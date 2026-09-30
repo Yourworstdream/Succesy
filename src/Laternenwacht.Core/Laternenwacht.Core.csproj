@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Plattformunabhängige Fachlogik: Sitzungsverfolgung, Klassifikation,
+    Einstellungen und das manipulationsgeschützte Sitzungsjournal.
+    Keine Abhängigkeit zu WPF oder Win32 – dadurch vollständig testbar.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Laternenwacht.Core</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Laternenwacht.Core.Tests" />
+  </ItemGroup>
+</Project>

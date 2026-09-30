@@ -1,0 +1,37 @@
+name: Build, Test & Veröffentlichen
+
+on:
+  push:
+    branches: [ main, "claude/**" ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Wiederherstellen
+        run: dotnet restore Laternenwacht.sln
+
+      - name: Bauen (Warnungen = Fehler)
+        run: dotnet build Laternenwacht.sln -c Release --no-restore
+
+      - name: Testen
+        run: dotnet test Laternenwacht.sln -c Release --no-build --logger "trx;LogFileName=tests.trx"
+
+      - name: Als einzelne EXE veröffentlichen
+        run: dotnet publish src/Laternenwacht.App/Laternenwacht.App.csproj -p:PublishProfile=Win-x64-EinzelneExe
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Laternenwacht-win-x64
+          path: publish/win-x64/Laternenwacht.exe
