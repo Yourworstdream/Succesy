@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    FRONTEND – WPF-Oberfläche: Fokusleiste, Hauptfenster, Rabenbote, Gestaltung, ViewModels.
+    Die gesamte Fachlogik liegt im Backend (backend/src): Laternenwacht.Core und Laternenwacht.Platform.Windows.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>Laternenwacht</AssemblyName>
+    <RootNamespace>Laternenwacht.App</RootNamespace>
+    <ApplicationIcon>Assets\laterne.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Für quellgenerierte P/Invokes (LibraryImport) -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- Erlaubt das Bauen (nicht Ausführen) auch auf CI-Systemen ohne Windows -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <SatelliteResourceLanguages>de</SatelliteResourceLanguages>
+    <AssemblyTitle>Laternenwacht – Fokuswächter</AssemblyTitle>
+    <Description>Zeigt am oberen Bildschirmrand, wie lange du dich während der Fokuszeit ablenkst.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\laterne.ico" />
+    <Resource Include="Assets\laterne.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- WPF-Projekte importieren System.IO nicht implizit (Namenskonflikte mit System.Windows.Shapes.Path) -->
+    <Using Include="System.IO" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\backend\src\Laternenwacht.Core\Laternenwacht.Core.csproj" />
+    <ProjectReference Include="..\..\backend\src\Laternenwacht.Platform.Windows\Laternenwacht.Platform.Windows.csproj" />
+  </ItemGroup>
+</Project>

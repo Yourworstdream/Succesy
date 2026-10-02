@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Windows-Anbindung des Backends (ohne Oberfläche):
+    Vordergrundprozess und Leerlaufzeit (Win32), Schlüsselschutz (DPAPI), Datenpfade, Fehlerprotokoll.
+    Implementiert die Schnittstellen aus Laternenwacht.Core.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RootNamespace>Laternenwacht.Platform.Windows</RootNamespace>
+    <!-- Für quellgenerierte P/Invokes (LibraryImport) -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- Erlaubt das Bauen auch auf CI-Systemen ohne Windows -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- DPAPI; Microsoft-eigenes Paket (in WPF-Projekten sonst über das Desktop-Framework enthalten) -->
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Laternenwacht.Core\Laternenwacht.Core.csproj" />
+  </ItemGroup>
+</Project>

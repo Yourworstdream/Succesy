@@ -21,3 +21,16 @@ rad.json
 *.flf
 #Test results file
 TestResults.xml
+### .NET / Visual Studio ###
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.rsuser
+TestResults/
+publish/
+*.DotSettings.user
+
+### Übergabe-Pakete ###
+export/

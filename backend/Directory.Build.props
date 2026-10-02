@@ -1,0 +1,24 @@
+<Project>
+  <!-- Gemeinsame Einstellungen für alle Projekte der Lösung -->
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <Deterministic>true</Deterministic>
+
+    <Company>Succesy</Company>
+    <Product>Laternenwacht</Product>
+    <Authors>Succesy</Authors>
+    <Copyright>© 2026 Succesy</Copyright>
+    <Version>1.1.0</Version>
+    <NeutralLanguage>de-DE</NeutralLanguage>
+  </PropertyGroup>
+
+  <!-- Release: Debug-Symbole in die Assemblies einbetten, damit die veröffentlichte EXE allein steht -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+</Project>

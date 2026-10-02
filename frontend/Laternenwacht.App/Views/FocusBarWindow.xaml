@@ -1,0 +1,190 @@
+<!--
+  Die Fokusleiste: hängt wie ein Banner am oberen Bildschirmrand und zeigt,
+  wie lange du dich in dieser Wacht bereits ablenken ließest ("Frost").
+-->
+<Window x:Class="Laternenwacht.App.Views.FocusBarWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:views="clr-namespace:Laternenwacht.App.Views"
+        xmlns:vm="clr-namespace:Laternenwacht.App.ViewModels"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=vm:BarViewModel}"
+        Title="Laternenwacht – Fokusleiste"
+        Width="820" SizeToContent="Height"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        ResizeMode="NoResize" ShowInTaskbar="False" ShowActivated="False" Topmost="True"
+        UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
+
+  <!-- Rechtsklick: Buch der Mahnrufe wählen, Leiste zurücksetzen, Wacht steuern -->
+  <Window.ContextMenu>
+    <ContextMenu FontFamily="{StaticResource RealmFont}" FontSize="14">
+      <MenuItem Header="Sprüche aus dem Buch …" ItemsSource="{Binding Settings.BookOptions}">
+        <MenuItem.Icon>
+          <TextBlock Text="❦" Foreground="{StaticResource GoldDimBrush}" HorizontalAlignment="Center" />
+        </MenuItem.Icon>
+        <MenuItem.ItemContainerStyle>
+          <Style TargetType="MenuItem">
+            <Setter Property="Header" Value="{Binding Label}" />
+            <Setter Property="Command" Value="{Binding SelectCommand}" />
+            <Setter Property="IsChecked" Value="{Binding IsSelected, Mode=OneWay}" />
+          </Style>
+        </MenuItem.ItemContainerStyle>
+      </MenuItem>
+      <MenuItem Header="Sprüche als Benachrichtigung (Rabenbote)"
+                IsChecked="{Binding Settings.ShowNotifications, Mode=OneWay}"
+                Command="{Binding Settings.ToggleNotificationsCommand}" />
+      <Separator />
+      <MenuItem Header="Leiste zurück an den oberen Rand" Command="{Binding Settings.ResetBarPositionCommand}" />
+      <Separator />
+      <MenuItem Header="{Binding Session.PauseResumeLabel}" Command="{Binding Session.PauseResumeCommand}" />
+      <MenuItem Header="Wacht abbrechen" Command="{Binding Session.AbortCommand}" />
+      <MenuItem Header="Kammer des Wächters öffnen" Command="{Binding Session.ShowChamberCommand}" />
+    </ContextMenu>
+  </Window.ContextMenu>
+
+  <Border x:Name="Banner" CornerRadius="0,0,16,16" BorderThickness="1.5,0,1.5,1.5" Margin="10,0,10,12"
+          Background="{StaticResource NightSkyBrush}" DataContext="{Binding Session}" Cursor="SizeAll"
+          ToolTip="Ziehen zum Verschieben · Rechtsklick für Bücher und Optionen">
+    <Border.Style>
+      <Style TargetType="Border">
+        <Setter Property="BorderBrush" Value="{StaticResource GoldBrush}" />
+        <Style.Triggers>
+          <DataTrigger Binding="{Binding IsDistracted}" Value="True">
+            <Setter Property="BorderBrush" Value="{StaticResource FrostBrush}" />
+          </DataTrigger>
+        </Style.Triggers>
+      </Style>
+    </Border.Style>
+    <Border.Effect>
+      <DropShadowEffect BlurRadius="16" ShadowDepth="4" Opacity="0.55" Color="Black" />
+    </Border.Effect>
+
+    <Grid>
+      <!-- Frostschleier: kriecht heran, sobald eine Verlockung lockt -->
+      <Border x:Name="FrostVeil" CornerRadius="0,0,15,15" Opacity="0" IsHitTestVisible="False"
+              Background="{StaticResource FrostGradientBrush}">
+        <Border.Style>
+          <Style TargetType="Border">
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding IsDistracted}" Value="True">
+                <DataTrigger.EnterActions>
+                  <BeginStoryboard>
+                    <Storyboard>
+                      <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0.28" Duration="0:0:2" />
+                    </Storyboard>
+                  </BeginStoryboard>
+                </DataTrigger.EnterActions>
+                <DataTrigger.ExitActions>
+                  <BeginStoryboard>
+                    <Storyboard>
+                      <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:1.2" />
+                    </Storyboard>
+                  </BeginStoryboard>
+                </DataTrigger.ExitActions>
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </Border.Style>
+      </Border>
+
+      <Grid Margin="14,8,14,10">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <views:LanternGlyph Width="38" Height="48" IsLit="{Binding IsLit}" Margin="0,0,12,0" />
+
+        <!-- Zustand -->
+        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+          <TextBlock Text="{Binding Headline}" FontSize="17" FontWeight="SemiBold" Foreground="{StaticResource GoldBrush}"
+                     TextTrimming="CharacterEllipsis" />
+          <TextBlock Text="{Binding Detail}" FontSize="13" Foreground="{StaticResource MutedTextBrush}"
+                     TextTrimming="CharacterEllipsis" />
+        </StackPanel>
+
+        <!-- Verbleibende Zeit -->
+        <StackPanel Grid.Column="2" Margin="18,0" VerticalAlignment="Center" ToolTip="Verbleibende Zeit dieser Wacht">
+          <TextBlock Text="{Binding RemainingText}" FontFamily="{StaticResource NumberFont}" FontSize="26"
+                     Foreground="{StaticResource ParchmentBrush}" HorizontalAlignment="Center" />
+          <TextBlock Text="verbleibend" FontSize="11" Foreground="{StaticResource MutedTextBrush}" HorizontalAlignment="Center" />
+        </StackPanel>
+
+        <!-- Frost = Ablenkungszeit -->
+        <Border Grid.Column="3" Padding="12,2" CornerRadius="8" BorderThickness="1" VerticalAlignment="Center"
+                ToolTip="Frost: so lange hast du dich in dieser Wacht ablenken lassen">
+          <Border.Style>
+            <Style TargetType="Border">
+              <Setter Property="Background" Value="#1AA9D6E5" />
+              <Setter Property="BorderBrush" Value="#55A9D6E5" />
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDistracted}" Value="True">
+                  <Setter Property="Background" Value="#40A9D6E5" />
+                  <Setter Property="BorderBrush" Value="{StaticResource FrostWhiteBrush}" />
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </Border.Style>
+          <StackPanel Orientation="Horizontal">
+            <Path Data="{StaticResource SnowflakeGeometry}" Stroke="{StaticResource FrostBrush}" StrokeThickness="1.6"
+                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" Width="24" Height="24" Stretch="Uniform"
+                  Margin="0,0,8,0" VerticalAlignment="Center" />
+            <StackPanel>
+              <TextBlock Text="{Binding FrostText}" FontFamily="{StaticResource NumberFont}" FontSize="24"
+                         Foreground="{StaticResource FrostWhiteBrush}" HorizontalAlignment="Center" />
+              <TextBlock FontSize="11" Foreground="{StaticResource FrostBrush}" HorizontalAlignment="Center">
+                <Run Text="Frost ·" /> <Run Text="{Binding DistractionCount, Mode=OneWay}" /><Run Text="× verlockt" />
+              </TextBlock>
+            </StackPanel>
+          </StackPanel>
+        </Border>
+
+        <!-- Steuerung -->
+        <StackPanel Grid.Column="4" Orientation="Horizontal" Margin="14,0,0,0" VerticalAlignment="Center" Cursor="Hand">
+          <Button Command="{Binding PauseResumeCommand}" ToolTip="{Binding PauseResumeLabel}"
+                  AutomationProperties.Name="{Binding PauseResumeLabel}">
+            <Button.Style>
+              <Style TargetType="Button" BasedOn="{StaticResource GlyphButton}">
+                <Setter Property="Content">
+                  <Setter.Value>
+                    <Path Data="{StaticResource PauseGeometry}" Style="{StaticResource GlyphFill}" />
+                  </Setter.Value>
+                </Setter>
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding IsPaused}" Value="True">
+                    <Setter Property="Content">
+                      <Setter.Value>
+                        <Path Data="{StaticResource PlayGeometry}" Style="{StaticResource GlyphFill}" />
+                      </Setter.Value>
+                    </Setter>
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </Button.Style>
+          </Button>
+          <Button Style="{StaticResource GlyphButton}" Command="{Binding AbortCommand}"
+                  ToolTip="Wacht abbrechen" AutomationProperties.Name="Wacht abbrechen">
+            <Path Data="{StaticResource StopGeometry}" Style="{StaticResource GlyphFill}" />
+          </Button>
+          <Button Style="{StaticResource GlyphButton}" Command="{Binding ShowChamberCommand}"
+                  ToolTip="Kammer des Wächters öffnen" AutomationProperties.Name="Hauptfenster öffnen">
+            <Path Data="{StaticResource DoorGeometry}" Style="{StaticResource GlyphStroke}" />
+          </Button>
+        </StackPanel>
+
+        <!-- Fortschritt der Wacht -->
+        <ProgressBar Grid.Row="1" Grid.ColumnSpan="5" Margin="0,8,0,0" Style="{StaticResource QuestProgress}"
+                     Value="{Binding Progress, Mode=OneWay}" AutomationProperties.Name="Fortschritt der Wacht" />
+      </Grid>
+    </Grid>
+  </Border>
+</Window>
