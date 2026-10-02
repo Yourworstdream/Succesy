@@ -33,6 +33,7 @@ internal sealed class SessionViewModel : ObservableObject
     private readonly HashSet<string> _shownAdmonitions = [];
     private string? _admonition;
     private long _admonitionUntil;
+    private int _admonitionSeed;
 
     public SessionViewModel(FocusWarden warden)
     {
@@ -72,6 +73,12 @@ internal sealed class SessionViewModel : ObservableObject
 
     /// <summary>Eine Wacht wurde begonnen.</summary>
     public event EventHandler? SessionStarted;
+
+    /// <summary>Ein neuer Mahnruf ist fällig – die Oberfläche überbringt ihn als Benachrichtigung.</summary>
+    public event EventHandler<Admonition>? AdmonitionRaised;
+
+    /// <summary>Aus welchem Buch der Chroniken die Mahnrufe stammen.</summary>
+    public ChronicleBook SayingsBook { get; set; } = ChronicleBook.All;
 
     /// <summary>Rückfrage vor dem Abbrechen (wird von der Oberfläche gesetzt).</summary>
     public Func<bool>? ConfirmAbort { get; set; }
@@ -152,6 +159,7 @@ internal sealed class SessionViewModel : ObservableObject
 
         _warden.Start(TimeSpan.FromMinutes(DurationMinutes));
         _shownAdmonitions.Clear();
+        _admonitionSeed = Random.Shared.Next();
         Admonition = null;
         Proverb = Lore.Proverb(Environment.TickCount);
         _timer.Start();
@@ -240,10 +248,11 @@ internal sealed class SessionViewModel : ObservableObject
     {
         var now = Environment.TickCount64;
         if (session.Phase == SessionPhase.Running
-            && Admonitions.Next(session.DistractionCount, session.Distracted, _shownAdmonitions) is { } next)
+            && Admonitions.Next(session.DistractionCount, session.Distracted, _shownAdmonitions, SayingsBook, _admonitionSeed) is { } next)
         {
             Admonition = next.Text;
             _admonitionUntil = now + (long)AdmonitionDuration.TotalMilliseconds;
+            AdmonitionRaised?.Invoke(this, next);
         }
         else if (Admonition is not null && (now >= _admonitionUntil || session.IsFinished))
         {

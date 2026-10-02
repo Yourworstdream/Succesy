@@ -8,7 +8,7 @@
 | Projekt | Laternenwacht – Desktopanwendung zur Messung von Ablenkung während Fokuszeiten |
 | Technologie | C# 14, .NET 10, WPF, xUnit |
 | Repository | `yourworstdream/succesy` |
-| Stand | September 2026, Version 1.0.0 |
+| Stand | Oktober 2026, Version 1.1.0 |
 
 ---
 
@@ -124,6 +124,9 @@ Lizenzkosten entstehen nicht.
 | F8 | Konfigurierbare Listen, Dauer, Leerlaufschwelle mit Eingabevalidierung | Muss |
 | F9 | Humorvolle Mahnrufe bei Erreichen von Ablenkungsschwellen | Soll |
 | F10 | Statistik: Gesamtfokus, Gesamtfrost, Frühlingsquote | Soll |
+| F11 | Mahnrufe als **Push‑Benachrichtigung** („Rabenbote“), abschaltbar | Soll |
+| F12 | Fokusleiste **frei verschiebbar**, Position wird gespeichert; Rückkehr an den oberen Rand | Soll |
+| F13 | **Rechtsklick‑Menü** der Leiste: Auswahl, aus welchem der sieben Bücher der Chroniken die Mahnrufe stammen (oder gemischt) | Soll |
 
 **Nichtfunktionale Anforderungen**
 
@@ -295,11 +298,40 @@ Alle Symbole (Laterne, Schneeflocke, Schild, Tür) sind **Vektorpfade** und dami
 │ 🏮  Der Winter kriecht heran          18:42        ❄  02:13        ⏸  ■  🚪 │
 │     Eine Verlockung ruft: discord    verbleibend    Frost · 3× verlockt      │
 │ ████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │
-│ ❦ Ein Faun räuspert sich hinter dem Laternenpfahl: „Nur ein kleiner Umweg …“ │
 ╰──────────────────────────────────────────────────────────────────────────────╯
+                       Rechtsklick ▸ ┌──────────────────────────────────────────┐
+                                     │ ❦ Sprüche aus dem Buch …               ▸ │──┐
+                                     │ ✓ Sprüche als Benachrichtigung           │  │
+                                     │ ──────────────────────────────────────── │  │
+                                     │   Leiste zurück an den oberen Rand       │  │
+                                     │   Rasten · Wacht abbrechen · Kammer …    │  │
+                                     └──────────────────────────────────────────┘  │
+     ┌─────────────────────────────────────────┐                                   │
+     │ ✓ Alle Chroniken (gemischt)             │◂──────────────────────────────────┘
+     │   Band 1 · Das Wunder von Narnia        │
+     │   Band 2 · Der König von Narnia         │
+     │   …                                     │
+     │   Band 7 · Der letzte Kampf             │
+     └─────────────────────────────────────────┘
 ```
 
-* Randlos, halbtransparent abgesetzt, zentriert am oberen Rand des Arbeitsbereichs.
+**Rabenbote (Push‑Benachrichtigung, unten rechts)**
+
+```
+╭────────────────────────────────────────────╮
+│ (❦)  Ein Rabe bringt Kunde              ✕  │
+│      „Herrscher von Cair Paravel, Ihr      │
+│       gefährdet Euer Königreich mit Eurem  │
+│       Müßiggang!“                          │
+│                 — aus »Der König von Narnia«│
+│ ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬░░░░░░░░░░░░░░░░ │
+╰────────────────────────────────────────────╯
+```
+
+* Randlos, standardmäßig zentriert am oberen Rand des Arbeitsbereichs angedockt.
+* **Verschiebbar:** Ziehen mit der linken Maustaste löst die Leiste vom Rand (alle Ecken werden rund);
+  die Position wird gespeichert. Fehlt der Bildschirm später (z. B. Laptop ohne Zweitmonitor), dockt sie
+  automatisch wieder oben an. Rechtsklick ▸ *Leiste zurück an den oberen Rand* setzt sie zurück.
 * `WS_EX_NOACTIVATE`: Klicks stehlen **nicht** den Tastaturfokus – sonst würde die Leiste selbst
   die Messung verfälschen. `WS_EX_TOOLWINDOW`: kein Eintrag in Alt+Tab/Taskleiste.
 * Bei Ablenkung wechselt der Rahmen von Gold zu Eisblau, ein Frostschleier blendet ein, die Laterne erlischt.
@@ -441,8 +473,21 @@ var entry = new JournalEntry(seq, _lastMac, payload, ComputeEntryMac(seq, _lastM
 **Mahnrufe** (`Admonitions.Next`): Schwellen nach Anzahl der Verlockungen (3, 5, 10, 15, **20**, 30, 50)
 und nach Frostminuten (5, 10, 20, 45). Jeder Spruch erscheint höchstens einmal je Wacht;
 übersprungene Schwellen werden nicht nachgereicht, damit keine Spruchkaskade entsteht.
+Jedes der sieben Bücher besitzt einen eigenen Satz von elf Sprüchen (eine je Schwelle). Im Modus
+„Alle Chroniken“ wählt ein je Wacht zufälliger Startwert für jede Schwelle ein anderes Buch.
 
-**Fokusleiste ohne Fokusraub** (`FocusBarWindow.ApplyToolWindowStyle`): Erweiterte Fensterstile
+**Rabenbote** (`RavenToastWindow`, `NotificationService`): Eigene Push‑Benachrichtigung statt
+Windows‑Toast. Begründung: Windows‑Toasts erfordern für nicht paketierte Anwendungen eine
+registrierte App‑ID mit Startmenü‑Verknüpfung (zusätzliche Installationsschritte und
+Registry‑Schreibzugriffe), außerdem passt die Darstellung nicht zur Gestaltung. Der Rabenbote
+aktiviert sich nie (`WS_EX_NOACTIVATE`), verschwindet nach 10 s, pausiert bei Mausberührung und
+ersetzt eine noch sichtbare ältere Botschaft.
+
+**Sofort wirkende Einstellungen** (`SettingsViewModel.ApplyQuickChange`): Buchwahl, Benachrichtigungen
+und Leistenposition werden ohne „Speichern“ übernommen – ungespeicherte Eingaben im Formular
+bleiben dabei unberührt.
+
+**Fokusleiste ohne Fokusraub** (`WindowStyles.MakeNonActivatingToolWindow`): Erweiterte Fensterstile
 `WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW` werden nach Erzeugung des nativen Fensters gesetzt.
 
 ---
@@ -451,7 +496,7 @@ und nach Frostminuten (5, 10, 20, 45). Jeder Spruch erscheint höchstens einmal 
 
 ### 7.1 Automatisierte Tests
 
-71 Unit‑Tests (xUnit) für die Fachlogik, u. a.:
+94 Unit‑Tests (xUnit) für die Fachlogik, u. a.:
 
 | Testklasse | Geprüft wird |
 |---|---|
@@ -461,7 +506,7 @@ und nach Frostminuten (5, 10, 20, 45). Jeder Spruch erscheint höchstens einmal 
 | `SessionJournalTests` | **Veränderung, Löschung, Vertauschung, Abschneiden, gefälschter Anker, falscher Schlüssel, Müllzeilen**, Absturz‑Reparatur |
 | `JournalBootstrapperTests` | Erststart, Schlüssel nie im Klartext, Archivierung gebrochener Chroniken, defekter Schlüssel |
 | `SettingsTests` | Wertebereiche, Überschneidungen, Normalisierung, **verdächtige Namen** (Pfade, Nullbytes), Round‑Trip, **beschädigte Dateien** |
-| `AdmonitionTests` | Schwellen, Einmaligkeit, kein Nachreichen, **Cair‑Paravel‑Mahnruf bei 20** |
+| `AdmonitionTests` | Schwellen, Einmaligkeit, kein Nachreichen, **Cair‑Paravel‑Mahnruf bei 20**, vollständige und eindeutige Spruchsätze je Buch, gewähltes Buch wird genutzt, gemischter Modus |
 | `FormattingTests` | Zeitformat, Jahreszeiten‑Grenzen |
 
 Zeitabhängige Tests laufen mit einer **manuell vorgestellten Uhr** (`ManualTimeProvider`) und sind
@@ -478,7 +523,7 @@ damit deterministisch und schnell (< 1 s gesamt).
 |---|---|---|
 | T1 | Wacht mit 1 min starten, nur in Visual Studio arbeiten | Leiste gold, Frost 00:00, nach 1 min „Der Frühling ist gekommen!“ |
 | T2 | Während der Wacht Discord in den Vordergrund holen | Rahmen eisblau, Frost zählt hoch, Detail „Eine Verlockung ruft: discord“ |
-| T3 | 20‑mal zwischen Editor und Verlockung wechseln | Mahnruf „Herrscher von Cair Paravel …“ erscheint |
+| T3 | Buch „Der König von Narnia“ wählen, 20‑mal zwischen Editor und Verlockung wechseln | Rabenbote unten rechts: „Herrscher von Cair Paravel …“ |
 | T4 | Auf die Leiste klicken | Vorheriges Fenster behält den Tastaturfokus |
 | T5 | 2 min keine Eingabe | „Die Laterne wacht allein“, Zeit unter „abwesend“ |
 | T6 | Systemuhr während der Wacht um 1 h verstellen | Restzeit unverändert |
@@ -486,6 +531,11 @@ damit deterministisch und schnell (< 1 s gesamt).
 | T8 | Zweite Instanz starten | Hinweis „Die Laternenwacht brennt bereits“ |
 | T9 | Ungültigen Namen `C:\x.exe` als Verlockung speichern | Fehlermeldung, nichts gespeichert |
 | T10 | Anzeige mit 150 % / 200 % Skalierung | Leiste und Symbole scharf, oben zentriert |
+| T11 | Leiste mit der Maus verschieben, App neu starten | Leiste erscheint an der neuen Stelle, alle Ecken rund |
+| T12 | Rechtsklick ▸ *Leiste zurück an den oberen Rand* | Leiste dockt oben zentriert an |
+| T13 | Rechtsklick ▸ *Sprüche aus dem Buch* ▸ *Der silberne Sessel* | Häkchen wandert, nächster Mahnruf stammt aus diesem Buch |
+| T14 | Benachrichtigungen per Rechtsklick abschalten, Schwelle erreichen | Kein Rabenbote; Mahnruf nur im Hauptfenster |
+| T15 | Auf den Rabenboten klicken, während in einem Editor getippt wird | Botschaft verschwindet, Editor behält den Fokus |
 
 ---
 
@@ -503,7 +553,7 @@ Benutzerprofil; eine Deinstallation besteht aus dem Löschen der EXE und des Ord
 
 ### 9.1 Soll‑Ist‑Vergleich
 
-Alle Muss‑ und Soll‑Anforderungen (F1–F10, N1–N8) wurden umgesetzt. Die Fachlogik ist vollständig
+Alle Muss‑ und Soll‑Anforderungen (F1–F13, N1–N8) wurden umgesetzt. Die Fachlogik ist vollständig
 von der Oberfläche entkoppelt und automatisiert getestet.
 
 ### 9.2 Lessons Learned
@@ -518,7 +568,9 @@ von der Oberfläche entkoppelt und automatisiert getestet.
 * Signierte Releases und automatische Updates (z. B. über MSIX/WinGet).
 * Optionaler externer Zeitstempeldienst (RFC 3161) für stärkere Integrität.
 * Wochen‑ und Monatsauswertung als Diagramm; Export (CSV/PDF) für Lerntagebücher.
-* Mehrmonitor‑Unterstützung (Leiste auf dem aktiven Bildschirm).
+* Andocken an den oberen Rand eines beliebigen Bildschirms (derzeit Hauptbildschirm; frei verschoben
+  funktioniert die Leiste bereits auf allen Bildschirmen).
+* Optional echte Windows‑Benachrichtigungen (Info‑Center) bei MSIX‑Paketierung.
 
 ---
 

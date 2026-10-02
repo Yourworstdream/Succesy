@@ -75,15 +75,30 @@ public partial class App : Application
         var warden = new FocusWarden(new Win32ActivityProbe(), TimeProvider.System, settings, selfName);
 
         // --- ViewModels ---
-        _session = new SessionViewModel(warden) { DurationMinutes = (int)settings.DefaultDuration.TotalMinutes };
+        _session = new SessionViewModel(warden)
+        {
+            DurationMinutes = (int)settings.DefaultDuration.TotalMinutes,
+            SayingsBook = settings.SayingsBook,
+        };
         var chronicle = new ChronicleViewModel(journal, journalError);
         var settingsViewModel = new SettingsViewModel(settingsStore, settings);
         var shell = new ShellViewModel(_session, chronicle, settingsViewModel);
 
         // --- Fenster ---
         _main = new MainWindow { DataContext = shell };
-        _bar = new FocusBarWindow { DataContext = _session, Topmost = settings.BarAlwaysOnTop };
+        _bar = new FocusBarWindow { DataContext = new BarViewModel(_session, settingsViewModel), Topmost = settings.BarAlwaysOnTop };
+        _bar.ApplyPosition(settings.BarLeft, settings.BarTop);
+        _bar.PositionChosen += (_, position) => settingsViewModel.SaveBarPosition(position.X, position.Y);
         MainWindow = _main;
+
+        var notifications = new NotificationService();
+        _session.AdmonitionRaised += (_, admonition) =>
+        {
+            if (settingsViewModel.ShowNotifications)
+            {
+                notifications.Show(admonition);
+            }
+        };
 
         _session.ConfirmAbort = () => MessageBox.Show(_main,
             "Willst du die Wacht wirklich abbrechen? Sie wird dennoch in der Chronik verzeichnet.",
@@ -96,7 +111,9 @@ public partial class App : Application
         settingsViewModel.SettingsSaved += (_, saved) =>
         {
             warden.ApplySettings(saved);
+            _session.SayingsBook = saved.SayingsBook;
             _bar.Topmost = saved.BarAlwaysOnTop;
+            _bar.ApplyPosition(saved.BarLeft, saved.BarTop);
             if (!_session.IsActive)
             {
                 _session.DurationMinutes = (int)saved.DefaultDuration.TotalMinutes;
@@ -143,7 +160,7 @@ public partial class App : Application
 
         _hideBarTimer?.Stop();
         _bar.Show();
-        _bar.DockToTop();
+        _bar.Reposition();
     }
 
     private void OnSessionEnded(SessionRecord record, ChronicleViewModel chronicle)

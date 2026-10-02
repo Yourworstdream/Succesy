@@ -81,6 +81,55 @@ public sealed class SettingsTests : IDisposable
         Assert.NotNull(store.LastLoadWarning);
     }
 
+    [Theory]
+    [InlineData(double.NaN, 0.0)]
+    [InlineData(double.PositiveInfinity, 0.0)]
+    [InlineData(1e9, 0.0)]
+    public void Invalid_bar_positions_are_rejected(double left, double top) =>
+        Assert.NotEmpty(SettingsValidator.Validate(FocusSettings.Default with { BarLeft = left, BarTop = top }));
+
+    [Fact]
+    public void Half_a_bar_position_is_rejected() =>
+        Assert.NotEmpty(SettingsValidator.Validate(FocusSettings.Default with { BarLeft = 100 }));
+
+    [Fact]
+    public void Book_notifications_and_position_roundtrip()
+    {
+        var store = new SettingsStore(_dir.File("einstellungen.json"));
+        var settings = FocusSettings.Default with
+        {
+            SayingsBook = ChronicleBook.SilverChair,
+            ShowNotifications = false,
+            BarLeft = -1200.5,
+            BarTop = 40,
+        };
+
+        store.Save(settings);
+        var loaded = store.Load();
+
+        Assert.Equal(ChronicleBook.SilverChair, loaded.SayingsBook);
+        Assert.False(loaded.ShowNotifications);
+        Assert.Equal(-1200.5, loaded.BarLeft);
+        Assert.True(loaded.HasCustomBarPosition);
+        Assert.DoesNotContain("hasCustomBarPosition", File.ReadAllText(store.FilePath), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Missing_fields_keep_their_defaults()
+    {
+        File.WriteAllText(_dir.File("einstellungen.json"), "{\"defaultDuration\":\"00:30:00\",\"mode\":\"BlockList\"}");
+        var store = new SettingsStore(_dir.File("einstellungen.json"));
+
+        var loaded = store.Load();
+
+        Assert.Null(store.LastLoadWarning);
+        Assert.Equal(TimeSpan.FromMinutes(30), loaded.DefaultDuration);
+        Assert.Equal(ChronicleBook.All, loaded.SayingsBook);
+        Assert.False(loaded.HasCustomBarPosition);
+        Assert.True(loaded.ShowNotifications);
+        Assert.Equal(FocusSettings.Default.IdleThreshold, loaded.IdleThreshold);
+    }
+
     [Fact]
     public void Invalid_settings_are_never_saved()
     {

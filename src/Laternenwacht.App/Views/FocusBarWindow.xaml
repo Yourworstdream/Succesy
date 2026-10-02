@@ -10,15 +10,43 @@
         xmlns:views="clr-namespace:Laternenwacht.App.Views"
         xmlns:vm="clr-namespace:Laternenwacht.App.ViewModels"
         mc:Ignorable="d"
-        d:DataContext="{d:DesignInstance Type=vm:SessionViewModel}"
+        d:DataContext="{d:DesignInstance Type=vm:BarViewModel}"
         Title="Laternenwacht – Fokusleiste"
         Width="820" SizeToContent="Height"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         ResizeMode="NoResize" ShowInTaskbar="False" ShowActivated="False" Topmost="True"
         UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
 
+  <!-- Rechtsklick: Buch der Mahnrufe wählen, Leiste zurücksetzen, Wacht steuern -->
+  <Window.ContextMenu>
+    <ContextMenu FontFamily="{StaticResource RealmFont}" FontSize="14">
+      <MenuItem Header="Sprüche aus dem Buch …" ItemsSource="{Binding Settings.BookOptions}">
+        <MenuItem.Icon>
+          <TextBlock Text="❦" Foreground="{StaticResource GoldDimBrush}" HorizontalAlignment="Center" />
+        </MenuItem.Icon>
+        <MenuItem.ItemContainerStyle>
+          <Style TargetType="MenuItem">
+            <Setter Property="Header" Value="{Binding Label}" />
+            <Setter Property="Command" Value="{Binding SelectCommand}" />
+            <Setter Property="IsChecked" Value="{Binding IsSelected, Mode=OneWay}" />
+          </Style>
+        </MenuItem.ItemContainerStyle>
+      </MenuItem>
+      <MenuItem Header="Sprüche als Benachrichtigung (Rabenbote)"
+                IsChecked="{Binding Settings.ShowNotifications, Mode=OneWay}"
+                Command="{Binding Settings.ToggleNotificationsCommand}" />
+      <Separator />
+      <MenuItem Header="Leiste zurück an den oberen Rand" Command="{Binding Settings.ResetBarPositionCommand}" />
+      <Separator />
+      <MenuItem Header="{Binding Session.PauseResumeLabel}" Command="{Binding Session.PauseResumeCommand}" />
+      <MenuItem Header="Wacht abbrechen" Command="{Binding Session.AbortCommand}" />
+      <MenuItem Header="Kammer des Wächters öffnen" Command="{Binding Session.ShowChamberCommand}" />
+    </ContextMenu>
+  </Window.ContextMenu>
+
   <Border x:Name="Banner" CornerRadius="0,0,16,16" BorderThickness="1.5,0,1.5,1.5" Margin="10,0,10,12"
-          Background="{StaticResource NightSkyBrush}">
+          Background="{StaticResource NightSkyBrush}" DataContext="{Binding Session}" Cursor="SizeAll"
+          ToolTip="Ziehen zum Verschieben · Rechtsklick für Bücher und Optionen">
     <Border.Style>
       <Style TargetType="Border">
         <Setter Property="BorderBrush" Value="{StaticResource GoldBrush}" />
@@ -63,7 +91,6 @@
 
       <Grid Margin="14,8,14,10">
         <Grid.RowDefinitions>
-          <RowDefinition Height="Auto" />
           <RowDefinition Height="Auto" />
           <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
@@ -122,7 +149,7 @@
         </Border>
 
         <!-- Steuerung -->
-        <StackPanel Grid.Column="4" Orientation="Horizontal" Margin="14,0,0,0" VerticalAlignment="Center">
+        <StackPanel Grid.Column="4" Orientation="Horizontal" Margin="14,0,0,0" VerticalAlignment="Center" Cursor="Hand">
           <Button Command="{Binding PauseResumeCommand}" ToolTip="{Binding PauseResumeLabel}"
                   AutomationProperties.Name="{Binding PauseResumeLabel}">
             <Button.Style>
@@ -157,32 +184,6 @@
         <!-- Fortschritt der Wacht -->
         <ProgressBar Grid.Row="1" Grid.ColumnSpan="5" Margin="0,8,0,0" Style="{StaticResource QuestProgress}"
                      Value="{Binding Progress, Mode=OneWay}" AutomationProperties.Name="Fortschritt der Wacht" />
-
-        <!-- Mahnruf: erscheint bei Erreichen einer Ablenkungsschwelle -->
-        <Border Grid.Row="2" Grid.ColumnSpan="5" Margin="0,8,0,0" Padding="10,5" CornerRadius="6"
-                Background="#268B1E2D" BorderBrush="#99A9D6E5" BorderThickness="1"
-                Visibility="{Binding HasAdmonition, Converter={StaticResource BoolToVisibility}}">
-          <Border.Style>
-            <Style TargetType="Border">
-              <Style.Triggers>
-                <Trigger Property="Visibility" Value="Visible">
-                  <Trigger.EnterActions>
-                    <BeginStoryboard>
-                      <Storyboard>
-                        <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.8" />
-                      </Storyboard>
-                    </BeginStoryboard>
-                  </Trigger.EnterActions>
-                </Trigger>
-              </Style.Triggers>
-            </Style>
-          </Border.Style>
-          <StackPanel Orientation="Horizontal">
-            <TextBlock Text="❦" FontSize="15" Foreground="{StaticResource GoldBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
-            <TextBlock Text="{Binding Admonition}" FontSize="14" FontStyle="Italic" Foreground="{StaticResource FrostWhiteBrush}"
-                       TextWrapping="Wrap" MaxWidth="720" VerticalAlignment="Center" AutomationProperties.LiveSetting="Assertive" />
-          </StackPanel>
-        </Border>
       </Grid>
     </Grid>
   </Border>

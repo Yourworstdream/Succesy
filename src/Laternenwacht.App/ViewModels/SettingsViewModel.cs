@@ -32,7 +32,12 @@ internal sealed class SettingsViewModel : ObservableObject
             SetStatus(warning + " Es gelten die Standardwerte.", isError: true);
         }
 
+        BookOptions = [.. Enum.GetValues<ChronicleBook>().Select(b => new BookOption(b, () => SelectedBook = b))];
+        UpdateBookSelection();
+
         SaveCommand = new RelayCommand(Save);
+        ResetBarPositionCommand = new RelayCommand(ResetBarPosition, () => _current.HasCustomBarPosition);
+        ToggleNotificationsCommand = new RelayCommand(() => ShowNotifications = !ShowNotifications);
         ResetCommand = new RelayCommand(() => LoadFrom(_current));
         DefaultsCommand = new RelayCommand(() => LoadFrom(FocusSettings.Default));
     }
@@ -43,6 +48,59 @@ internal sealed class SettingsViewModel : ObservableObject
     public FocusSettings Current => _current;
 
     public ICommand SaveCommand { get; }
+
+    public ICommand ResetBarPositionCommand { get; }
+
+    public ICommand ToggleNotificationsCommand { get; }
+
+    /// <summary>Auswahlmöglichkeiten "Alle Chroniken" und die sieben Bücher.</summary>
+    public IReadOnlyList<BookOption> BookOptions { get; }
+
+    /// <summary>Das Buch, aus dem die Mahnrufe stammen. Wird sofort gespeichert.</summary>
+    public ChronicleBook SelectedBook
+    {
+        get => _current.SayingsBook;
+        set
+        {
+            if (value != _current.SayingsBook && ApplyQuickChange(_current with { SayingsBook = value }))
+            {
+                UpdateBookSelection();
+                SetStatus($"Die Mahnrufe stammen nun aus: {ChronicleBooks.Title(value)}.", isError: false);
+            }
+        }
+    }
+
+    public BookOption? SelectedBookOption
+    {
+        get => BookOptions.FirstOrDefault(o => o.Book == SelectedBook);
+        set
+        {
+            if (value is not null)
+            {
+                SelectedBook = value.Book;
+            }
+        }
+    }
+
+    /// <summary>Mahnrufe als Push-Benachrichtigung zeigen. Wird sofort gespeichert.</summary>
+    public bool ShowNotifications
+    {
+        get => _current.ShowNotifications;
+        set
+        {
+            if (value != _current.ShowNotifications && ApplyQuickChange(_current with { ShowNotifications = value }))
+            {
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    /// <summary>Merkt sich die vom Benutzer verschobene Position der Fokusleiste.</summary>
+    public void SaveBarPosition(double left, double top) =>
+        ApplyQuickChange(_current with { BarLeft = Math.Round(left, 1), BarTop = Math.Round(top, 1) });
+
+    /// <summary>Die Leiste kehrt an den oberen Bildschirmrand zurück.</summary>
+    public void ResetBarPosition() => ApplyQuickChange(_current with { BarLeft = null, BarTop = null });
 
     public ICommand ResetCommand { get; }
 
@@ -160,9 +218,70 @@ internal sealed class SettingsViewModel : ObservableObject
         SettingsSaved?.Invoke(this, candidate);
     }
 
+    /// <summary>
+    /// Speichert eine einzelne Änderung sofort (ohne das Formular anzutasten, damit
+    /// ungespeicherte Eingaben dort erhalten bleiben).
+    /// </summary>
+    private bool ApplyQuickChange(FocusSettings candidate)
+    {
+        if (SettingsValidator.Validate(candidate).Count > 0)
+        {
+            return false;
+        }
+
+        try
+        {
+            _store.Save(candidate);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            AppLog.Error("Einstellungen", ex);
+            SetStatus("Speichern fehlgeschlagen: " + ex.Message, isError: true);
+            return false;
+        }
+
+        _current = candidate;
+        SettingsSaved?.Invoke(this, candidate);
+        return true;
+    }
+
+    private void UpdateBookSelection()
+    {
+        foreach (var option in BookOptions)
+        {
+            option.IsSelected = option.Book == _current.SayingsBook;
+        }
+
+        OnPropertyChanged(nameof(SelectedBook));
+        OnPropertyChanged(nameof(SelectedBookOption));
+    }
+
     private void SetStatus(string message, bool isError)
     {
         StatusIsError = isError;
         StatusMessage = message;
     }
+}
+
+/// <summary>Ein Eintrag der Buchauswahl (Kontextmenü der Leiste und Einstellungen).</summary>
+internal sealed class BookOption : ObservableObject
+{
+    private bool _isSelected;
+
+    public BookOption(ChronicleBook book, Action select)
+    {
+        Book = book;
+        SelectCommand = new RelayCommand(select);
+    }
+
+    public ChronicleBook Book { get; }
+
+    public string Title => ChronicleBooks.Title(Book);
+
+    /// <summary>"Band 2 · Der König von Narnia" bzw. "Alle Chroniken (gemischt)".</summary>
+    public string Label => Book == ChronicleBook.All ? Title : $"Band {ChronicleBooks.Volume(Book)} · {Title}";
+
+    public ICommand SelectCommand { get; }
+
+    public bool IsSelected { get => _isSelected; set => SetProperty(ref _isSelected, value); }
 }

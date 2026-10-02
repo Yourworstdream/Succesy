@@ -13,10 +13,15 @@ klassischer Fantasy‑Chroniken à la C. S. Lewis: Laternenpfahl, ewiger Winter,
 
 * **Fokusleiste oben am Bildschirm** – Restzeit, kumulierte Ablenkungszeit (❄ Frost), Anzahl der
   Verlockungen, Fortschritt; stiehlt beim Anklicken keinen Fokus.
+* **Verschiebbar** – Leiste mit der Maus an jede Stelle ziehen; die Position wird gespeichert.
+* **Rechtsklick auf die Leiste** – wählen, aus welchem Buch der Chroniken von Narnia die Sprüche
+  stammen (Band 1–7 oder alle gemischt), Benachrichtigungen an/aus, Leiste zurück an den Rand.
 * **Ablenkungserkennung** über das Vordergrundprogramm – *Milde Wacht* (Sperrliste) oder
   *Strenge Wacht* (nur Erlaubnisliste zählt als Fokus); Abwesenheit wird separat erfasst.
-* **Mahnrufe** mit Augenzwinkern, z. B. nach 20 Ablenkungen:
+* **Mahnrufe per Push‑Benachrichtigung** – ein „Rabenbote“ fliegt unten rechts ein, z. B. nach
+  20 Ablenkungen aus *Der König von Narnia*:
   *„Herrscher von Cair Paravel, Ihr gefährdet Euer Königreich mit Eurem Müßiggang!“*
+  Jedes der sieben Bücher hat eigene Sprüche (77 insgesamt).
 * **Jahreszeiten** als Ergebnis: Frühling (< 10 % Frost), Tauwetter (< 25 %), Winter.
 * **Versiegelte Chronik** – jede Wacht wird mit HMAC‑SHA256 versiegelt und verkettet;
   Manipulation, Löschung oder Vertauschung wird erkannt und angezeigt.
@@ -53,7 +58,7 @@ dotnet publish src/Laternenwacht.App/Laternenwacht.App.csproj -p:PublishProfile=
 ```
 src/Laternenwacht.Core     Fachlogik (Messung, Bewertung, versiegelte Chronik) – plattformunabhängig
 src/Laternenwacht.App      WPF-Oberfläche, Win32-/DPAPI-Anbindung
-tests/…Core.Tests          71 xUnit-Tests
+tests/…Core.Tests          94 xUnit-Tests
 docs/                      Projektdokumentation & Veröffentlichungsanleitung
 ```
 

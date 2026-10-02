@@ -25,6 +25,17 @@ public static class SettingsValidator
             errors.Add("Unbekannter Bewertungsmodus.");
         }
 
+        if (!Enum.IsDefined(settings.SayingsBook))
+        {
+            errors.Add("Unbekanntes Buch der Chroniken.");
+        }
+
+        if (!IsValidCoordinate(settings.BarLeft) || !IsValidCoordinate(settings.BarTop)
+            || (settings.BarLeft is null) != (settings.BarTop is null))
+        {
+            errors.Add("Die gespeicherte Position der Fokusleiste ist ungültig.");
+        }
+
         ValidateList(settings.AllowedProcesses, "Gefährten", errors);
         ValidateList(settings.DistractingProcesses, "Verlockungen", errors);
 
@@ -44,6 +55,9 @@ public static class SettingsValidator
 
         return errors;
     }
+
+    private static bool IsValidCoordinate(double? value) =>
+        value is null || (double.IsFinite(value.Value) && Math.Abs(value.Value) <= FocusSettings.MaxScreenCoordinate);
 
     private static void ValidateList(IReadOnlyList<string>? list, string label, List<string> errors)
     {
