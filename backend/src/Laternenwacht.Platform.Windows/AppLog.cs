@@ -1,12 +1,12 @@
 using System.Globalization;
 
-namespace Laternenwacht.App.Services;
+namespace Laternenwacht.Platform.Windows;
 
 /// <summary>
 /// Minimales Fehlerprotokoll. Protokolliert werden nur technische Fehler,
 /// niemals Aktivitäts- oder Prozessdaten des Benutzers.
 /// </summary>
-internal static class AppLog
+public static class AppLog
 {
     private const long MaxSize = 1024 * 1024;
     private static readonly object Sync = new();

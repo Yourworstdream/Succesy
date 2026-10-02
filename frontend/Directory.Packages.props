@@ -1,0 +1,4 @@
+<Project>
+  <!-- Zentrale Paketverwaltung des Backends mitbenutzen (das Frontend selbst hat keine Pakete). -->
+  <Import Project="$(MSBuildThisFileDirectory)..\backend\Directory.Packages.props" />
+</Project>

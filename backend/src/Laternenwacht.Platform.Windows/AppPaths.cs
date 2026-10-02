@@ -1,7 +1,7 @@
-namespace Laternenwacht.App.Services;
+namespace Laternenwacht.Platform.Windows;
 
 /// <summary>Ablageorte im Benutzerprofil. Es werden keine Daten außerhalb von %LOCALAPPDATA% geschrieben.</summary>
-internal static class AppPaths
+public static class AppPaths
 {
     public static string DataDirectory { get; } =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Laternenwacht");

@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using Laternenwacht.App.Services;
+using Laternenwacht.Platform.Windows;
 using Laternenwacht.Core.Integrity;
 using Laternenwacht.Core.Model;
 using Laternenwacht.Core.Tracking;

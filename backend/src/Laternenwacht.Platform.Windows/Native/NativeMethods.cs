@@ -2,18 +2,14 @@ using System.Runtime.InteropServices;
 
 [assembly: DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
 
-namespace Laternenwacht.App.Services.Native;
+namespace Laternenwacht.Platform.Windows.Native;
 
 /// <summary>
-/// Win32-Schnittstellen. Es werden ausschließlich lesende Abfragen und Fensterstile
-/// des eigenen Fensters verwendet – keine Hooks, keine Tastaturprotokollierung.
+/// Win32-Schnittstellen zur Aktivitätsmessung. Ausschließlich lesende Abfragen –
+/// keine Hooks, keine Tastaturprotokollierung, keine Fenstertitel.
 /// </summary>
 internal static partial class NativeMethods
 {
-    internal const int GWL_EXSTYLE = -20;
-    internal const nint WS_EX_TOOLWINDOW = 0x00000080;
-    internal const nint WS_EX_NOACTIVATE = 0x08000000;
-
     [LibraryImport("user32.dll")]
     internal static partial nint GetForegroundWindow();
 
@@ -23,12 +19,6 @@ internal static partial class NativeMethods
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static partial bool GetLastInputInfo(ref LastInputInfo info);
-
-    [LibraryImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
-    internal static partial nint GetWindowLongPtr(nint hWnd, int index);
-
-    [LibraryImport("user32.dll", EntryPoint = "SetWindowLongPtrW")]
-    internal static partial nint SetWindowLongPtr(nint hWnd, int index, nint newLong);
 
     [StructLayout(LayoutKind.Sequential)]
     internal struct LastInputInfo

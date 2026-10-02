@@ -32,11 +32,12 @@ Im **Projektmappen‑Explorer** siehst du nun:
 
 ```
 Projektmappe "Laternenwacht"
-├── src
-│   ├── Laternenwacht.App      ← WPF-Anwendung (wird zur EXE)
-│   └── Laternenwacht.Core     ← Fachlogik
-└── tests
-    └── Laternenwacht.Core.Tests
+├── backend
+│   ├── Laternenwacht.Core              ← Fachlogik
+│   ├── Laternenwacht.Platform.Windows  ← Windows-Anbindung (Messung, DPAPI)
+│   └── Laternenwacht.Core.Tests
+└── frontend
+    └── Laternenwacht.App               ← WPF-Anwendung (wird zur EXE)
 ```
 
 ---
@@ -53,7 +54,7 @@ Projektmappe "Laternenwacht"
 ## 4. Veröffentlichen mit dem mitgelieferten Profil (empfohlen)
 
 Das Repository enthält bereits ein fertiges Veröffentlichungsprofil
-(`src/Laternenwacht.App/Properties/PublishProfiles/Win-x64-EinzelneExe.pubxml`).
+(`frontend/Laternenwacht.App/Properties/PublishProfiles/Win-x64-EinzelneExe.pubxml`).
 
 1. Im Projektmappen‑Explorer **Rechtsklick auf `Laternenwacht.App` → „Veröffentlichen…“**.
 2. Visual Studio erkennt das Profil **„Win-x64-EinzelneExe“** automatisch und zeigt die Übersichtsseite.
@@ -105,7 +106,7 @@ In Visual Studio: **Ansicht → Terminal** (oder die *Developer PowerShell*) und
 
 ```powershell
 dotnet test Laternenwacht.sln -c Release
-dotnet publish src/Laternenwacht.App/Laternenwacht.App.csproj -p:PublishProfile=Win-x64-EinzelneExe
+dotnet publish frontend/Laternenwacht.App/Laternenwacht.App.csproj -p:PublishProfile=Win-x64-EinzelneExe
 ```
 
 Ergebnis ebenfalls unter `publish\win-x64\Laternenwacht.exe`.

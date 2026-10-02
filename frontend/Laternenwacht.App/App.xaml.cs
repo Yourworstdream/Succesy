@@ -5,6 +5,7 @@ using System.Windows.Threading;
 using Laternenwacht.App.Services;
 using Laternenwacht.App.ViewModels;
 using Laternenwacht.App.Views;
+using Laternenwacht.Platform.Windows;
 using Laternenwacht.Core.Integrity;
 using Laternenwacht.Core.Model;
 using Laternenwacht.Core.Settings;

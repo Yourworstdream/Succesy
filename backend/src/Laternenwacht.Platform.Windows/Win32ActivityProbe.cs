@@ -1,17 +1,17 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using Laternenwacht.App.Services.Native;
+using Laternenwacht.Platform.Windows.Native;
 using Laternenwacht.Core.Abstractions;
 using Laternenwacht.Core.Model;
 
-namespace Laternenwacht.App.Services;
+namespace Laternenwacht.Platform.Windows;
 
 /// <summary>
 /// Ermittelt den Prozess des Vordergrundfensters und die Leerlaufzeit.
 /// Fenstertitel werden bewusst nicht gelesen (Datensparsamkeit).
 /// </summary>
-internal sealed class Win32ActivityProbe : IActivityProbe
+public sealed class Win32ActivityProbe : IActivityProbe
 {
     public ActivitySnapshot Capture() => new(GetForegroundProcessName(), GetIdleTime());
 

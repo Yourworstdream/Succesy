@@ -153,19 +153,25 @@ verborgen (*Dependency Inversion*), wodurch die Fachlogik ohne Windows testbar i
 
 ```mermaid
 flowchart TB
-    subgraph App["Laternenwacht.App (WPF, net10.0-windows)"]
-        V[Views<br/>MainWindow · FocusBarWindow · LanternGlyph]
-        VM[ViewModels<br/>Shell · Session · Chronicle · Settings]
-        S[Services<br/>Win32ActivityProbe · DpapiSecretProtector · Lore · AppLog]
-        V --> VM --> S
+    subgraph FE["FRONTEND · frontend/Laternenwacht.App (WPF, net10.0-windows)"]
+        V[Views<br/>MainWindow · FocusBarWindow · RavenToastWindow · LanternGlyph]
+        VM[ViewModels<br/>Shell · Bar · Session · Chronicle · Settings]
+        L[Services<br/>Lore · NotificationService · WindowStyles]
+        V --> VM --> L
     end
-    subgraph Core["Laternenwacht.Core (net10.0, plattformunabhängig)"]
-        T[Tracking<br/>FocusWarden · FocusSession · ActivityClassifier · Admonitions]
-        I[Integrity<br/>SessionJournal · JournalBootstrapper · ProtectedKeyStore · AtomicFile]
-        C[Settings<br/>FocusSettings · SettingsValidator · SettingsStore · ProcessNames]
-        A[Abstractions<br/>IActivityProbe · ISecretProtector]
+    subgraph BE["BACKEND · backend/"]
+        subgraph Core["Laternenwacht.Core (net10.0, plattformunabhängig)"]
+            T[Tracking<br/>FocusWarden · FocusSession · ActivityClassifier · Admonitions]
+            I[Integrity<br/>SessionJournal · JournalBootstrapper · ProtectedKeyStore · AtomicFile]
+            C[Settings<br/>FocusSettings · SettingsValidator · SettingsStore · ProcessNames]
+            A[Abstractions<br/>IActivityProbe · ISecretProtector]
+        end
+        subgraph P["Laternenwacht.Platform.Windows (net10.0-windows, ohne UI)"]
+            S[Win32ActivityProbe · DpapiSecretProtector · AppPaths · AppLog]
+        end
     end
     VM --> T & I & C
+    VM --> S
     S -. implementiert .-> A
     T --> A
     I --> A
@@ -425,28 +431,41 @@ Die Chronik ist damit **manipulationserkennend** („tamper‑evident“), nicht
 
 ```
 Succesy/
-├── Laternenwacht.sln
-├── Directory.Build.props        Gemeinsame Compiler-/Analyse-Einstellungen
-├── Directory.Packages.props     Zentrale Paketversionen
-├── global.json                  SDK-Festlegung (.NET 10)
-├── src/
-│   ├── Laternenwacht.Core/      Fachlogik (plattformunabhängig)
-│   │   ├── Abstractions/        IActivityProbe, ISecretProtector
-│   │   ├── Integrity/           SessionJournal, JournalBootstrapper, ProtectedKeyStore, AtomicFile
-│   │   ├── Model/               SessionRecord, ActivityState, SessionPhase …
-│   │   ├── Settings/            FocusSettings, SettingsValidator, SettingsStore, ProcessNames
-│   │   └── Tracking/            FocusWarden, FocusSession, ActivityClassifier, Admonitions …
-│   └── Laternenwacht.App/       WPF-Anwendung
-│       ├── Assets/              Anwendungssymbol
+├── Laternenwacht.sln                Gesamtlösung (Backend + Frontend)
+├── global.json                      SDK-Festlegung (.NET 10)
+├── backend/                         BACKEND – eigenständig baubar und übergebbar
+│   ├── Laternenwacht.Backend.sln
+│   ├── GEMINI.md                    Arbeitsanweisung/Vertrag für KI-Assistenten
+│   ├── Directory.Build.props        Qualitätsregeln (vom Frontend importiert)
+│   ├── Directory.Packages.props     Zentrale Paketversionen
+│   ├── src/
+│   │   ├── Laternenwacht.Core/              Fachlogik (plattformunabhängig)
+│   │   │   ├── Abstractions/   IActivityProbe, ISecretProtector
+│   │   │   ├── Integrity/      SessionJournal, JournalBootstrapper, ProtectedKeyStore, AtomicFile
+│   │   │   ├── Model/          SessionRecord, ActivityState, SessionPhase, ChronicleBook …
+│   │   │   ├── Settings/       FocusSettings, SettingsValidator, SettingsStore, ProcessNames
+│   │   │   └── Tracking/       FocusWarden, FocusSession, ActivityClassifier, Admonitions …
+│   │   └── Laternenwacht.Platform.Windows/  Win32-Messung, DPAPI, Pfade, Protokoll (ohne UI)
+│   └── tests/Laternenwacht.Core.Tests/
+├── frontend/                        FRONTEND – nur Darstellung
+│   ├── Directory.Build.props        importiert die Regeln des Backends
+│   └── Laternenwacht.App/           WPF-Anwendung
+│       ├── Assets/                  Anwendungssymbol
 │       ├── Properties/PublishProfiles/   Veröffentlichungsprofil (einzelne EXE)
-│       ├── Services/            Win32, DPAPI, Pfade, Protokoll, Erzähltexte
-│       ├── Themes/Realm.xaml    Gestaltungssystem
-│       ├── ViewModels/          MVVM
-│       └── Views/               Hauptfenster, Fokusleiste, Laterne
-├── tests/Laternenwacht.Core.Tests/
-├── docs/                        Diese Dokumentation, Veröffentlichungsanleitung
-└── .github/workflows/build.yml  CI: Build, Test, EXE-Artefakt
+│       ├── Services/                Erzähltexte (Lore), Rabenbote, Fensterstile
+│       ├── Themes/Realm.xaml        Gestaltungssystem
+│       ├── ViewModels/              MVVM
+│       └── Views/                   Hauptfenster, Fokusleiste, Laterne, Rabenbote
+├── docs/                            Diese Dokumentation, Veröffentlichungsanleitung
+└── .github/workflows/build.yml      CI: Build, Test, EXE-Artefakt
 ```
+
+**Trennung von Frontend und Backend:** Das Backend kennt das Frontend nicht und lässt sich ohne
+den Rest des Repositorys bauen und testen (`backend/Laternenwacht.Backend.sln`). Das Frontend
+referenziert ausschließlich die beiden Backend-Projekte. Die öffentliche Schnittstelle, die das
+Frontend nutzt, ist in `backend/GEMINI.md` (Abschnitt „Vertrag mit dem Frontend“) festgehalten;
+dadurch kann das Backend an andere Entwickler oder KI-Assistenten übergeben werden, ohne dass
+versehentlich das Frontend bricht.
 
 ### 6.2 Ausgewählte Implementierungsdetails
 
@@ -578,7 +597,8 @@ von der Oberfläche entkoppelt und automatisiert getestet.
 
 * **A1** Benutzer‑Kurzanleitung: siehe [`README.md`](../README.md)
 * **A2** Veröffentlichung: [`Veroeffentlichung-VS2026.md`](Veroeffentlichung-VS2026.md)
-* **A3** Quellcode: `src/`, Tests: `tests/`
+* **A3** Quellcode: Backend `backend/src/`, Tests `backend/tests/`, Frontend `frontend/`
+* **A4** Übergabe‑Anweisung für das Backend: [`backend/GEMINI.md`](../backend/GEMINI.md)
 
 > **Hinweis zur Gestaltung:** Die Laternenwacht ist eine nicht‑kommerzielle Hommage an die
 > Atmosphäre der Chroniken von C. S. Lewis. Sie steht in keiner Verbindung zu den Rechteinhabern;

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!--
-    WPF-Oberfläche: Fokusleiste am oberen Bildschirmrand, Hauptfenster,
-    Windows-spezifische Dienste (Vordergrundfenster, Leerlaufzeit, DPAPI).
+    FRONTEND – WPF-Oberfläche: Fokusleiste, Hauptfenster, Rabenbote, Gestaltung, ViewModels.
+    Die gesamte Fachlogik liegt im Backend (backend/src): Laternenwacht.Core und Laternenwacht.Platform.Windows.
   -->
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -31,6 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Laternenwacht.Core\Laternenwacht.Core.csproj" />
+    <ProjectReference Include="..\..\backend\src\Laternenwacht.Core\Laternenwacht.Core.csproj" />
+    <ProjectReference Include="..\..\backend\src\Laternenwacht.Platform.Windows\Laternenwacht.Platform.Windows.csproj" />
   </ItemGroup>
 </Project>

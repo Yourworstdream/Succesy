@@ -31,3 +31,6 @@ obj/
 TestResults/
 publish/
 *.DotSettings.user
+
+### Übergabe-Pakete ###
+export/

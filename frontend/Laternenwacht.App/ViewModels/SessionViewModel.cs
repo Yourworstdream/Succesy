@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Windows.Input;
 using System.Windows.Threading;
 using Laternenwacht.App.Services;
+using Laternenwacht.Platform.Windows;
 using Laternenwacht.Core.Model;
 using Laternenwacht.Core.Tracking;
 

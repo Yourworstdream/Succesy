@@ -7,7 +7,7 @@
 ablenkst** – als *Frost*, der über eine Laterne im verschneiten Wald kriecht. Gestaltet im Geist
 klassischer Fantasy‑Chroniken à la C. S. Lewis: Laternenpfahl, ewiger Winter, wiederkehrender Frühling.
 
-![Symbol](src/Laternenwacht.App/Assets/laterne.png)
+![Symbol](frontend/Laternenwacht.App/Assets/laterne.png)
 
 ## Funktionen
 
@@ -38,7 +38,7 @@ klassischer Fantasy‑Chroniken à la C. S. Lewis: Laternenpfahl, ewiger Winter,
 **Als EXE veröffentlichen:** → [docs/Veroeffentlichung-VS2026.md](docs/Veroeffentlichung-VS2026.md)
 
 ```powershell
-dotnet publish src/Laternenwacht.App/Laternenwacht.App.csproj -p:PublishProfile=Win-x64-EinzelneExe
+dotnet publish frontend/Laternenwacht.App/Laternenwacht.App.csproj -p:PublishProfile=Win-x64-EinzelneExe
 # Ergebnis: publish\win-x64\Laternenwacht.exe
 ```
 
@@ -56,9 +56,13 @@ dotnet publish src/Laternenwacht.App/Laternenwacht.App.csproj -p:PublishProfile=
 ## Projektstruktur
 
 ```
-src/Laternenwacht.Core     Fachlogik (Messung, Bewertung, versiegelte Chronik) – plattformunabhängig
-src/Laternenwacht.App      WPF-Oberfläche, Win32-/DPAPI-Anbindung
-tests/…Core.Tests          94 xUnit-Tests
+backend/                               BACKEND – eigenständig baubar (Laternenwacht.Backend.sln)
+  src/Laternenwacht.Core               Fachlogik: Messung, Bewertung, Sprüche, versiegelte Chronik
+  src/Laternenwacht.Platform.Windows   Win32-Messung, DPAPI, Pfade, Protokoll (ohne Oberfläche)
+  tests/Laternenwacht.Core.Tests       94 xUnit-Tests
+  GEMINI.md                            Übergabe-Anweisung & Schnittstellenvertrag für KI-Assistenten
+frontend/                              FRONTEND – nur Darstellung
+  Laternenwacht.App                    WPF: Fokusleiste, Hauptfenster, Rabenbote, Gestaltung
 docs/                      Projektdokumentation & Veröffentlichungsanleitung
 ```
 
@@ -66,6 +70,16 @@ docs/                      Projektdokumentation & Veröffentlichungsanleitung
 
 * [Projektdokumentation](docs/Projektdokumentation.md) – Analyse, Entwurf, Sicherheitskonzept, Tests, Fazit
 * [Veröffentlichung in Visual Studio 2026](docs/Veroeffentlichung-VS2026.md)
+
+## Backend allein weitergeben
+
+Der Ordner `backend/` ist in sich geschlossen. Zum Übergeben (z. B. an Gemini) einfach den Ordner
+zippen – `backend/GEMINI.md` erklärt Aufbau, Regeln und die Schnittstelle zum Frontend.
+
+```powershell
+cd backend
+dotnet test Laternenwacht.Backend.sln
+```
 
 ## Build & Test (Kommandozeile)
 

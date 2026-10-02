@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Windows.Input;
 using Laternenwacht.App.Services;
+using Laternenwacht.Platform.Windows;
 using Laternenwacht.Core.Model;
 using Laternenwacht.Core.Settings;
 

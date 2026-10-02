@@ -1,0 +1,7 @@
+<Project>
+  <!--
+    Das Frontend übernimmt die Qualitätsregeln des Backends (Nullable, Analyse, Warnungen = Fehler, Version).
+    So gelten für beide Teile identische Maßstäbe, ohne die Einstellungen doppelt zu pflegen.
+  -->
+  <Import Project="$(MSBuildThisFileDirectory)..\backend\Directory.Build.props" />
+</Project>
