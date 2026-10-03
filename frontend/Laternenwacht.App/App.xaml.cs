@@ -106,6 +106,25 @@ public partial class App : Application
         };
 
         var notifications = new NotificationService();
+
+        // Positives würdigen: Rückkehr zur Arbeit und lange Fokus-Serien.
+        warden.ReturnedToWork += (_, back) =>
+        {
+            memes.SinkCurrent();
+            if (settingsViewModel.ShowPraise)
+            {
+                notifications.ShowEncouragement("Willkommen zurück im Licht",
+                    Homecomings.For(settingsViewModel.SelectedBook, back.Absence, Random.Shared.Next()));
+            }
+        };
+        warden.FocusStreakReached += (_, streak) =>
+        {
+            if (settingsViewModel.ShowPraise)
+            {
+                notifications.ShowEncouragement($"{streak.Minutes} Minuten am Stück im Licht",
+                    Praises.ForStreak(settingsViewModel.SelectedBook, streak.Index, Random.Shared.Next()));
+            }
+        };
         _session.AdmonitionRaised += (_, admonition) =>
         {
             if (settingsViewModel.ShowNotifications)
@@ -120,7 +139,16 @@ public partial class App : Application
 
         _session.SessionStarted += (_, _) => ShowBar();
         _session.ShowChamberRequested += (_, _) => _main.BringToFront();
-        _session.SessionEnded += (_, record) => OnSessionEnded(record, chronicle);
+        _session.SessionEnded += (_, record) =>
+        {
+            var previousBest = chronicle.BestStreak;
+            var hadHistory = chronicle.Entries.Count > 0;
+            OnSessionEnded(record, chronicle);
+            if (settingsViewModel.ShowPraise)
+            {
+                PraiseFinishedSession(notifications, record, previousBest, hadHistory);
+            }
+        };
 
         settingsViewModel.SettingsSaved += (_, saved) =>
         {
@@ -175,6 +203,33 @@ public partial class App : Application
         _hideBarTimer?.Stop();
         _bar.Show();
         _bar.Reposition();
+    }
+
+    /// <summary>Würdigt am Ende einer Wacht, was gut lief – auch bei einer abgebrochenen.</summary>
+    private static void PraiseFinishedSession(NotificationService notifications, SessionRecord record, TimeSpan previousBest, bool hadHistory)
+    {
+        if (record.Focused < TimeSpan.FromMinutes(1))
+        {
+            return;
+        }
+
+        var parts = new List<string>();
+        if (record.Outcome == SessionPhase.Completed && record.DistractionCount == 0)
+        {
+            parts.Add("Makellose Wacht – kein einziges Mal verlockt!");
+        }
+
+        if (hadHistory && record.LongestFocusStreak > previousBest)
+        {
+            parts.Add($"Neue Bestleistung: {TimeFormat.Clock(record.LongestFocusStreak)} am Stück im Licht!");
+        }
+
+        parts.Add($"{TimeFormat.Clock(record.Focused)} im Licht – gut gemacht.");
+
+        var header = record.Outcome == SessionPhase.Completed
+            ? Lore.Completed(RealmMoods.FromFrost(record.Measured <= TimeSpan.Zero ? 0 : record.Distracted / record.Measured)).Headline
+            : "Auch eine kurze Wacht zählt";
+        notifications.ShowPraise(header, string.Join(" ", parts), "— die Laternenwacht");
     }
 
     private void OnSessionEnded(SessionRecord record, ChronicleViewModel chronicle)

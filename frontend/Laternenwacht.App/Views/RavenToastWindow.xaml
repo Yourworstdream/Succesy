@@ -36,12 +36,12 @@
 
         <!-- Wachssiegel -->
         <Grid Grid.RowSpan="3" Width="40" Height="40" Margin="0,2,12,0" VerticalAlignment="Top">
-          <Ellipse Fill="{StaticResource CrimsonBrush}" Stroke="#4A0F18" StrokeThickness="1.5" />
-          <Ellipse Margin="5" Stroke="#C9737E" StrokeThickness="1" />
-          <TextBlock Text="❦" FontSize="18" Foreground="#F3D6A0" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          <Ellipse x:Name="SealOuter" Fill="{StaticResource CrimsonBrush}" Stroke="#4A0F18" StrokeThickness="1.5" />
+          <Ellipse x:Name="SealRing" Margin="5" Stroke="#C9737E" StrokeThickness="1" />
+          <TextBlock x:Name="SealGlyph" Text="❦" FontSize="18" Foreground="#F3D6A0" HorizontalAlignment="Center" VerticalAlignment="Center" />
         </Grid>
 
-        <TextBlock Grid.Column="1" Text="Ein Rabe bringt Kunde" FontSize="12" FontWeight="SemiBold"
+        <TextBlock x:Name="HeaderText" Grid.Column="1" Text="Ein Rabe bringt Kunde" FontSize="12" FontWeight="SemiBold"
                    Foreground="#6B5A43" VerticalAlignment="Center" />
         <TextBlock Grid.Column="2" Text="✕" FontSize="13" Foreground="#6B5A43" Margin="8,0,0,0"
                    ToolTip="Schließen" VerticalAlignment="Center" />

@@ -43,6 +43,7 @@ internal sealed class SettingsViewModel : ObservableObject
         ResetBarPositionCommand = new RelayCommand(ResetBarPosition, () => _current.HasCustomBarPosition);
         ToggleNotificationsCommand = new RelayCommand(() => ShowNotifications = !ShowNotifications);
         ToggleMemesCommand = new RelayCommand(() => ShowMemes = !ShowMemes);
+        TogglePraiseCommand = new RelayCommand(() => ShowPraise = !ShowPraise);
         ToggleKnownDistractionsCommand = new RelayCommand(() => UseKnownDistractions = !UseKnownDistractions);
         OpenMemeFolderCommand = new RelayCommand(OpenMemeFolder);
         AddMemesCommand = new RelayCommand(AddMemes);
@@ -62,6 +63,21 @@ internal sealed class SettingsViewModel : ObservableObject
     public ICommand ToggleNotificationsCommand { get; }
 
     public ICommand ToggleMemesCommand { get; }
+
+    public ICommand TogglePraiseCommand { get; }
+
+    /// <summary>Lob für Fokus-Serien, "Willkommen zurück" und Bestleistungen. Wird sofort gespeichert.</summary>
+    public bool ShowPraise
+    {
+        get => _current.ShowPraise;
+        set
+        {
+            if (value != _current.ShowPraise && ApplyQuickChange(_current with { ShowPraise = value }))
+            {
+                OnPropertyChanged();
+            }
+        }
+    }
 
     public ICommand ToggleKnownDistractionsCommand { get; }
 

@@ -39,7 +39,7 @@ backend/
 │       ├── DpapiSecretProtector   Schlüsselschutz per DPAPI (CurrentUser)
 │       ├── AppPaths, AppLog       %LOCALAPPDATA%\Laternenwacht, Fehlerprotokoll
 │       └── Native/NativeMethods   P/Invoke-Deklarationen
-└── tests/Laternenwacht.Core.Tests/      xUnit, 116 Tests, deterministische Uhr
+└── tests/Laternenwacht.Core.Tests/      xUnit, 135 Tests, deterministische Uhr
 ```
 
 ## 3. Bauen und testen
@@ -63,6 +63,12 @@ Parameter mit Standardwert) sind erlaubt.
 |---|---|
 | `FocusWarden` | Konstruktor `(IActivityProbe, TimeProvider, FocusSettings, string selfProcessName)`, `Start(TimeSpan)`, `Pulse()` (1×/s vom UI-Timer), `Pause()`, `Resume()`, `Abort()`, `ApplySettings(FocusSettings)`, `Current`, `IsActive`, `LastSnapshot`, Ereignis `SessionEnded` (**genau einmal** je Wacht), Ereignis `DistractionStarted` (**einmal je neuer Ablenkungs-Episode**, löst das schwimmende Meme aus) |
 | `DistractionStarted` | `ProcessName`, `Episode` |
+| `FocusWarden` (Ereignisse) | `ReturnedToWork` (Rückkehr nach ≥ `MinimumAbsenceForWelcome` Ablenkung), `FocusStreakReached` (Fokus-Serie erreicht eine Schwelle aus `Praises.StreakMilestones`, je Serie einmal) |
+| `ReturnedToWork` | `ProcessName`, `Absence`, `Episode` |
+| `FocusStreakReached` | `Minutes`, `Index` |
+| `FocusSession` (Serien) | `CurrentStreak`, `LongestStreak` – nur Ablenkung setzt die Serie zurück, Abwesenheit nicht |
+| `SessionRecord.LongestFocusStreak` | neues optionales Feld (alte Einträge: 0) |
+| `Homecomings` / `Praises` / `Encouragement` | `Homecomings.For(book, absence, seed)`, `Praises.ForStreak(book, index, seed)`; `Encouragement.Text`, `.Speaker`, `.Book` |
 | `FocusWarden.SelfProcessName` | Name der eigenen App (für „als Verlockung markieren“) |
 | `KnownDistractions` | `Names` – eingebauter Katalog (Spiele, Launcher, Messenger); greift bei `FocusSettings.UseKnownDistractions` |
 | `SettingsEditing` | `MarkAsDistraction(FocusSettings, string)` → neue Einstellungen oder `null` |

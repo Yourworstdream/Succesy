@@ -167,7 +167,7 @@
                         Visibility="{Binding HasAdmonition, Converter={StaticResource BoolToVisibility}}">
                   <TextBlock Text="{Binding Admonition}" Style="{StaticResource BodyInk}" FontStyle="Italic" Foreground="{StaticResource CrimsonBrush}" />
                 </Border>
-                <UniformGrid Columns="3" Rows="2">
+                <UniformGrid Columns="4" Rows="2">
                   <StackPanel Margin="6">
                     <TextBlock Text="{Binding RemainingText}" Style="{StaticResource StatValue}" />
                     <TextBlock Text="verbleibend" Style="{StaticResource StatLabel}" />
@@ -175,6 +175,14 @@
                   <StackPanel Margin="6">
                     <TextBlock Text="{Binding FocusedText}" Style="{StaticResource StatValue}" Foreground="{StaticResource SpringBrush}" />
                     <TextBlock Text="im Licht (Fokus)" Style="{StaticResource StatLabel}" />
+                  </StackPanel>
+                  <StackPanel Margin="6" ToolTip="Fokuszeit seit der letzten Ablenkung">
+                    <TextBlock Text="{Binding CurrentStreakText}" Style="{StaticResource StatValue}" Foreground="{StaticResource SpringBrush}" />
+                    <TextBlock Text="aktuelle Serie" Style="{StaticResource StatLabel}" />
+                  </StackPanel>
+                  <StackPanel Margin="6" ToolTip="Längste ununterbrochene Fokusphase dieser Wacht">
+                    <TextBlock Text="{Binding LongestStreakText}" Style="{StaticResource StatValue}" Foreground="{StaticResource GoldDimBrush}" />
+                    <TextBlock Text="beste Serie" Style="{StaticResource StatLabel}" />
                   </StackPanel>
                   <StackPanel Margin="6">
                     <TextBlock Text="{Binding FrostText}" Style="{StaticResource StatValue}" Foreground="#3F7A93" />
@@ -255,7 +263,7 @@
           </Border>
 
           <!-- Kennzahlen -->
-          <UniformGrid Grid.Row="1" Columns="4" Margin="0,14,0,10">
+          <UniformGrid Grid.Row="1" Columns="5" Margin="0,14,0,10">
             <Border Style="{StaticResource ParchmentCard}" Margin="0,0,8,0" Padding="8,10">
               <StackPanel>
                 <TextBlock Text="{Binding CompletedCount}" Style="{StaticResource StatValue}" />
@@ -278,6 +286,12 @@
               <StackPanel>
                 <TextBlock Text="{Binding SpringShareText}" Style="{StaticResource StatValue}" />
                 <TextBlock Text="Wachten im Frühling" Style="{StaticResource StatLabel}" />
+              </StackPanel>
+            </Border>
+            <Border Style="{StaticResource ParchmentCard}" Margin="8,0,0,0" Padding="8,10" ToolTip="Deine Bestleistung: längste ununterbrochene Fokusphase">
+              <StackPanel>
+                <TextBlock Text="{Binding BestStreakText}" Style="{StaticResource StatValue}" Foreground="{StaticResource GoldDimBrush}" />
+                <TextBlock Text="längste Serie (Rekord)" Style="{StaticResource StatLabel}" />
               </StackPanel>
             </Border>
           </UniformGrid>
@@ -323,6 +337,9 @@
                           </TextBlock>
                           <TextBlock Foreground="{StaticResource MutedTextBrush}" Margin="0,0,18,0" VerticalAlignment="Center">
                             <Run Text="Licht" /> <Run Text="{Binding FocusedText, Mode=OneWay}" Foreground="#9BCB82" />
+                          </TextBlock>
+                          <TextBlock Foreground="{StaticResource MutedTextBrush}" Margin="0,0,18,0" VerticalAlignment="Center">
+                            <Run Text="Serie" /> <Run Text="{Binding LongestStreakText, Mode=OneWay}" Foreground="{StaticResource GoldBrush}" />
                           </TextBlock>
                           <TextBlock Foreground="{StaticResource MutedTextBrush}" Margin="0,0,18,0" VerticalAlignment="Center">
                             <Run Text="Frost" /> <Run Text="{Binding FrostText, Mode=OneWay}" Foreground="{StaticResource FrostBrush}" />
@@ -400,8 +417,10 @@
                 <ComboBox ItemsSource="{Binding BookOptions}" SelectedItem="{Binding SelectedBookOption}"
                           DisplayMemberPath="Label" MinWidth="320" FontFamily="{StaticResource RealmFont}" FontSize="14"
                           Margin="0,0,16,0" VerticalAlignment="Center" AutomationProperties.Name="Buch der Mahnrufe" />
-                <CheckBox IsChecked="{Binding ShowNotifications}" VerticalAlignment="Center"
-                          Content="Mahnrufe als Benachrichtigung zeigen" />
+                <CheckBox IsChecked="{Binding ShowNotifications}" VerticalAlignment="Center" Margin="0,0,16,0"
+                          Content="Mahnrufe bei vielen Ablenkungen" />
+                <CheckBox IsChecked="{Binding ShowPraise}" VerticalAlignment="Center"
+                          Content="Lob &amp; „Willkommen zurück“ (Serien, Rückkehr, Bestleistung)" />
               </WrapPanel>
               <TextBlock Text="Treibgut im Fluss der Ablenkung" FontWeight="SemiBold" Style="{StaticResource BodyInk}" Margin="0,12,0,0" />
               <TextBlock Style="{StaticResource BodyInk}" FontSize="12" Foreground="#6B5A43" Margin="0,0,0,6"

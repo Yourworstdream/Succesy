@@ -21,6 +21,11 @@ klassischer Fantasy‑Chroniken à la C. S. Lewis: Laternenpfahl, ewiger Winter,
   *„… als Verlockung markieren“*.
 * **Ablenkungserkennung** über das Vordergrundprogramm – *Milde Wacht* (Sperrliste) oder
   *Strenge Wacht* (nur Erlaubnisliste zählt als Fokus); Abwesenheit wird separat erfasst.
+* **Positives sehen** – die App erkennt, was gut läuft: Lob nach 10, 25, 45, 60 und 90 Minuten
+  am Stück, „Willkommen zurück“ nach einer Ablenkung (z. B. *„Kaspian hat lange auf dich gewartet.
+  Wenn es nach mir ginge, wären wir ohne dich losgesegelt.“ — Riepiepich*), Würdigung makelloser
+  Wachten und neuer Bestleistungen. Lob kommt leise mit grünem Siegel; Mahnrufe lassen sich getrennt
+  abschalten.
 * **Schwimmende Memes** – bei jeder neuen Ablenkung treibt ein Meme schaukelnd quer über den
   Bildschirm („Treibgut im Fluss der Ablenkung“); ein Klick lässt es versinken. Eigene Bilder per
   Rechtsklick ▸ *Memes hinzufügen …* oder im Reiter *Gefährten & Verlockungen*.
@@ -67,7 +72,7 @@ dotnet publish frontend/Laternenwacht.App/Laternenwacht.App.csproj -p:PublishPro
 backend/                               BACKEND – eigenständig baubar (Laternenwacht.Backend.sln)
   src/Laternenwacht.Core               Fachlogik: Messung, Bewertung, Sprüche, versiegelte Chronik
   src/Laternenwacht.Platform.Windows   Win32-Messung, DPAPI, Pfade, Protokoll (ohne Oberfläche)
-  tests/Laternenwacht.Core.Tests       116 xUnit-Tests
+  tests/Laternenwacht.Core.Tests       135 xUnit-Tests
   GEMINI.md                            Übergabe-Anweisung & Schnittstellenvertrag für KI-Assistenten
 frontend/                              FRONTEND – nur Darstellung
   Laternenwacht.App                    WPF: Fokusleiste, Hauptfenster, Rabenbote, Gestaltung

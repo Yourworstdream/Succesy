@@ -47,8 +47,14 @@ public sealed record FocusSettings
     /// <summary>Aus welchem Buch der Chroniken die Mahnrufe stammen.</summary>
     public ChronicleBook SayingsBook { get; set; } = ChronicleBook.All;
 
-    /// <summary>Mahnrufe als Benachrichtigung ("Rabenbote") unten rechts einblenden.</summary>
+    /// <summary>Mahnrufe (bei vielen Ablenkungen) als Benachrichtigung ("Rabenbote") unten rechts einblenden.</summary>
     public bool ShowNotifications { get; set; } = true;
+
+    /// <summary>
+    /// Positives würdigen: Lob für Fokus-Serien, "Willkommen zurück" nach einer Ablenkung,
+    /// Würdigung makelloser Wachten und neuer Bestleistungen.
+    /// </summary>
+    public bool ShowPraise { get; set; } = true;
 
     /// <summary>Bei jeder neuen Ablenkung treibt ein Meme über den Bildschirm.</summary>
     public bool ShowMemes { get; set; } = true;

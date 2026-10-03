@@ -25,6 +25,8 @@ internal sealed class SessionViewModel : ObservableObject
     private string _focusedText = "00:00";
     private string _frostText = "00:00";
     private string _awayText = "00:00";
+    private string _currentStreakText = "00:00";
+    private string _longestStreakText = "00:00";
     private int _distractionCount;
     private double _progress;
     private double _frostRatio;
@@ -120,6 +122,12 @@ internal sealed class SessionViewModel : ObservableObject
     public string FrostText { get => _frostText; private set => SetProperty(ref _frostText, value); }
 
     public string AwayText { get => _awayText; private set => SetProperty(ref _awayText, value); }
+
+    /// <summary>Fokuszeit seit der letzten Ablenkung.</summary>
+    public string CurrentStreakText { get => _currentStreakText; private set => SetProperty(ref _currentStreakText, value); }
+
+    /// <summary>Längste Fokus-Serie dieser Wacht.</summary>
+    public string LongestStreakText { get => _longestStreakText; private set => SetProperty(ref _longestStreakText, value); }
 
     public int DistractionCount { get => _distractionCount; private set => SetProperty(ref _distractionCount, value); }
 
@@ -236,6 +244,8 @@ internal sealed class SessionViewModel : ObservableObject
             FocusedText = TimeFormat.Clock(session.Focused);
             FrostText = TimeFormat.Clock(session.Distracted);
             AwayText = TimeFormat.Clock(session.Away);
+            CurrentStreakText = TimeFormat.Clock(session.CurrentStreak);
+            LongestStreakText = TimeFormat.Clock(session.LongestStreak);
             DistractionCount = session.DistractionCount;
             Progress = session.Progress;
             FrostRatio = session.FrostRatio;

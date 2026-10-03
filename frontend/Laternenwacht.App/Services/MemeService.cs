@@ -73,6 +73,9 @@ internal sealed class MemeService
         }
     }
 
+    /// <summary>Lässt ein gerade treibendes Meme versinken (z. B. bei der Rückkehr zur Arbeit).</summary>
+    public void SinkCurrent() => _current?.Sink();
+
     private static FileStream? OpenUserFile(string path)
     {
         // Erneute Größenprüfung: Die Datei könnte sich seit dem Einlesen geändert haben.

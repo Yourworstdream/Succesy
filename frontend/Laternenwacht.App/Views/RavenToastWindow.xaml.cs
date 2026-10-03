@@ -17,10 +17,20 @@ public partial class RavenToastWindow : Window
     private AnimationClock? _lifetimeClock;
     private bool _closing;
 
-    public RavenToastWindow(string message, string source, TimeSpan lifetime)
+    public RavenToastWindow(string header, string message, string source, TimeSpan lifetime, bool positive)
     {
         InitializeComponent();
+        HeaderText.Text = header;
         MessageText.Text = message;
+        if (positive)
+        {
+            // Lob trägt ein grünes Frühlingssiegel statt des karmesinroten Mahnsiegels.
+            SealOuter.Fill = (System.Windows.Media.Brush)FindResource("SpringBrush");
+            SealOuter.Stroke = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x3E, 0x5E, 0x2F));
+            SealRing.Stroke = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xC8, 0xE0, 0xB4));
+            SealGlyph.Text = "✦";
+        }
+
         SourceText.Text = source;
         _lifetime = lifetime;
 

@@ -41,7 +41,10 @@
           </Style>
         </MenuItem.ItemContainerStyle>
       </MenuItem>
-      <MenuItem Header="Sprüche als Benachrichtigung (Rabenbote)"
+      <MenuItem Header="Lob &amp; „Willkommen zurück“"
+                IsChecked="{Binding Settings.ShowPraise, Mode=OneWay}"
+                Command="{Binding Settings.TogglePraiseCommand}" />
+      <MenuItem Header="Mahnrufe bei vielen Ablenkungen"
                 IsChecked="{Binding Settings.ShowNotifications, Mode=OneWay}"
                 Command="{Binding Settings.ToggleNotificationsCommand}" />
       <MenuItem Header="Memes bei Ablenkung treiben lassen"

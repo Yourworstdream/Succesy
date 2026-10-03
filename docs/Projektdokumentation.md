@@ -127,6 +127,7 @@ Lizenzkosten entstehen nicht.
 | F11 | Mahnrufe als **Push‑Benachrichtigung** („Rabenbote“), abschaltbar | Soll |
 | F12 | Fokusleiste **frei verschiebbar**, Position wird gespeichert; Rückkehr an den oberen Rand | Soll |
 | F13 | **Rechtsklick‑Menü** der Leiste: Auswahl, aus welchem der sieben Bücher der Chroniken die Mahnrufe stammen (oder gemischt) | Soll |
+| F15 | **Positive Verstärkung:** Lob für Fokus‑Serien (10/25/45/60/90 min), „Willkommen zurück“ nach einer Ablenkung, Würdigung makelloser Wachten und neuer Bestleistungen; getrennt von den Mahnrufen abschaltbar | Soll |
 | F14 | Bei jeder neuen Ablenkung **treibt ein Meme** in einem Pop‑up quer über den Bildschirm; eigene Memes hinzufügbar, abschaltbar | Kann |
 
 **Nichtfunktionale Anforderungen**
@@ -503,6 +504,15 @@ Registry‑Schreibzugriffe), außerdem passt die Darstellung nicht zur Gestaltun
 aktiviert sich nie (`WS_EX_NOACTIVATE`), verschwindet nach 10 s, pausiert bei Mausberührung und
 ersetzt eine noch sichtbare ältere Botschaft.
 
+**Positive Verstärkung** (Backend: `FocusSession.CurrentStreak/LongestStreak`, `FocusWarden.ReturnedToWork`,
+`FocusWarden.FocusStreakReached`, `Homecomings`, `Praises`): Die App erkennt nicht nur Ablenkung,
+sondern vor allem, was gut läuft. Eine Fokus‑Serie wächst nur im Fokus und wird ausschließlich durch
+eine Ablenkung zurückgesetzt – kurze Abwesenheit (Nachdenken, Telefonat) bestraft also nicht. Lob kommt
+leise (ohne Ton) und mit grünem Siegel, damit es die Konzentration nicht selbst unterbricht; je Serie
+wird jede Schwelle nur einmal gewürdigt. Die längste Serie wird als optionales Feld `LongestFocusStreak`
+in der Chronik gespeichert – bestehende Einträge bleiben gültig versiegelt, weil das Siegel über den
+gespeicherten Text gebildet wird.
+
 **Schwimmende Memes** (`MemeService`, `MemeFloatWindow`, Backend: `FocusWarden.DistractionStarted`,
 `ShuffleBag<T>`, `MemeCatalog`): Das Backend meldet jede *neue* Ablenkungs‑Episode genau einmal.
 Das Frontend wählt per „Wundertüte“ ein Meme (nie dasselbe zweimal hintereinander) und lässt ein
@@ -527,7 +537,7 @@ bleiben dabei unberührt.
 
 ### 7.1 Automatisierte Tests
 
-116 Unit‑Tests (xUnit) für die Fachlogik, u. a.:
+135 Unit‑Tests (xUnit) für die Fachlogik, u. a.:
 
 | Testklasse | Geprüft wird |
 |---|---|
@@ -537,6 +547,7 @@ bleiben dabei unberührt.
 | `SessionJournalTests` | **Veränderung, Löschung, Vertauschung, Abschneiden, gefälschter Anker, falscher Schlüssel, Müllzeilen**, Absturz‑Reparatur |
 | `JournalBootstrapperTests` | Erststart, Schlüssel nie im Klartext, Archivierung gebrochener Chroniken, defekter Schlüssel |
 | `SettingsTests` | Wertebereiche, Überschneidungen, Normalisierung, **verdächtige Namen** (Pfade, Nullbytes), Round‑Trip, **beschädigte Dateien** |
+| `HomecomingTests`, `PraiseTests` | Abwesenheitsstufen, Riepiepich‑Gruß, vollständige Spruchsätze je Buch und Schwelle |
 | `KnownDistractionTests` | Hearthstone & Co. ab Werk erkannt, Gefährten haben Vorrang, Katalog abschaltbar, Markieren ohne Duplikate |
 | `ShuffleBagTests` | Jedes Element einmal je Durchgang, nie zweimal hintereinander, Sonderfälle leer/einzeln |
 | `MemeCatalogTests` | Nur Bildendungen, sortiert, leere Dateien und Unterordner ignoriert, Anzahlgrenze |
@@ -572,6 +583,9 @@ damit deterministisch und schnell (< 1 s gesamt).
 | T15 | Auf den Rabenboten klicken, während in einem Editor getippt wird | Botschaft verschwindet, Editor behält den Fokus |
 | T16 | Während der Wacht zu einer Verlockung wechseln | Ein Meme treibt schaukelnd über den Bildschirm, Beschriftung „Verlockung Nr. 1: …“ |
 | T17 | Auf das treibende Meme klicken | Es versinkt; das aktive Programm behält den Fokus |
+| T21 | 11 Minuten ohne Ablenkung arbeiten | Leise grüne Botschaft „10 Minuten am Stück im Licht“, Leiste: „Seit 11:00 ununterbrochen im Licht – stark!“ |
+| T22 | 15 Minuten in Hearthstone, dann zurück in den Editor (Buch: *Die Reise auf der Morgenröte*) | „Willkommen zurück im Licht“ – „Kaspian hat lange auf dich gewartet …“ — Riepiepich; treibendes Meme versinkt |
+| T23 | Wacht ohne eine einzige Ablenkung vollenden | Würdigung „Makellose Wacht“, ggf. „Neue Bestleistung“ |
 | T19 | Wacht starten, Hearthstone in den Vordergrund holen | Frost zählt hoch, „Eine Verlockung ruft: Hearthstone“ |
 | T20 | Unbekanntes Spiel im Vordergrund, Rechtsklick auf die Leiste ▸ *„… als Verlockung markieren“* | Ab sofort Frost; Eintrag erscheint in der Liste der Verlockungen |
 | T18 | *Memes hinzufügen …*, eine PNG‑ und eine TXT‑Datei wählen | PNG wird übernommen, TXT übersprungen und gemeldet |
