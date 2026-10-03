@@ -189,4 +189,5 @@ signtool sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 /a publish
 | Build‑Fehler durch eine Warnung | Projekt behandelt Warnungen als Fehler (Qualitätsanspruch) | Warnung beheben – nicht abschalten |
 | „Die Laternenwacht brennt bereits“ | Es darf nur eine Instanz laufen | Vorhandenes Fenster verwenden |
 | F5: *Ein Projekt mit dem Ausgabetyp „Klassenbibliothek“ kann nicht direkt gestartet werden* | Ein Backend‑Projekt ist Startprojekt | Rechtsklick auf **Laternenwacht.App** → **Als Startprojekt festlegen** |
+| *Das Argument "%~dp0Veroeffentlichen.ps1" für den -File-Parameter ist nicht vorhanden* | Der **Inhalt** der .cmd wurde in die Eingabeaufforderung kopiert (z. B. in `C:\Windows\System32`) | Die **Datei** ausführen: im Explorer im Repository‑Ordner doppelklicken, oder `cd /d <Repository-Ordner>` und dann `Veroeffentlichen.cmd` |
 | `Veroeffentlichen.cmd` schließt sofort / meldet *Ausführung von Skripts ist deaktiviert* | PowerShell‑Richtlinie | Das `.cmd` startet PowerShell bereits mit `-ExecutionPolicy Bypass` nur für dieses Skript; sonst im Terminal `powershell -ExecutionPolicy Bypass -File .\Veroeffentlichen.ps1` |
