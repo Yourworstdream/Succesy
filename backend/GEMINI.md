@@ -29,16 +29,17 @@ backend/
 │   │   ├── Abstractions/   IActivityProbe, ISecretProtector
 │   │   ├── Model/          SessionRecord, ActivityState, SessionPhase, ChronicleBook, …
 │   │   ├── Tracking/       FocusWarden (Fassade), FocusSession (Zustandsautomat),
-│   │   │                   ActivityClassifier, Admonitions (Sprüche), RealmMood, TimeFormat
+│   │   │                   ActivityClassifier, Admonitions (Sprüche), ShuffleBag, RealmMood, TimeFormat
 │   │   ├── Integrity/      SessionJournal (Hash-Kette + Anker), JournalBootstrapper,
 │   │   │                   ProtectedKeyStore, AtomicFile, CoreJsonContext
+│   │   ├── Media/          MemeCatalog (eigene Meme-Bilder sicher einlesen)
 │   │   └── Settings/       FocusSettings, SettingsValidator, SettingsStore, ProcessNames
 │   └── Laternenwacht.Platform.Windows/  net10.0-windows, ohne Oberfläche
 │       ├── Win32ActivityProbe     Vordergrundprozess + Leerlaufzeit (user32.dll, nur lesend)
 │       ├── DpapiSecretProtector   Schlüsselschutz per DPAPI (CurrentUser)
 │       ├── AppPaths, AppLog       %LOCALAPPDATA%\Laternenwacht, Fehlerprotokoll
 │       └── Native/NativeMethods   P/Invoke-Deklarationen
-└── tests/Laternenwacht.Core.Tests/      xUnit, 94 Tests, deterministische Uhr
+└── tests/Laternenwacht.Core.Tests/      xUnit, 106 Tests, deterministische Uhr
 ```
 
 ## 3. Bauen und testen
@@ -60,7 +61,10 @@ Parameter mit Standardwert) sind erlaubt.
 
 | Typ | Vom Frontend genutzt |
 |---|---|
-| `FocusWarden` | Konstruktor `(IActivityProbe, TimeProvider, FocusSettings, string selfProcessName)`, `Start(TimeSpan)`, `Pulse()` (1×/s vom UI-Timer), `Pause()`, `Resume()`, `Abort()`, `ApplySettings(FocusSettings)`, `Current`, `IsActive`, `LastSnapshot`, Ereignis `SessionEnded` (**genau einmal** je Wacht) |
+| `FocusWarden` | Konstruktor `(IActivityProbe, TimeProvider, FocusSettings, string selfProcessName)`, `Start(TimeSpan)`, `Pulse()` (1×/s vom UI-Timer), `Pause()`, `Resume()`, `Abort()`, `ApplySettings(FocusSettings)`, `Current`, `IsActive`, `LastSnapshot`, Ereignis `SessionEnded` (**genau einmal** je Wacht), Ereignis `DistractionStarted` (**einmal je neuer Ablenkungs-Episode**, löst das schwimmende Meme aus) |
+| `DistractionStarted` | `ProcessName`, `Episode` |
+| `ShuffleBag<T>` | Konstruktor `(IEnumerable<T>, Random? = null)`, `TryNext(out T)`, `Count` – nie zweimal dasselbe Element hintereinander |
+| `MemeCatalog` | `Scan(string directory)`, `AllowedExtensions`, `MaxFileSizeBytes`, `MaxFiles` |
 | `FocusSession` | `Phase`, `CurrentState`, `CurrentProcess`, `Focused`, `Distracted`, `Away`, `DistractionCount`, `Remaining`, `Progress`, `FrostRatio`, `IsFinished` |
 | `SessionRecord` | `StartedAtUtc`, `Planned`, `Focused`, `Distracted`, `Measured`, `DistractionCount`, `Outcome`, `TopDistractions` |
 | `ActivitySnapshot` | `ProcessName`, `IdleTime` |
@@ -77,7 +81,7 @@ Parameter mit Standardwert) sind erlaubt.
 | `SessionJournal` | `Append(SessionRecord)`, `Verify()`, `Records` |
 | `JournalVerification` | `Status`, `Message` |
 | `Win32ActivityProbe`, `DpapiSecretProtector` | parameterlose Konstruktoren |
-| `AppPaths` | `DataDirectory`, `SettingsFile`, `LogFile` |
+| `AppPaths` | `DataDirectory`, `SettingsFile`, `LogFile`, `MemeDirectory` |
 | `AppLog` | `Error(string context, Exception)`, `Info(string)` |
 
 ## 5. Unverhandelbare Regeln
@@ -101,6 +105,8 @@ Parameter mit Standardwert) sind erlaubt.
    `UnmappedMemberHandling.Disallow`; keine Reflection-Serialisierung, kein `TypeNameHandling`.
 8. Siegel immer mit `CryptographicOperations.FixedTimeEquals` vergleichen.
 9. Dateien atomar schreiben (`AtomicFile`), Größenlimits beim Lesen beibehalten.
+   Fremde Bilddateien (Meme-Ordner) nur über `MemeCatalog` einlesen: oberste Ebene, keine Reparse-Points,
+   nur Bildendungen, Größen- und Anzahlgrenze.
 10. Zeitmessung ausschließlich über `TimeProvider.GetTimestamp()` (monoton) – nie `DateTime.Now` für Dauern.
 11. Fehler beim Lesen beschädigter Dateien dürfen nie zum Absturz führen (sichere Standardwerte bzw. Archivierung).
 

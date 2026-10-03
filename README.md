@@ -18,6 +18,9 @@ klassischer Fantasy‑Chroniken à la C. S. Lewis: Laternenpfahl, ewiger Winter,
   stammen (Band 1–7 oder alle gemischt), Benachrichtigungen an/aus, Leiste zurück an den Rand.
 * **Ablenkungserkennung** über das Vordergrundprogramm – *Milde Wacht* (Sperrliste) oder
   *Strenge Wacht* (nur Erlaubnisliste zählt als Fokus); Abwesenheit wird separat erfasst.
+* **Schwimmende Memes** – bei jeder neuen Ablenkung treibt ein Meme schaukelnd quer über den
+  Bildschirm („Treibgut im Fluss der Ablenkung“); ein Klick lässt es versinken. Eigene Bilder per
+  Rechtsklick ▸ *Memes hinzufügen …* oder im Reiter *Gefährten & Verlockungen*.
 * **Mahnrufe per Push‑Benachrichtigung** – ein „Rabenbote“ fliegt unten rechts ein, z. B. nach
   20 Ablenkungen aus *Der König von Narnia*:
   *„Herrscher von Cair Paravel, Ihr gefährdet Euer Königreich mit Eurem Müßiggang!“*
@@ -59,7 +62,7 @@ dotnet publish frontend/Laternenwacht.App/Laternenwacht.App.csproj -p:PublishPro
 backend/                               BACKEND – eigenständig baubar (Laternenwacht.Backend.sln)
   src/Laternenwacht.Core               Fachlogik: Messung, Bewertung, Sprüche, versiegelte Chronik
   src/Laternenwacht.Platform.Windows   Win32-Messung, DPAPI, Pfade, Protokoll (ohne Oberfläche)
-  tests/Laternenwacht.Core.Tests       94 xUnit-Tests
+  tests/Laternenwacht.Core.Tests       106 xUnit-Tests
   GEMINI.md                            Übergabe-Anweisung & Schnittstellenvertrag für KI-Assistenten
 frontend/                              FRONTEND – nur Darstellung
   Laternenwacht.App                    WPF: Fokusleiste, Hauptfenster, Rabenbote, Gestaltung
@@ -70,6 +73,15 @@ docs/                      Projektdokumentation & Veröffentlichungsanleitung
 
 * [Projektdokumentation](docs/Projektdokumentation.md) – Analyse, Entwurf, Sicherheitskonzept, Tests, Fazit
 * [Veröffentlichung in Visual Studio 2026](docs/Veroeffentlichung-VS2026.md)
+
+## Memes
+
+* **Eingebaut:** Jede Bilddatei in `frontend/Laternenwacht.App/Assets/Memes/` wird beim Bauen
+  automatisch in die EXE eingebettet – einfach Bilder dort ablegen und neu veröffentlichen.
+* **Eigene:** In der App über *Memes hinzufügen …* (kopiert nach `%LOCALAPPDATA%\Laternenwacht\Memes`).
+* Erlaubt: JPG, PNG, BMP, GIF (erstes Bild), je bis 10 MB, höchstens 200 eigene Memes.
+* Hinweis: Die mitgelieferten Memes stammen aus dem Internet und sind nur für den privaten Gebrauch
+  gedacht. Vor einer öffentlichen Weitergabe der EXE bitte entfernen oder durch eigene Bilder ersetzen.
 
 ## Backend allein weitergeben
 

@@ -26,6 +26,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Eingebaute Memes: jede Bilddatei in Assets\Memes wird automatisch eingebettet -->
+    <EmbeddedResource Include="Assets\Memes\*.jpg;Assets\Memes\*.jpeg;Assets\Memes\*.png;Assets\Memes\*.bmp;Assets\Memes\*.gif"
+                      LogicalName="Memes/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- WPF-Projekte importieren System.IO nicht implizit (Namenskonflikte mit System.Windows.Shapes.Path) -->
     <Using Include="System.IO" />
   </ItemGroup>

@@ -35,6 +35,10 @@
       <MenuItem Header="Sprüche als Benachrichtigung (Rabenbote)"
                 IsChecked="{Binding Settings.ShowNotifications, Mode=OneWay}"
                 Command="{Binding Settings.ToggleNotificationsCommand}" />
+      <MenuItem Header="Memes bei Ablenkung treiben lassen"
+                IsChecked="{Binding Settings.ShowMemes, Mode=OneWay}"
+                Command="{Binding Settings.ToggleMemesCommand}" />
+      <MenuItem Header="Memes hinzufügen …" Command="{Binding Settings.AddMemesCommand}" />
       <Separator />
       <MenuItem Header="Leiste zurück an den oberen Rand" Command="{Binding Settings.ResetBarPositionCommand}" />
       <Separator />

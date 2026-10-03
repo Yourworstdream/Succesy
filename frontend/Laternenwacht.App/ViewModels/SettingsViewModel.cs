@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Windows.Input;
 using Laternenwacht.App.Services;
 using Laternenwacht.Platform.Windows;
+using Laternenwacht.Core.Media;
 using Laternenwacht.Core.Model;
 using Laternenwacht.Core.Settings;
 
@@ -12,6 +13,7 @@ namespace Laternenwacht.App.ViewModels;
 internal sealed class SettingsViewModel : ObservableObject
 {
     private readonly SettingsStore _store;
+    private readonly MemeService _memes;
     private FocusSettings _current;
     private string _allowedText = string.Empty;
     private string _distractingText = string.Empty;
@@ -22,8 +24,9 @@ internal sealed class SettingsViewModel : ObservableObject
     private string? _statusMessage;
     private bool _statusIsError;
 
-    public SettingsViewModel(SettingsStore store, FocusSettings current)
+    public SettingsViewModel(SettingsStore store, FocusSettings current, MemeService memes)
     {
+        _memes = memes ?? throw new ArgumentNullException(nameof(memes));
         _store = store ?? throw new ArgumentNullException(nameof(store));
         _current = current ?? throw new ArgumentNullException(nameof(current));
         LoadFrom(current);
@@ -39,6 +42,9 @@ internal sealed class SettingsViewModel : ObservableObject
         SaveCommand = new RelayCommand(Save);
         ResetBarPositionCommand = new RelayCommand(ResetBarPosition, () => _current.HasCustomBarPosition);
         ToggleNotificationsCommand = new RelayCommand(() => ShowNotifications = !ShowNotifications);
+        ToggleMemesCommand = new RelayCommand(() => ShowMemes = !ShowMemes);
+        OpenMemeFolderCommand = new RelayCommand(OpenMemeFolder);
+        AddMemesCommand = new RelayCommand(AddMemes);
         ResetCommand = new RelayCommand(() => LoadFrom(_current));
         DefaultsCommand = new RelayCommand(() => LoadFrom(FocusSettings.Default));
     }
@@ -53,6 +59,30 @@ internal sealed class SettingsViewModel : ObservableObject
     public ICommand ResetBarPositionCommand { get; }
 
     public ICommand ToggleNotificationsCommand { get; }
+
+    public ICommand ToggleMemesCommand { get; }
+
+    public ICommand OpenMemeFolderCommand { get; }
+
+    public ICommand AddMemesCommand { get; }
+
+    /// <summary>Dateiauswahl für "Memes hinzufügen…" (wird von der Oberfläche gesetzt).</summary>
+    public Func<IReadOnlyList<string>>? PickMemeFiles { get; set; }
+
+    /// <summary>Bei jeder neuen Ablenkung treibt ein Meme über den Bildschirm. Wird sofort gespeichert.</summary>
+    public bool ShowMemes
+    {
+        get => _current.ShowMemes;
+        set
+        {
+            if (value != _current.ShowMemes && ApplyQuickChange(_current with { ShowMemes = value }))
+            {
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public string MemeSummary => $"{_memes.BuiltInCount} eingebaute und {_memes.CustomCount} eigene Memes treiben im Fluss.";
 
     /// <summary>Auswahlmöglichkeiten "Alle Chroniken" und die sieben Bücher.</summary>
     public IReadOnlyList<BookOption> BookOptions { get; }
@@ -217,6 +247,89 @@ internal sealed class SettingsViewModel : ObservableObject
         LoadFrom(candidate);
         SetStatus("Die Einstellungen wurden in die Schriftrolle übertragen.", isError: false);
         SettingsSaved?.Invoke(this, candidate);
+    }
+
+    private void OpenMemeFolder()
+    {
+        try
+        {
+            Directory.CreateDirectory(AppPaths.MemeDirectory);
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = AppPaths.MemeDirectory,
+                UseShellExecute = true,
+            });
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
+        {
+            AppLog.Error("Meme-Ordner", ex);
+            SetStatus("Der Meme-Ordner konnte nicht geöffnet werden: " + ex.Message, isError: true);
+        }
+
+        // Nach dem Befüllen im Explorer zählen die neuen Memes bei der nächsten Ablenkung mit.
+        RefreshMemes();
+    }
+
+    /// <summary>Kopiert ausgewählte Bilder (geprüft auf Endung und Größe) in den Meme-Ordner.</summary>
+    private void AddMemes()
+    {
+        var files = PickMemeFiles?.Invoke() ?? [];
+        if (files.Count == 0)
+        {
+            return;
+        }
+
+        var added = 0;
+        var skipped = new List<string>();
+        try
+        {
+            Directory.CreateDirectory(AppPaths.MemeDirectory);
+            foreach (var file in files)
+            {
+                var info = new FileInfo(file);
+                if (!info.Exists || !MemeCatalog.AllowedExtensions.Contains(info.Extension)
+                    || info.Length is 0 or > MemeCatalog.MaxFileSizeBytes)
+                {
+                    skipped.Add(info.Name);
+                    continue;
+                }
+
+                info.CopyTo(UniqueTarget(info.Name), overwrite: false);
+                added++;
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            AppLog.Error("Memes hinzufügen", ex);
+            SetStatus("Memes konnten nicht kopiert werden: " + ex.Message, isError: true);
+            RefreshMemes();
+            return;
+        }
+
+        RefreshMemes();
+        SetStatus(skipped.Count == 0
+                ? $"{added} Meme(s) wurden dem Fluss übergeben."
+                : $"{added} Meme(s) hinzugefügt, übersprungen (kein Bild oder größer als 10 MB): {string.Join(", ", skipped)}",
+            isError: skipped.Count > 0 && added == 0);
+    }
+
+    private static string UniqueTarget(string fileName)
+    {
+        var name = Path.GetFileNameWithoutExtension(fileName);
+        var extension = Path.GetExtension(fileName).ToLowerInvariant();
+        var target = Path.Combine(AppPaths.MemeDirectory, name + extension);
+        for (var i = 2; File.Exists(target); i++)
+        {
+            target = Path.Combine(AppPaths.MemeDirectory, $"{name} ({i}){extension}");
+        }
+
+        return target;
+    }
+
+    private void RefreshMemes()
+    {
+        _memes.Reload();
+        OnPropertyChanged(nameof(MemeSummary));
     }
 
     /// <summary>

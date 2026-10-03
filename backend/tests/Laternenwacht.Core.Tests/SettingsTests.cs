@@ -127,6 +127,7 @@ public sealed class SettingsTests : IDisposable
         Assert.Equal(ChronicleBook.All, loaded.SayingsBook);
         Assert.False(loaded.HasCustomBarPosition);
         Assert.True(loaded.ShowNotifications);
+        Assert.True(loaded.ShowMemes);
         Assert.Equal(FocusSettings.Default.IdleThreshold, loaded.IdleThreshold);
     }
 

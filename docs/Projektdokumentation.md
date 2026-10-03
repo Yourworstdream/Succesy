@@ -127,6 +127,7 @@ Lizenzkosten entstehen nicht.
 | F11 | Mahnrufe als **Push‑Benachrichtigung** („Rabenbote“), abschaltbar | Soll |
 | F12 | Fokusleiste **frei verschiebbar**, Position wird gespeichert; Rückkehr an den oberen Rand | Soll |
 | F13 | **Rechtsklick‑Menü** der Leiste: Auswahl, aus welchem der sieben Bücher der Chroniken die Mahnrufe stammen (oder gemischt) | Soll |
+| F14 | Bei jeder neuen Ablenkung **treibt ein Meme** in einem Pop‑up quer über den Bildschirm; eigene Memes hinzufügbar, abschaltbar | Kann |
 
 **Nichtfunktionale Anforderungen**
 
@@ -502,6 +503,17 @@ Registry‑Schreibzugriffe), außerdem passt die Darstellung nicht zur Gestaltun
 aktiviert sich nie (`WS_EX_NOACTIVATE`), verschwindet nach 10 s, pausiert bei Mausberührung und
 ersetzt eine noch sichtbare ältere Botschaft.
 
+**Schwimmende Memes** (`MemeService`, `MemeFloatWindow`, Backend: `FocusWarden.DistractionStarted`,
+`ShuffleBag<T>`, `MemeCatalog`): Das Backend meldet jede *neue* Ablenkungs‑Episode genau einmal.
+Das Frontend wählt per „Wundertüte“ ein Meme (nie dasselbe zweimal hintereinander) und lässt ein
+kleines, nicht aktivierendes Fenster zeitbasiert über den Arbeitsbereich treiben (Sinuswelle +
+leichtes Schaukeln). Bewusst kein bildschirmgroßes transparentes Fenster – das wäre bei hohen
+Auflösungen teuer. Es treibt höchstens ein Meme gleichzeitig, damit schnelles Hin‑ und Herwechseln
+den Bildschirm nicht flutet. Eigene Bilder werden defensiv eingelesen (nur Bildendungen, oberste
+Ordnerebene, keine Verknüpfungen, max. 10 MB, max. 200 Dateien) und mit begrenzter Auflösung
+dekodiert; unlesbare Dateien werden übersprungen und protokolliert. Eingebaute Memes wurden
+verkleinert und ohne Metadaten (EXIF, ggf. GPS) gespeichert.
+
 **Sofort wirkende Einstellungen** (`SettingsViewModel.ApplyQuickChange`): Buchwahl, Benachrichtigungen
 und Leistenposition werden ohne „Speichern“ übernommen – ungespeicherte Eingaben im Formular
 bleiben dabei unberührt.
@@ -515,7 +527,7 @@ bleiben dabei unberührt.
 
 ### 7.1 Automatisierte Tests
 
-94 Unit‑Tests (xUnit) für die Fachlogik, u. a.:
+106 Unit‑Tests (xUnit) für die Fachlogik, u. a.:
 
 | Testklasse | Geprüft wird |
 |---|---|
@@ -525,6 +537,8 @@ bleiben dabei unberührt.
 | `SessionJournalTests` | **Veränderung, Löschung, Vertauschung, Abschneiden, gefälschter Anker, falscher Schlüssel, Müllzeilen**, Absturz‑Reparatur |
 | `JournalBootstrapperTests` | Erststart, Schlüssel nie im Klartext, Archivierung gebrochener Chroniken, defekter Schlüssel |
 | `SettingsTests` | Wertebereiche, Überschneidungen, Normalisierung, **verdächtige Namen** (Pfade, Nullbytes), Round‑Trip, **beschädigte Dateien** |
+| `ShuffleBagTests` | Jedes Element einmal je Durchgang, nie zweimal hintereinander, Sonderfälle leer/einzeln |
+| `MemeCatalogTests` | Nur Bildendungen, sortiert, leere Dateien und Unterordner ignoriert, Anzahlgrenze |
 | `AdmonitionTests` | Schwellen, Einmaligkeit, kein Nachreichen, **Cair‑Paravel‑Mahnruf bei 20**, vollständige und eindeutige Spruchsätze je Buch, gewähltes Buch wird genutzt, gemischter Modus |
 | `FormattingTests` | Zeitformat, Jahreszeiten‑Grenzen |
 
@@ -555,6 +569,9 @@ damit deterministisch und schnell (< 1 s gesamt).
 | T13 | Rechtsklick ▸ *Sprüche aus dem Buch* ▸ *Der silberne Sessel* | Häkchen wandert, nächster Mahnruf stammt aus diesem Buch |
 | T14 | Benachrichtigungen per Rechtsklick abschalten, Schwelle erreichen | Kein Rabenbote; Mahnruf nur im Hauptfenster |
 | T15 | Auf den Rabenboten klicken, während in einem Editor getippt wird | Botschaft verschwindet, Editor behält den Fokus |
+| T16 | Während der Wacht zu einer Verlockung wechseln | Ein Meme treibt schaukelnd über den Bildschirm, Beschriftung „Verlockung Nr. 1: …“ |
+| T17 | Auf das treibende Meme klicken | Es versinkt; das aktive Programm behält den Fokus |
+| T18 | *Memes hinzufügen …*, eine PNG‑ und eine TXT‑Datei wählen | PNG wird übernommen, TXT übersprungen und gemeldet |
 
 ---
 
