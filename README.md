@@ -38,7 +38,9 @@ klassischer Fantasy‑Chroniken à la C. S. Lewis: Laternenpfahl, ewiger Winter,
 3. Im Reiter **„Die Wacht“** eine Dauer wählen → **„Laterne entzünden“**.
 4. Im Reiter **„Gefährten & Verlockungen“** eigene Programme eintragen (z. B. `discord`, `steam`).
 
-**Als EXE veröffentlichen:** → [docs/Veroeffentlichung-VS2026.md](docs/Veroeffentlichung-VS2026.md)
+**Als EXE veröffentlichen:** Doppelklick auf **`Veroeffentlichen.cmd`** – Tests laufen, die EXE
+(Frontend + Backend in einer Datei) liegt danach unter `publish\win-x64\Laternenwacht.exe`.
+Ausführlich inkl. GitHub‑Release: → [docs/Veroeffentlichung-VS2026.md](docs/Veroeffentlichung-VS2026.md)
 
 ```powershell
 dotnet publish frontend/Laternenwacht.App/Laternenwacht.App.csproj -p:PublishProfile=Win-x64-EinzelneExe

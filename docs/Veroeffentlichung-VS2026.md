@@ -3,6 +3,18 @@
 Diese Anleitung führt Schritt für Schritt vom Quellcode zur fertigen, eigenständigen
 `Laternenwacht.exe`, die sich ohne Installation auf jedem 64‑Bit‑Windows‑10/11‑Rechner starten lässt.
 
+> **Frontend und Backend sind verbunden.** Die Projektmappe `Laternenwacht.sln` enthält beide Teile;
+> die WPF‑App (`frontend/Laternenwacht.App`) referenziert `Laternenwacht.Core` und
+> `Laternenwacht.Platform.Windows` aus `backend/`. Beim Veröffentlichen wird alles zusammen in
+> **eine** EXE gepackt – es gibt nichts separat zu kopieren oder zu installieren.
+
+## Kurzfassung: in 1 Minute zur EXE
+
+**Doppelklick auf `Veroeffentlichen.cmd`** im Repository‑Ordner. Das Skript führt alle Tests aus,
+veröffentlicht die EXE und öffnet den Explorer mit der fertigen Datei
+`publish\win-x64\Laternenwacht.exe`. Voraussetzung ist nur Visual Studio 2026 mit der Workload
+„.NET‑Desktopentwicklung“ (Abschnitt 1). Der ausführliche Weg über Visual Studio folgt unten.
+
 ---
 
 ## 1. Voraussetzungen
@@ -44,7 +56,8 @@ Projektmappe "Laternenwacht"
 
 ## 3. Erst testen, dann veröffentlichen
 
-1. Rechtsklick auf **Laternenwacht.App** → **Als Startprojekt festlegen**.
+1. **Laternenwacht.App** ist bereits als Startprojekt voreingestellt (fett im Projektmappen‑Explorer).
+   Falls nicht: Rechtsklick auf **Laternenwacht.App** → **Als Startprojekt festlegen**.
 2. Oben in der Symbolleiste Konfiguration **Debug** wählen und **F5** drücken → die Anwendung startet.
 3. **Test → Test-Explorer** öffnen → **Alle Tests ausführen** (grüner Doppelpfeil).
    Alle Tests müssen grün sein, bevor veröffentlicht wird.
@@ -111,8 +124,38 @@ dotnet publish frontend/Laternenwacht.App/Laternenwacht.App.csproj -p:PublishPro
 
 Ergebnis ebenfalls unter `publish\win-x64\Laternenwacht.exe`.
 
+Noch einfacher: `.\Veroeffentlichen.ps1` (bzw. Doppelklick auf `Veroeffentlichen.cmd`) erledigt Tests,
+Veröffentlichung und zeigt Größe und SHA‑256‑Prüfsumme der EXE an.
+
 Zusätzlich baut die GitHub‑Action (`.github/workflows/build.yml`) bei jedem Push die EXE und stellt sie
 als Artefakt **„Laternenwacht-win-x64“** im Reiter *Actions* zum Download bereit.
+
+---
+
+## 6a. Auf GitHub als Release veröffentlichen (zum Herunterladen für andere)
+
+Ein Versions‑Tag erzeugt automatisch ein GitHub‑Release mit der fertigen EXE und ihrer Prüfsumme
+(`.github/workflows/release.yml`):
+
+**In Visual Studio 2026:**
+1. **Git → Git‑Repository verwalten** (bzw. Fenster *Git‑Repository*) öffnen.
+2. Den gewünschten Commit auf `main` auswählen → Rechtsklick → **Neues Tag…**.
+3. Tag‑Name z. B. **`v1.2.0`** eingeben → **Tag erstellen**.
+4. **Git → Push** und dabei **Tags mit übertragen** (im Push‑Menü „Alle Tags pushen“).
+
+**Oder im Terminal:**
+```powershell
+git tag v1.2.0
+git push origin v1.2.0
+```
+
+Nach wenigen Minuten erscheint unter **GitHub → Releases** die Seite *Laternenwacht v1.2.0* mit
+`Laternenwacht-v1.2.0-win-x64.exe` und `…exe.sha256`. Die Versionsnummer der EXE wird dabei aus dem
+Tag übernommen.
+
+> Vor einer **öffentlichen** Veröffentlichung die mitgelieferten Internet‑Memes aus
+> `frontend/Laternenwacht.App/Assets/Memes/` entfernen oder durch eigene Bilder ersetzen
+> (Urheberrecht) – siehe README.
 
 ---
 
@@ -145,3 +188,5 @@ signtool sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 /a publish
 | Veröffentlichung schlägt fehl: *Datei wird verwendet* | Laternenwacht läuft noch | Anwendung beenden, erneut veröffentlichen |
 | Build‑Fehler durch eine Warnung | Projekt behandelt Warnungen als Fehler (Qualitätsanspruch) | Warnung beheben – nicht abschalten |
 | „Die Laternenwacht brennt bereits“ | Es darf nur eine Instanz laufen | Vorhandenes Fenster verwenden |
+| F5: *Ein Projekt mit dem Ausgabetyp „Klassenbibliothek“ kann nicht direkt gestartet werden* | Ein Backend‑Projekt ist Startprojekt | Rechtsklick auf **Laternenwacht.App** → **Als Startprojekt festlegen** |
+| `Veroeffentlichen.cmd` schließt sofort / meldet *Ausführung von Skripts ist deaktiviert* | PowerShell‑Richtlinie | Das `.cmd` startet PowerShell bereits mit `-ExecutionPolicy Bypass` nur für dieses Skript; sonst im Terminal `powershell -ExecutionPolicy Bypass -File .\Veroeffentlichen.ps1` |

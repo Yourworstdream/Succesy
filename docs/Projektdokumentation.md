@@ -8,7 +8,7 @@
 | Projekt | Laternenwacht – Desktopanwendung zur Messung von Ablenkung während Fokuszeiten |
 | Technologie | C# 14, .NET 10, WPF, xUnit |
 | Repository | `yourworstdream/succesy` |
-| Stand | Oktober 2026, Version 1.1.0 |
+| Stand | Oktober 2026, Version 1.2.0 |
 
 ---
 
@@ -582,6 +582,12 @@ auf dem Zielsystem nötig). Die Schritte in Visual Studio 2026 beschreibt
 [`Veroeffentlichung-VS2026.md`](Veroeffentlichung-VS2026.md). Einstellungen und Chronik liegen im
 Benutzerprofil; eine Deinstallation besteht aus dem Löschen der EXE und des Ordners
 `%LOCALAPPDATA%\Laternenwacht`.
+
+Frontend und Backend werden dabei über Projektverweise zu einer Anwendung verbunden und gemeinsam
+in die EXE gepackt. Für die Auslieferung stehen drei Wege bereit: das Skript `Veroeffentlichen.cmd`
+(Tests + Veröffentlichung per Doppelklick), das Veröffentlichungsprofil in Visual Studio und – für die
+Weitergabe an andere – ein GitHub‑Release, das ein Versions‑Tag (`v1.2.0`) automatisch mit EXE und
+SHA‑256‑Prüfsumme erzeugt.
 
 ---
 
