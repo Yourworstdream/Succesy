@@ -35,6 +35,12 @@ public sealed class FocusWarden
     /// <summary>Wird genau einmal ausgelöst, wenn eine Wacht endet (abgeschlossen oder abgebrochen).</summary>
     public event EventHandler<SessionRecord>? SessionEnded;
 
+    /// <summary>
+    /// Wird bei jeder neuen Ablenkungs-Episode ausgelöst (Wechsel in den Zustand "abgelenkt"),
+    /// auch wenn die Wacht bereits abgelenkt beginnt. Anhaltende Ablenkung löst es nicht erneut aus.
+    /// </summary>
+    public event EventHandler<DistractionStarted>? DistractionStarted;
+
     /// <summary>Übernimmt geänderte Einstellungen; eine laufende Wacht wird ab sofort danach bewertet.</summary>
     public void ApplySettings(FocusSettings settings) =>
         _classifier = new ActivityClassifier(settings, _selfProcessName);
@@ -48,8 +54,10 @@ public sealed class FocusWarden
 
         var snapshot = _probe.Capture();
         LastSnapshot = snapshot;
-        Current = new FocusSession(duration, _time, _classifier.Classify(snapshot), snapshot.ProcessName);
-        return Current;
+        var session = new FocusSession(duration, _time, _classifier.Classify(snapshot), snapshot.ProcessName);
+        Current = session;
+        RaiseIfNewDistraction(session, previousCount: 0);
+        return session;
     }
 
     /// <summary>Misst einmal und aktualisiert die laufende Wacht.</summary>
@@ -62,7 +70,9 @@ public sealed class FocusWarden
 
         var snapshot = _probe.Capture();
         LastSnapshot = snapshot;
+        var previousCount = session.DistractionCount;
         session.Update(_classifier.Classify(snapshot), snapshot.ProcessName);
+        RaiseIfNewDistraction(session, previousCount);
         RaiseIfFinished(session);
     }
 
@@ -86,6 +96,14 @@ public sealed class FocusWarden
         }
     }
 
+    private void RaiseIfNewDistraction(FocusSession session, int previousCount)
+    {
+        if (session.DistractionCount > previousCount && session.Phase == SessionPhase.Running)
+        {
+            DistractionStarted?.Invoke(this, new DistractionStarted(session.CurrentProcess, session.DistractionCount));
+        }
+    }
+
     private void RaiseIfFinished(FocusSession session)
     {
         if (session.IsFinished && ReferenceEquals(session, Current) && !_reported.Contains(session.Id))
@@ -95,3 +113,8 @@ public sealed class FocusWarden
         }
     }
 }
+
+/// <summary>Eine neue Ablenkungs-Episode hat begonnen.</summary>
+/// <param name="ProcessName">Das verlockende Programm (ohne ".exe") oder <c>null</c>, wenn unbekannt.</param>
+/// <param name="Episode">Laufende Nummer der Ablenkung in dieser Wacht (1, 2, 3 …).</param>
+public sealed record DistractionStarted(string? ProcessName, int Episode);

@@ -44,6 +44,9 @@ public sealed record FocusSettings
     /// <summary>Mahnrufe als Benachrichtigung ("Rabenbote") unten rechts einblenden.</summary>
     public bool ShowNotifications { get; set; } = true;
 
+    /// <summary>Bei jeder neuen Ablenkung treibt ein Meme über den Bildschirm.</summary>
+    public bool ShowMemes { get; set; } = true;
+
     /// <summary>Vom Benutzer verschobene Position der Leiste (geräteunabhängige Pixel); <c>null</c> = oben angedockt.</summary>
     public double? BarLeft { get; set; }
 

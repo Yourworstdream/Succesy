@@ -53,4 +53,58 @@ public class FocusWardenTests
 
         Assert.Equal(ActivityState.Distracted, session.CurrentState);
     }
+
+    [Fact]
+    public void Distraction_started_fires_once_per_episode()
+    {
+        var warden = new FocusWarden(_probe, _time, FocusSettings.Default, "laternenwacht");
+        var episodes = new List<DistractionStarted>();
+        warden.DistractionStarted += (_, e) => episodes.Add(e);
+        warden.Start(TimeSpan.FromMinutes(10));
+
+        void Tick(string process, int seconds)
+        {
+            _probe.Next = new ActivitySnapshot(process, TimeSpan.Zero);
+            for (var i = 0; i < seconds; i++)
+            {
+                _time.Advance(TimeSpan.FromSeconds(1));
+                warden.Pulse();
+            }
+        }
+
+        Tick("discord", 5);   // Episode 1 – anhaltend, nur einmal gemeldet
+        Tick("devenv", 3);
+        Tick("steam", 2);     // Episode 2
+
+        Assert.Equal([new DistractionStarted("discord", 1), new DistractionStarted("steam", 2)], episodes);
+    }
+
+    [Fact]
+    public void Starting_while_distracted_reports_first_episode()
+    {
+        _probe.Next = new ActivitySnapshot("discord", TimeSpan.Zero);
+        var warden = new FocusWarden(_probe, _time, FocusSettings.Default, "laternenwacht");
+        DistractionStarted? reported = null;
+        warden.DistractionStarted += (_, e) => reported = e;
+
+        warden.Start(TimeSpan.FromMinutes(5));
+
+        Assert.Equal(new DistractionStarted("discord", 1), reported);
+    }
+
+    [Fact]
+    public void No_distraction_events_while_paused()
+    {
+        var warden = new FocusWarden(_probe, _time, FocusSettings.Default, "laternenwacht");
+        var count = 0;
+        warden.DistractionStarted += (_, _) => count++;
+        warden.Start(TimeSpan.FromMinutes(5));
+        warden.Pause();
+
+        _probe.Next = new ActivitySnapshot("discord", TimeSpan.Zero);
+        _time.Advance(TimeSpan.FromSeconds(1));
+        warden.Pulse();
+
+        Assert.Equal(0, count);
+    }
 }

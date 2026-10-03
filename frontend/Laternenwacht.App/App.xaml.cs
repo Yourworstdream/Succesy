@@ -82,7 +82,11 @@ public partial class App : Application
             SayingsBook = settings.SayingsBook,
         };
         var chronicle = new ChronicleViewModel(journal, journalError);
-        var settingsViewModel = new SettingsViewModel(settingsStore, settings);
+        var memes = new MemeService();
+        var settingsViewModel = new SettingsViewModel(settingsStore, settings, memes)
+        {
+            PickMemeFiles = PickMemeFiles,
+        };
         var shell = new ShellViewModel(_session, chronicle, settingsViewModel);
 
         // --- Fenster ---
@@ -91,6 +95,15 @@ public partial class App : Application
         _bar.ApplyPosition(settings.BarLeft, settings.BarTop);
         _bar.PositionChosen += (_, position) => settingsViewModel.SaveBarPosition(position.X, position.Y);
         MainWindow = _main;
+
+        // Jede neue Ablenkung schickt ein Meme auf die Reise.
+        warden.DistractionStarted += (_, distraction) =>
+        {
+            if (settingsViewModel.ShowMemes)
+            {
+                memes.Show(distraction);
+            }
+        };
 
         var notifications = new NotificationService();
         _session.AdmonitionRaised += (_, admonition) =>
@@ -190,6 +203,19 @@ public partial class App : Application
         {
             _main?.BringToFront();
         }
+    }
+
+    private string[] PickMemeFiles()
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Memes für den Fluss der Ablenkung auswählen",
+            Filter = "Bilder (*.jpg;*.jpeg;*.png;*.bmp;*.gif)|*.jpg;*.jpeg;*.png;*.bmp;*.gif",
+            Multiselect = true,
+            CheckFileExists = true,
+        };
+
+        return dialog.ShowDialog(_main) == true ? dialog.FileNames : [];
     }
 
     private void OnUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)

@@ -398,6 +398,17 @@
                 <CheckBox IsChecked="{Binding ShowNotifications}" VerticalAlignment="Center"
                           Content="Mahnrufe als Benachrichtigung zeigen" />
               </WrapPanel>
+              <TextBlock Text="Treibgut im Fluss der Ablenkung" FontWeight="SemiBold" Style="{StaticResource BodyInk}" Margin="0,12,0,0" />
+              <TextBlock Style="{StaticResource BodyInk}" FontSize="12" Foreground="#6B5A43" Margin="0,0,0,6"
+                         Text="Bei jeder neuen Ablenkung schwimmt ein Meme über den Bildschirm. Ein Klick lässt es versinken. Eigene Bilder (JPG, PNG, BMP, GIF, je bis 10 MB) kannst du hinzufügen." />
+              <WrapPanel>
+                <CheckBox IsChecked="{Binding ShowMemes}" VerticalAlignment="Center" Margin="0,0,16,0"
+                          Content="Memes bei Ablenkung treiben lassen" />
+                <Button Style="{StaticResource InkButton}" Command="{Binding AddMemesCommand}" Content="Memes hinzufügen …" />
+                <Button Style="{StaticResource InkButton}" Command="{Binding OpenMemeFolderCommand}" Content="Meme-Ordner öffnen" />
+              </WrapPanel>
+              <TextBlock Text="{Binding MemeSummary}" Style="{StaticResource BodyInk}" FontSize="12" FontStyle="Italic" Foreground="#6B5A43" />
+
               <Button Style="{StaticResource InkButton}" Command="{Binding ResetBarPositionCommand}" HorizontalAlignment="Left"
                       Margin="0,8,0,0" Content="Fokusleiste zurück an den oberen Rand" />
 

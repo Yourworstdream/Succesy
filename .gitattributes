@@ -1,0 +1,4 @@
+# Windows-Skripte immer mit CRLF auschecken (cmd.exe/PowerShell erwarten das)
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+*.sln text eol=crlf
