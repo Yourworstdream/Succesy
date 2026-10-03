@@ -27,6 +27,9 @@ public sealed class FocusWarden
     /// <summary>Die laufende oder zuletzt beendete Wacht.</summary>
     public FocusSession? Current { get; private set; }
 
+    /// <summary>Prozessname der eigenen Anwendung (wird nie als Ablenkung gewertet).</summary>
+    public string SelfProcessName => _selfProcessName;
+
     /// <summary>Die zuletzt erfasste Momentaufnahme (für Anzeigezwecke).</summary>
     public ActivitySnapshot? LastSnapshot { get; private set; }
 

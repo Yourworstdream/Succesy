@@ -128,6 +128,7 @@ public sealed class SettingsTests : IDisposable
         Assert.False(loaded.HasCustomBarPosition);
         Assert.True(loaded.ShowNotifications);
         Assert.True(loaded.ShowMemes);
+        Assert.True(loaded.UseKnownDistractions);
         Assert.Equal(FocusSettings.Default.IdleThreshold, loaded.IdleThreshold);
     }
 

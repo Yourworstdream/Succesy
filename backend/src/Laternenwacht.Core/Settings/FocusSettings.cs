@@ -35,6 +35,12 @@ public sealed record FocusSettings
     public IReadOnlyList<string> DistractingProcesses { get; set; } =
         ["discord", "steam", "epicgameslauncher", "spotify", "whatsapp", "telegram", "netflix", "battle.net"];
 
+    /// <summary>
+    /// Zusätzlich den eingebauten Katalog bekannter Verlockungen (<see cref="KnownDistractions"/>) verwenden,
+    /// z. B. Hearthstone, Steam, Discord. Gefährten haben Vorrang.
+    /// </summary>
+    public bool UseKnownDistractions { get; set; } = true;
+
     /// <summary>Soll die Leiste am oberen Rand stets sichtbar sein?</summary>
     public bool BarAlwaysOnTop { get; set; } = true;
 

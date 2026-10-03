@@ -527,7 +527,7 @@ bleiben dabei unberührt.
 
 ### 7.1 Automatisierte Tests
 
-106 Unit‑Tests (xUnit) für die Fachlogik, u. a.:
+116 Unit‑Tests (xUnit) für die Fachlogik, u. a.:
 
 | Testklasse | Geprüft wird |
 |---|---|
@@ -537,6 +537,7 @@ bleiben dabei unberührt.
 | `SessionJournalTests` | **Veränderung, Löschung, Vertauschung, Abschneiden, gefälschter Anker, falscher Schlüssel, Müllzeilen**, Absturz‑Reparatur |
 | `JournalBootstrapperTests` | Erststart, Schlüssel nie im Klartext, Archivierung gebrochener Chroniken, defekter Schlüssel |
 | `SettingsTests` | Wertebereiche, Überschneidungen, Normalisierung, **verdächtige Namen** (Pfade, Nullbytes), Round‑Trip, **beschädigte Dateien** |
+| `KnownDistractionTests` | Hearthstone & Co. ab Werk erkannt, Gefährten haben Vorrang, Katalog abschaltbar, Markieren ohne Duplikate |
 | `ShuffleBagTests` | Jedes Element einmal je Durchgang, nie zweimal hintereinander, Sonderfälle leer/einzeln |
 | `MemeCatalogTests` | Nur Bildendungen, sortiert, leere Dateien und Unterordner ignoriert, Anzahlgrenze |
 | `AdmonitionTests` | Schwellen, Einmaligkeit, kein Nachreichen, **Cair‑Paravel‑Mahnruf bei 20**, vollständige und eindeutige Spruchsätze je Buch, gewähltes Buch wird genutzt, gemischter Modus |
@@ -571,6 +572,8 @@ damit deterministisch und schnell (< 1 s gesamt).
 | T15 | Auf den Rabenboten klicken, während in einem Editor getippt wird | Botschaft verschwindet, Editor behält den Fokus |
 | T16 | Während der Wacht zu einer Verlockung wechseln | Ein Meme treibt schaukelnd über den Bildschirm, Beschriftung „Verlockung Nr. 1: …“ |
 | T17 | Auf das treibende Meme klicken | Es versinkt; das aktive Programm behält den Fokus |
+| T19 | Wacht starten, Hearthstone in den Vordergrund holen | Frost zählt hoch, „Eine Verlockung ruft: Hearthstone“ |
+| T20 | Unbekanntes Spiel im Vordergrund, Rechtsklick auf die Leiste ▸ *„… als Verlockung markieren“* | Ab sofort Frost; Eintrag erscheint in der Liste der Verlockungen |
 | T18 | *Memes hinzufügen …*, eine PNG‑ und eine TXT‑Datei wählen | PNG wird übernommen, TXT übersprungen und gemeldet |
 
 ---

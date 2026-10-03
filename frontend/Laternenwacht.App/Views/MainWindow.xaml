@@ -374,6 +374,11 @@
                 </StackPanel>
               </Grid>
 
+              <CheckBox IsChecked="{Binding UseKnownDistractions}" Margin="0,10,0,0"
+                        Content="Zusätzlich bekannte Verlockungen erkennen (wird sofort übernommen)"
+                        ToolTip="{Binding KnownDistractionsList}" />
+              <TextBlock Style="{StaticResource BodyInk}" FontSize="12" Foreground="#6B5A43"
+                         Text="Eingebauter Katalog mit Spielen (z. B. Hearthstone, League of Legends, Minecraft), Launchern (Battle.net, Steam) und Messengern (Discord, WhatsApp). Gefährten haben Vorrang. Tipp: Rechtsklick auf die Fokusleiste markiert das Programm im Vordergrund als Verlockung." />
               <WrapPanel Margin="0,14,0,0">
                 <StackPanel Margin="0,0,28,0">
                   <TextBlock Text="Standarddauer einer Wacht (Minuten)" Style="{StaticResource BodyInk}" />

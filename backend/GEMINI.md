@@ -39,7 +39,7 @@ backend/
 │       ├── DpapiSecretProtector   Schlüsselschutz per DPAPI (CurrentUser)
 │       ├── AppPaths, AppLog       %LOCALAPPDATA%\Laternenwacht, Fehlerprotokoll
 │       └── Native/NativeMethods   P/Invoke-Deklarationen
-└── tests/Laternenwacht.Core.Tests/      xUnit, 106 Tests, deterministische Uhr
+└── tests/Laternenwacht.Core.Tests/      xUnit, 116 Tests, deterministische Uhr
 ```
 
 ## 3. Bauen und testen
@@ -63,6 +63,9 @@ Parameter mit Standardwert) sind erlaubt.
 |---|---|
 | `FocusWarden` | Konstruktor `(IActivityProbe, TimeProvider, FocusSettings, string selfProcessName)`, `Start(TimeSpan)`, `Pulse()` (1×/s vom UI-Timer), `Pause()`, `Resume()`, `Abort()`, `ApplySettings(FocusSettings)`, `Current`, `IsActive`, `LastSnapshot`, Ereignis `SessionEnded` (**genau einmal** je Wacht), Ereignis `DistractionStarted` (**einmal je neuer Ablenkungs-Episode**, löst das schwimmende Meme aus) |
 | `DistractionStarted` | `ProcessName`, `Episode` |
+| `FocusWarden.SelfProcessName` | Name der eigenen App (für „als Verlockung markieren“) |
+| `KnownDistractions` | `Names` – eingebauter Katalog (Spiele, Launcher, Messenger); greift bei `FocusSettings.UseKnownDistractions` |
+| `SettingsEditing` | `MarkAsDistraction(FocusSettings, string)` → neue Einstellungen oder `null` |
 | `ShuffleBag<T>` | Konstruktor `(IEnumerable<T>, Random? = null)`, `TryNext(out T)`, `Count` – nie zweimal dasselbe Element hintereinander |
 | `MemeCatalog` | `Scan(string directory)`, `AllowedExtensions`, `MaxFileSizeBytes`, `MaxFiles` |
 | `FocusSession` | `Phase`, `CurrentState`, `CurrentProcess`, `Focused`, `Distracted`, `Away`, `DistractionCount`, `Remaining`, `Progress`, `FrostRatio`, `IsFinished` |

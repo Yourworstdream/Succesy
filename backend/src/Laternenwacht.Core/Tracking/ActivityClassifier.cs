@@ -11,6 +11,7 @@ public sealed class ActivityClassifier
     private readonly ClassificationMode _mode;
     private readonly TimeSpan _idleThreshold;
     private readonly string _selfProcessName;
+    private readonly bool _useKnown;
 
     public ActivityClassifier(FocusSettings settings, string selfProcessName)
     {
@@ -22,6 +23,7 @@ public sealed class ActivityClassifier
         _mode = settings.Mode;
         _idleThreshold = settings.IdleThreshold;
         _selfProcessName = ProcessNames.Normalize(selfProcessName);
+        _useKnown = settings.UseKnownDistractions;
     }
 
     public ActivityState Classify(ActivitySnapshot snapshot)
@@ -43,7 +45,7 @@ public sealed class ActivityClassifier
             return ActivityState.Focused;
         }
 
-        if (_distracting.Contains(name))
+        if (_distracting.Contains(name) || (_useKnown && KnownDistractions.Names.Contains(name)))
         {
             return ActivityState.Distracted;
         }

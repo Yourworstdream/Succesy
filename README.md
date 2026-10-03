@@ -16,6 +16,9 @@ klassischer Fantasy‑Chroniken à la C. S. Lewis: Laternenpfahl, ewiger Winter,
 * **Verschiebbar** – Leiste mit der Maus an jede Stelle ziehen; die Position wird gespeichert.
 * **Rechtsklick auf die Leiste** – wählen, aus welchem Buch der Chroniken von Narnia die Sprüche
   stammen (Band 1–7 oder alle gemischt), Benachrichtigungen an/aus, Leiste zurück an den Rand.
+* **Bekannte Verlockungen** wie Hearthstone, Battle.net, Steam, League of Legends, Minecraft oder
+  Discord werden ab Werk erkannt; jedes andere Programm per Rechtsklick auf die Leiste ▸
+  *„… als Verlockung markieren“*.
 * **Ablenkungserkennung** über das Vordergrundprogramm – *Milde Wacht* (Sperrliste) oder
   *Strenge Wacht* (nur Erlaubnisliste zählt als Fokus); Abwesenheit wird separat erfasst.
 * **Schwimmende Memes** – bei jeder neuen Ablenkung treibt ein Meme schaukelnd quer über den
@@ -64,7 +67,7 @@ dotnet publish frontend/Laternenwacht.App/Laternenwacht.App.csproj -p:PublishPro
 backend/                               BACKEND – eigenständig baubar (Laternenwacht.Backend.sln)
   src/Laternenwacht.Core               Fachlogik: Messung, Bewertung, Sprüche, versiegelte Chronik
   src/Laternenwacht.Platform.Windows   Win32-Messung, DPAPI, Pfade, Protokoll (ohne Oberfläche)
-  tests/Laternenwacht.Core.Tests       106 xUnit-Tests
+  tests/Laternenwacht.Core.Tests       116 xUnit-Tests
   GEMINI.md                            Übergabe-Anweisung & Schnittstellenvertrag für KI-Assistenten
 frontend/                              FRONTEND – nur Darstellung
   Laternenwacht.App                    WPF: Fokusleiste, Hauptfenster, Rabenbote, Gestaltung

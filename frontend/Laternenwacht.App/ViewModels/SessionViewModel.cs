@@ -139,6 +139,22 @@ internal sealed class SessionViewModel : ObservableObject
 
     public bool IsAway => IsActive && !IsPaused && State == ActivityState.Away;
 
+    /// <summary>
+    /// Fremdes Programm im Vordergrund, das gerade nicht als Ablenkung zählt – Kandidat für
+    /// "als Verlockung markieren" im Rechtsklick-Menü (die Leiste stiehlt keinen Fokus,
+    /// daher ist das beim Rechtsklick noch das eben benutzte Programm).
+    /// </summary>
+    public string? MarkCandidate =>
+        IsActive && State != ActivityState.Distracted
+        && _warden.LastSnapshot?.ProcessName is { Length: > 0 } process
+        && !string.Equals(process, _warden.SelfProcessName, StringComparison.OrdinalIgnoreCase)
+            ? process
+            : null;
+
+    public bool HasMarkCandidate => MarkCandidate is not null;
+
+    public string MarkCandidateLabel => MarkCandidate is { } p ? $"„{p}“ als Verlockung markieren" : "Aktuelles Programm als Verlockung markieren";
+
     public bool IsLit => !IsActive || IsPaused || State == ActivityState.Focused;
 
     public string Proverb { get => _proverb; private set => SetProperty(ref _proverb, value); }
@@ -242,6 +258,9 @@ internal sealed class SessionViewModel : ObservableObject
         OnPropertyChanged(nameof(FrostPercentText));
         OnPropertyChanged(nameof(MoodName));
         OnPropertyChanged(nameof(HasAdmonition));
+        OnPropertyChanged(nameof(MarkCandidate));
+        OnPropertyChanged(nameof(HasMarkCandidate));
+        OnPropertyChanged(nameof(MarkCandidateLabel));
         RelayCommand.Refresh();
     }
 

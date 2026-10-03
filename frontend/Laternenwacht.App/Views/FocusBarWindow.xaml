@@ -20,6 +20,15 @@
   <!-- Rechtsklick: Buch der Mahnrufe wählen, Leiste zurücksetzen, Wacht steuern -->
   <Window.ContextMenu>
     <ContextMenu FontFamily="{StaticResource RealmFont}" FontSize="14">
+      <MenuItem Header="{Binding Session.MarkCandidateLabel}" Command="{Binding MarkAsDistractionCommand}" FontWeight="SemiBold">
+        <MenuItem.Icon>
+          <TextBlock Text="❄" Foreground="#3F7A93" HorizontalAlignment="Center" />
+        </MenuItem.Icon>
+      </MenuItem>
+      <MenuItem Header="Bekannte Verlockungen erkennen (Spiele, Discord …)"
+                IsChecked="{Binding Settings.UseKnownDistractions, Mode=OneWay}"
+                Command="{Binding Settings.ToggleKnownDistractionsCommand}" />
+      <Separator />
       <MenuItem Header="Sprüche aus dem Buch …" ItemsSource="{Binding Settings.BookOptions}">
         <MenuItem.Icon>
           <TextBlock Text="❦" Foreground="{StaticResource GoldDimBrush}" HorizontalAlignment="Center" />
