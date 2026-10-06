@@ -287,62 +287,66 @@ Laternenpfahl. Die Metaphern sind durchgängig und selbsterklärend:
 |---|---|
 | Fokussitzung | **Wacht** |
 | Ablenkungszeit | **Frost** |
-| Erlaubte Programme | **Gefährten** |
-| Ablenkende Programme | **Verlockungen** |
+| Erlaubte Programme | **Gefährten** (in den Einstellungen: „Arbeitsprogramme“) |
+| Ablenkende Programme | **Verlockungen** (in den Einstellungen: „Ablenkungen“) |
 | Sitzungshistorie | **Chronik** |
 | Integritätsprüfung | **Siegel** |
 | Ergebnisbewertung | **Jahreszeit**: Frühling (< 10 % Frost), Tauwetter (< 25 %), Winter |
 | Hinweis bei vielen Ablenkungen | **Mahnruf** (z. B. bei 20 Verlockungen: *„Herrscher von Cair Paravel, Ihr gefährdet Euer Königreich mit Eurem Müßiggang!“*) |
 
-**Farbwelt:** Nachtblau `#0E1A2B`, Laternengold `#E8B84A`, Pergament `#F3E9D2`,
-Frost `#A9D6E5`, Karmesin `#8B1E2D` (Löwenbanner), Frühlingsgrün `#6E9E55`.
-**Schrift:** Palatino Linotype (Windows‑Bordmittel) – klassische Buchtypografie.
-Alle Symbole (Laterne, Schneeflocke, Schild, Tür) sind **Vektorpfade** und damit auf jeder DPI‑Stufe scharf.
+**Gestaltungssystem „Schneelicht“ (ab Version 1.4).** Die erste Fassung arbeitete mit Nachtblau,
+Gold, Pergament, Serifenschrift und Ornamenten. Im Nutzertest wirkte das zu klassisch und „generiert“.
+Die Überarbeitung trennt deshalb **Erzählung** (Texte, Figuren, Metaphern) von **Form** (ruhig, modern,
+eigenständig): Die Fantasy lebt in der Sprache, die Oberfläche bleibt klar.
 
-**Fokusleiste (oberer Bildschirmrand)**
+| Rolle | Farbe | Verwendung |
+|---|---|---|
+| Paper | `#F6F4F0` | Fensterhintergrund (warmes Papierweiß statt Nachtblau) |
+| Card / Line | `#FFFFFF` / `#E8E4DD` | Flächen mit Haarlinie statt Schlagschatten |
+| Ink · Ink2 · Ink3 | `#141414` · `#5C5A55` · `#9A968F` | Text in drei Stufen, Hauptschaltflächen |
+| **Light** | `#FF6B2C` | der **einzige** Akzent: Fokus, Fortschritt, Lob |
+| **Frost** | `#3FA9E6` | ausschließlich Ablenkung |
+| Error | `#D63B3B` | nur echte Fehler (z. B. gebrochenes Siegel) |
 
-```
-╭──────────────────────────────────────────────────────────────────────────────╮
-│ 🏮  Der Winter kriecht heran          18:42        ❄  02:13        ⏸  ■  🚪 │
-│     Eine Verlockung ruft: discord    verbleibend    Frost · 3× verlockt      │
-│ ████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │
-╰──────────────────────────────────────────────────────────────────────────────╯
-                       Rechtsklick ▸ ┌──────────────────────────────────────────┐
-                                     │ ❦ Sprüche aus dem Buch …               ▸ │──┐
-                                     │ ✓ Sprüche als Benachrichtigung           │  │
-                                     │ ──────────────────────────────────────── │  │
-                                     │   Leiste zurück an den oberen Rand       │  │
-                                     │   Rasten · Wacht abbrechen · Kammer …    │  │
-                                     └──────────────────────────────────────────┘  │
-     ┌─────────────────────────────────────────┐                                   │
-     │ ✓ Alle Chroniken (gemischt)             │◂──────────────────────────────────┘
-     │   Band 1 · Das Wunder von Narnia        │
-     │   Band 2 · Der König von Narnia         │
-     │   …                                     │
-     │   Band 7 · Der letzte Kampf             │
-     └─────────────────────────────────────────┘
-```
+* **Farbsemantik statt Dekoration:** Orange bedeutet immer „Licht/gut“, Eisblau immer „Frost/Ablenkung“.
+  Dadurch ist der Zustand ohne Lesen erfassbar – auch im Augenwinkel in der Fokusleiste.
+* **Form:** Kapseln (Fokusleiste, Statusanzeigen, Schaltflächen), Fortschrittsringe mit runden Enden,
+  Karten mit 24 px Radius, Kennzahlen mit kleinen Großbuchstaben‑Beschriftungen. Keine Verläufe,
+  keine Ornamente.
+* **Schrift:** Segoe UI Variable (Windows 11, Rückfall Segoe UI) – Display‑Schnitt für große, tabellarische
+  Ziffern (die Zeit springt beim Zählen nicht), Text‑Schnitt für Fließtext.
+* **Symbole:** eigene 24‑px‑Linienpfade (Flamme, Schneeflocke, Uhr, Buch, Regler …) – auf jeder DPI‑Stufe scharf.
+* **App‑Symbol:** tintenschwarze Kachel mit oranger Flamme.
+* **Barrierefreiheit:** Tastaturfokus wird mit orangem Ring sichtbar; Steuerelemente tragen
+  `AutomationProperties.Name`; Kontrast Ink auf Paper > 15 : 1.
 
-**Rabenbote (Push‑Benachrichtigung, unten rechts)**
+![Fokus – laufende Wacht](bilder/1-fokus-laufend.png)
 
-```
-╭────────────────────────────────────────────╮
-│ (❦)  Ein Rabe bringt Kunde              ✕  │
-│      „Herrscher von Cair Paravel, Ihr      │
-│       gefährdet Euer Königreich mit Eurem  │
-│       Müßiggang!“                          │
-│                 — aus »Der König von Narnia«│
-│ ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬░░░░░░░░░░░░░░░░ │
-╰────────────────────────────────────────────╯
-```
+*Abb.: Hauptfenster, laufende Wacht (Entwurfsvorschau als HTML‑Nachbau). Links Navigation, Mitte
+Fortschrittsring mit Restzeit, rechts Kennzahlen und Verteilungsbalken (Licht / Frost / abwesend).*
 
-* Randlos, standardmäßig zentriert am oberen Rand des Arbeitsbereichs angedockt.
-* **Verschiebbar:** Ziehen mit der linken Maustaste löst die Leiste vom Rand (alle Ecken werden rund);
-  die Position wird gespeichert. Fehlt der Bildschirm später (z. B. Laptop ohne Zweitmonitor), dockt sie
-  automatisch wieder oben an. Rechtsklick ▸ *Leiste zurück an den oberen Rand* setzt sie zurück.
+![Fokusleiste, Botschaft und Meme](bilder/3-kapsel-botschaft-meme.png)
+
+*Abb.: Fokusleiste als dunkle Kapsel – oben im Fokus (Orange), darunter abgelenkt (Eisblau‑Rand und
+Frost‑Chip). Unten rechts eine Lob‑Botschaft mit Initial‑Avatar, links ein treibendes Meme.*
+
+![Chronik](bilder/4-chronik.png)
+
+*Abb.: Chronik mit Siegelstatus, Kennzahlen und versiegelten Einträgen.*
+
+**Fokusleiste (Kapsel)**
+
+* Dunkle Kapsel (Ink, 95 % deckend), damit sie auf hellen wie dunklen Hintergründen trägt.
+  Ring = Fortschritt der Wacht, große Zahl = Restzeit, Unterzeile = Kurzstatus
+  („Im Licht · Serie 12:30“ bzw. „Frost · Hearthstone“), Chip = Frostzeit und Anzahl der Ablenkungen.
+* **Verschiebbar:** Ziehen mit der linken Maustaste; die Position wird gespeichert. Fehlt der Bildschirm
+  später (z. B. Laptop ohne Zweitmonitor), sitzt sie wieder oben mittig. Rechtsklick ▸
+  *Leiste zurück an den oberen Rand* setzt sie zurück.
+* **Rechtsklick‑Menü:** Programm im Vordergrund als Ablenkung markieren, Buch der Chroniken wählen
+  (Band 1–7 oder gemischt), Lob/Mahnrufe/Memes schalten, Wacht steuern.
 * `WS_EX_NOACTIVATE`: Klicks stehlen **nicht** den Tastaturfokus – sonst würde die Leiste selbst
   die Messung verfälschen. `WS_EX_TOOLWINDOW`: kein Eintrag in Alt+Tab/Taskleiste.
-* Bei Ablenkung wechselt der Rahmen von Gold zu Eisblau, ein Frostschleier blendet ein, die Laterne erlischt.
+* Bei Ablenkung wechseln Ring, Rand und Chip von Orange zu Eisblau, die Flamme wird zur Schneeflocke.
 
 ---
 

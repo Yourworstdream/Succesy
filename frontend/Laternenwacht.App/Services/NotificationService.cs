@@ -7,7 +7,7 @@ namespace Laternenwacht.App.Services;
 
 /// <summary>
 /// Überbringt Botschaften als Push-Benachrichtigung ("Rabenbote"). Es ist stets höchstens eine sichtbar.
-/// Mahnrufe kommen mit Ton und rotem Siegel, Lob leise mit grünem Siegel – damit es die
+/// Mahnrufe kommen mit Ton und in Eisblau, Lob leise in Laternenorange – damit es die
 /// Konzentration nicht seinerseits stört.
 /// </summary>
 internal sealed class NotificationService
@@ -21,7 +21,7 @@ internal sealed class NotificationService
     public void Show(Admonition admonition)
     {
         ArgumentNullException.ThrowIfNull(admonition);
-        Present("Ein Rabe bringt Kunde", admonition.Text, $"— aus »{ChronicleBooks.Title(admonition.Book)}«",
+        Present("Mahnruf", admonition.Text, ChronicleBooks.Title(admonition.Book), "!",
             AdmonitionLifetime, positive: false);
         SystemSounds.Asterisk.Play();
     }
@@ -30,18 +30,25 @@ internal sealed class NotificationService
     public void ShowEncouragement(string header, Encouragement encouragement)
     {
         ArgumentNullException.ThrowIfNull(encouragement);
-        Present(header, encouragement.Text, $"— {encouragement.Speaker} · aus »{ChronicleBooks.Title(encouragement.Book)}«",
-            PraiseLifetime, positive: true);
+        Present(header, encouragement.Text, $"{encouragement.Speaker} · {ChronicleBooks.Title(encouragement.Book)}",
+            Initial(encouragement.Speaker), PraiseLifetime, positive: true);
     }
 
     /// <summary>Freie positive Botschaft (z. B. Würdigung einer vollendeten Wacht).</summary>
     public void ShowPraise(string header, string message, string source) =>
-        Present(header, message, source, PraiseLifetime, positive: true);
+        Present(header, message, source, "✓", PraiseLifetime, positive: true);
 
-    private void Present(string header, string message, string source, TimeSpan lifetime, bool positive)
+    /// <summary>Anfangsbuchstabe des Namens, Artikel übersprungen ("der Weihnachtsmann" → "W").</summary>
+    private static string Initial(string speaker)
+    {
+        var letter = speaker.FirstOrDefault(char.IsUpper);
+        return letter == default ? speaker[..1].ToUpperInvariant() : letter.ToString();
+    }
+
+    private void Present(string header, string message, string source, string avatar, TimeSpan lifetime, bool positive)
     {
         _current?.FlyOut();
-        var toast = new RavenToastWindow(header, message, source, lifetime, positive);
+        var toast = new RavenToastWindow(header, message, source, avatar, lifetime, positive);
         toast.Closed += (_, _) =>
         {
             if (ReferenceEquals(_current, toast))

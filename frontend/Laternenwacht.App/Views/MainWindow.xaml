@@ -1,5 +1,6 @@
 <!--
-  Die Kammer des Wächters: Wacht beginnen, Chronik einsehen, Gefährten und Verlockungen pflegen.
+  Hauptfenster im Gestaltungssystem "Schneelicht":
+  links eine ruhige Navigationsleiste, rechts die Seiten Fokus, Chronik, Einstellungen und Über.
 -->
 <Window x:Class="Laternenwacht.App.Views.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -10,11 +11,13 @@
         xmlns:vm="clr-namespace:Laternenwacht.App.ViewModels"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:ShellViewModel}"
-        Title="Laternenwacht – Die Kammer des Wächters"
-        Width="1000" Height="720" MinWidth="860" MinHeight="600"
+        Title="Laternenwacht"
+        Width="1120" Height="740" MinWidth="940" MinHeight="620"
         WindowStartupLocation="CenterScreen"
         Icon="pack://application:,,,/Assets/laterne.ico"
-        Background="{StaticResource NightSkyBrush}"
+        Background="{StaticResource PaperBrush}"
+        Foreground="{StaticResource InkBrush}"
+        FontFamily="{StaticResource UiFont}"
         UseLayoutRounding="True">
 
   <Window.Resources>
@@ -22,329 +25,503 @@
     <views:TextToVisibilityConverter x:Key="TextToVisibility" />
     <views:MoodToBrushConverter x:Key="MoodToBrush" />
     <views:ErrorToBrushConverter x:Key="ErrorToBrush" />
+    <views:StarConverter x:Key="Star" />
 
-    <!-- Kennzahl-Kachel auf Pergament -->
-    <Style x:Key="StatValue" TargetType="TextBlock">
-      <Setter Property="FontFamily" Value="{StaticResource NumberFont}" />
-      <Setter Property="FontSize" Value="26" />
-      <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
-      <Setter Property="HorizontalAlignment" Value="Center" />
-    </Style>
-    <Style x:Key="StatLabel" TargetType="TextBlock">
-      <Setter Property="FontSize" Value="12" />
-      <Setter Property="Foreground" Value="#6B5A43" />
-      <Setter Property="HorizontalAlignment" Value="Center" />
-      <Setter Property="TextAlignment" Value="Center" />
-      <Setter Property="TextWrapping" Value="Wrap" />
+    <!-- Navigationseintrag -->
+    <Style x:Key="NavItem" TargetType="TabItem">
+      <Setter Property="Foreground" Value="{StaticResource Ink2Brush}" />
+      <Setter Property="FontSize" Value="14" />
+      <Setter Property="FontWeight" Value="Medium" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="TabItem">
+            <Border x:Name="Bg" Height="42" Margin="0,0,0,4" Padding="12,0" CornerRadius="12"
+                    Background="Transparent" BorderBrush="Transparent" BorderThickness="1">
+              <ContentPresenter ContentSource="Header" VerticalAlignment="Center" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Bg" Property="Background" Value="{StaticResource HoverBrush}" />
+              </Trigger>
+              <Trigger Property="IsSelected" Value="True">
+                <Setter TargetName="Bg" Property="Background" Value="{StaticResource CardBrush}" />
+                <Setter TargetName="Bg" Property="BorderBrush" Value="{StaticResource LineBrush}" />
+                <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+              </Trigger>
+              <Trigger Property="IsKeyboardFocused" Value="True">
+                <Setter TargetName="Bg" Property="BorderBrush" Value="{StaticResource LightBrush}" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
     </Style>
   </Window.Resources>
 
-  <Grid Margin="28,18,28,20">
-    <Grid.RowDefinitions>
-      <RowDefinition Height="Auto" />
-      <RowDefinition Height="*" />
-      <RowDefinition Height="Auto" />
-    </Grid.RowDefinitions>
-
-    <!-- ===== Kopfzeile ===== -->
-    <Grid Margin="0,0,0,10">
-      <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="Auto" />
-        <ColumnDefinition Width="*" />
-        <ColumnDefinition Width="Auto" />
-      </Grid.ColumnDefinitions>
-      <Image Source="pack://application:,,,/Assets/laterne.png" Width="54" Height="54" Margin="0,0,14,0" />
-      <StackPanel Grid.Column="1" VerticalAlignment="Center">
-        <TextBlock Text="Laternenwacht" Style="{StaticResource TitleText}" FontSize="30" />
-        <TextBlock Text="Die Kammer des Wächters – hüte dein Licht gegen den ewigen Winter der Ablenkung"
-                   FontSize="14" FontStyle="Italic" Foreground="{StaticResource MutedTextBrush}" />
-      </StackPanel>
-
-      <!-- Siegel-Plakette -->
-      <Border Grid.Column="2" Padding="12,6" CornerRadius="18" BorderThickness="1.2" VerticalAlignment="Center"
-              ToolTip="{Binding Chronicle.SealMessage}">
-        <Border.Style>
-          <Style TargetType="Border">
-            <Setter Property="BorderBrush" Value="{StaticResource GoldDimBrush}" />
-            <Setter Property="Background" Value="#18E8B84A" />
-            <Style.Triggers>
-              <DataTrigger Binding="{Binding Chronicle.IsSealIntact}" Value="False">
-                <Setter Property="BorderBrush" Value="{StaticResource CrimsonBrush}" />
-                <Setter Property="Background" Value="#448B1E2D" />
-              </DataTrigger>
-            </Style.Triggers>
-          </Style>
-        </Border.Style>
-        <StackPanel Orientation="Horizontal">
-          <Grid Width="20" Height="20" Margin="0,0,8,0">
-            <Path Data="{StaticResource ShieldGeometry}" Stretch="Uniform" Fill="#33E8B84A" Stroke="{StaticResource GoldBrush}" StrokeThickness="1.3" />
-            <Path Data="{StaticResource CheckGeometry}" Stretch="None" Stroke="{StaticResource GoldBrush}" StrokeThickness="1.8"
-                  Margin="-2,-1,0,0" HorizontalAlignment="Center" VerticalAlignment="Center"
-                  Visibility="{Binding Chronicle.IsSealIntact, Converter={StaticResource BoolToVisibility}}" />
-          </Grid>
-          <TextBlock Text="{Binding Chronicle.SealHeadline}" Foreground="{StaticResource ParchmentBrush}" FontSize="13" VerticalAlignment="Center" />
-        </StackPanel>
-      </Border>
-    </Grid>
-
-    <!-- ===== Reiter ===== -->
-    <TabControl Grid.Row="1" x:Name="Tabs">
-
-      <!-- ********** Die Wacht ********** -->
-      <TabItem Header="Die Wacht">
-        <Grid Margin="0,18,0,0">
+  <TabControl x:Name="Tabs" Background="Transparent" BorderThickness="0" Padding="0">
+    <TabControl.Template>
+      <ControlTemplate TargetType="TabControl">
+        <Grid>
           <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="5*" />
-            <ColumnDefinition Width="6*" />
+            <ColumnDefinition Width="236" />
+            <ColumnDefinition Width="*" />
           </Grid.ColumnDefinitions>
 
-          <!-- Links: Laterne und Erzählstimme -->
-          <StackPanel VerticalAlignment="Center" Margin="0,0,24,0" DataContext="{Binding Session}">
-            <views:LanternGlyph Width="170" Height="212" IsLit="{Binding IsLit}" />
-            <TextBlock Text="{Binding Headline}" Style="{StaticResource TitleText}" FontSize="24"
-                       HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" Margin="0,14,0,2" />
-            <TextBlock Text="{Binding Detail}" Foreground="{StaticResource ParchmentBrush}" FontSize="15"
-                       HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" />
-            <TextBlock Style="{StaticResource Ornament}" Margin="0,14,0,6" />
-            <TextBlock Text="{Binding Proverb}" Style="{StaticResource Proverb}" MaxWidth="360" />
-          </StackPanel>
+          <!-- ===== Navigationsleiste ===== -->
+          <DockPanel Margin="16,24,16,18">
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="8,0,0,26">
+              <Border Width="34" Height="34" CornerRadius="11" Background="{StaticResource InkBrush}">
+                <Path Data="{StaticResource FlameGeometry}" Fill="{StaticResource LightBrush}" Stretch="Uniform" Width="15" Height="17" />
+              </Border>
+              <TextBlock Text="Laternenwacht" Margin="11,0,0,0" FontFamily="{StaticResource DisplayFont}" FontSize="17"
+                         FontWeight="SemiBold" VerticalAlignment="Center" />
+            </StackPanel>
 
-          <!-- Rechts: Beginnen oder laufende Wacht -->
-          <Grid Grid.Column="1" VerticalAlignment="Center" DataContext="{Binding Session}">
-
-            <!-- Neue Wacht -->
-            <Border Style="{StaticResource ParchmentCard}"
-                    Visibility="{Binding IsActive, Converter={StaticResource InverseBoolToVisibility}}">
-              <StackPanel>
-                <TextBlock Text="Eine neue Wacht beginnen" Style="{StaticResource SectionTitle}" />
-                <TextBlock Style="{StaticResource BodyInk}" Margin="0,0,0,12"
-                           Text="Wähle, wie lange die Laterne brennen soll. Während der Wacht zeigt dir das Banner am oberen Bildschirmrand, wie viel Zeit der Frost der Ablenkung dir bereits gestohlen hat." />
-
-                <TextBlock Text="Schnellwahl" FontSize="13" Foreground="#6B5A43" Margin="0,0,0,2" />
-                <ItemsControl ItemsSource="{x:Static vm:SessionViewModel.Presets}">
-                  <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                      <WrapPanel />
-                    </ItemsPanelTemplate>
-                  </ItemsControl.ItemsPanel>
-                  <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                      <Button Style="{StaticResource InkButton}" MinWidth="86"
-                              Command="{Binding DataContext.StartPresetCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                              CommandParameter="{Binding}">
-                        <TextBlock><Run Text="{Binding Mode=OneWay}" /><Run Text=" min" /></TextBlock>
-                      </Button>
-                    </DataTemplate>
-                  </ItemsControl.ItemTemplate>
-                </ItemsControl>
-
-                <TextBlock Text="Eigene Dauer (Minuten, 1–480)" FontSize="13" Foreground="#6B5A43" Margin="0,12,0,2" />
-                <StackPanel Orientation="Horizontal">
-                  <TextBox Width="90" VerticalContentAlignment="Center" FontSize="18" MaxLength="3"
-                           Text="{Binding DurationMinutes, UpdateSourceTrigger=PropertyChanged}"
-                           AutomationProperties.Name="Dauer in Minuten" />
-                  <Button Style="{StaticResource GoldButton}" Command="{Binding StartCommand}" Margin="12,0,0,0"
-                          IsDefault="True" Padding="22,10">
-                    <StackPanel Orientation="Horizontal">
-                      <Path Data="{StaticResource SunGeometry}" Stroke="{StaticResource InkBrush}" StrokeThickness="1.6"
-                            Width="18" Height="18" Stretch="Uniform" Margin="0,0,8,0" />
-                      <TextBlock Text="Laterne entzünden" />
-                    </StackPanel>
-                  </Button>
-                </StackPanel>
-              </StackPanel>
-            </Border>
-
-            <!-- Laufende Wacht -->
-            <Border Style="{StaticResource ParchmentCard}"
-                    Visibility="{Binding IsActive, Converter={StaticResource BoolToVisibility}}">
-              <StackPanel>
-                <TextBlock Text="Die Wacht ist im Gange" Style="{StaticResource SectionTitle}" />
-                <ProgressBar Style="{StaticResource QuestProgress}" Background="#33000000" Height="8"
-                             Value="{Binding Progress, Mode=OneWay}" Margin="0,0,0,14" />
-                <Border Background="#1A8B1E2D" BorderBrush="{StaticResource CrimsonBrush}" BorderThickness="1" CornerRadius="4"
-                        Padding="10,6" Margin="0,0,0,10"
-                        Visibility="{Binding HasAdmonition, Converter={StaticResource BoolToVisibility}}">
-                  <TextBlock Text="{Binding Admonition}" Style="{StaticResource BodyInk}" FontStyle="Italic" Foreground="{StaticResource CrimsonBrush}" />
-                </Border>
-                <UniformGrid Columns="4" Rows="2">
-                  <StackPanel Margin="6">
-                    <TextBlock Text="{Binding RemainingText}" Style="{StaticResource StatValue}" />
-                    <TextBlock Text="verbleibend" Style="{StaticResource StatLabel}" />
-                  </StackPanel>
-                  <StackPanel Margin="6">
-                    <TextBlock Text="{Binding FocusedText}" Style="{StaticResource StatValue}" Foreground="{StaticResource SpringBrush}" />
-                    <TextBlock Text="im Licht (Fokus)" Style="{StaticResource StatLabel}" />
-                  </StackPanel>
-                  <StackPanel Margin="6" ToolTip="Fokuszeit seit der letzten Ablenkung">
-                    <TextBlock Text="{Binding CurrentStreakText}" Style="{StaticResource StatValue}" Foreground="{StaticResource SpringBrush}" />
-                    <TextBlock Text="aktuelle Serie" Style="{StaticResource StatLabel}" />
-                  </StackPanel>
-                  <StackPanel Margin="6" ToolTip="Längste ununterbrochene Fokusphase dieser Wacht">
-                    <TextBlock Text="{Binding LongestStreakText}" Style="{StaticResource StatValue}" Foreground="{StaticResource GoldDimBrush}" />
-                    <TextBlock Text="beste Serie" Style="{StaticResource StatLabel}" />
-                  </StackPanel>
-                  <StackPanel Margin="6">
-                    <TextBlock Text="{Binding FrostText}" Style="{StaticResource StatValue}" Foreground="#3F7A93" />
-                    <TextBlock Text="im Frost (Ablenkung)" Style="{StaticResource StatLabel}" />
-                  </StackPanel>
-                  <StackPanel Margin="6">
-                    <TextBlock Text="{Binding AwayText}" Style="{StaticResource StatValue}" />
-                    <TextBlock Text="abwesend" Style="{StaticResource StatLabel}" />
-                  </StackPanel>
-                  <StackPanel Margin="6">
-                    <TextBlock Text="{Binding DistractionCount}" Style="{StaticResource StatValue}" />
-                    <TextBlock Text="Verlockungen" Style="{StaticResource StatLabel}" />
-                  </StackPanel>
-                  <StackPanel Margin="6">
-                    <TextBlock Text="{Binding MoodName}" Style="{StaticResource StatValue}"
-                               Foreground="{Binding Mood, Converter={StaticResource MoodToBrush}}" />
-                    <TextBlock Style="{StaticResource StatLabel}"><Run Text="Jahreszeit · Frost" /> <Run Text="{Binding FrostPercentText, Mode=OneWay}" /></TextBlock>
-                  </StackPanel>
-                </UniformGrid>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
-                  <Button Style="{StaticResource InkButton}" Command="{Binding PauseResumeCommand}" Content="{Binding PauseResumeLabel}" />
-                  <Button Style="{StaticResource InkButton}" Command="{Binding AbortCommand}" Content="Wacht abbrechen"
-                          Foreground="{StaticResource CrimsonBrush}" BorderBrush="{StaticResource CrimsonBrush}" />
-                </StackPanel>
-              </StackPanel>
-            </Border>
-          </Grid>
-        </Grid>
-      </TabItem>
-
-      <!-- ********** Die Chronik ********** -->
-      <TabItem Header="Die Chronik">
-        <Grid Margin="0,18,0,0" DataContext="{Binding Chronicle}">
-          <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-          </Grid.RowDefinitions>
-
-          <!-- Siegel -->
-          <Border Style="{StaticResource ParchmentCard}" Padding="16,12">
-            <Grid>
-              <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-              </Grid.ColumnDefinitions>
-              <Grid Width="42" Height="46" Margin="0,0,14,0" VerticalAlignment="Top">
-                <Path Data="{StaticResource ShieldGeometry}" Stretch="Uniform" StrokeThickness="1.6">
-                  <Path.Style>
-                    <Style TargetType="Path">
-                      <Setter Property="Fill" Value="{StaticResource GoldGradientBrush}" />
-                      <Setter Property="Stroke" Value="#7A5A1C" />
+            <!-- Siegelstatus der Chronik -->
+            <Border DockPanel.Dock="Bottom" Padding="12" CornerRadius="14" BorderThickness="1"
+                    ToolTip="{Binding Chronicle.SealMessage}">
+              <Border.Style>
+                <Style TargetType="Border">
+                  <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
+                  <Setter Property="Background" Value="Transparent" />
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding Chronicle.IsSealIntact}" Value="False">
+                      <Setter Property="BorderBrush" Value="{StaticResource ErrorBrush}" />
+                      <Setter Property="Background" Value="{StaticResource ErrorTintBrush}" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Border.Style>
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border Width="24" Height="24" CornerRadius="12" VerticalAlignment="Top">
+                  <Border.Style>
+                    <Style TargetType="Border">
+                      <Setter Property="Background" Value="{StaticResource InkBrush}" />
                       <Style.Triggers>
-                        <DataTrigger Binding="{Binding IsSealIntact}" Value="False">
-                          <Setter Property="Fill" Value="{StaticResource CrimsonBrush}" />
-                          <Setter Property="Stroke" Value="#4A0F18" />
+                        <DataTrigger Binding="{Binding Chronicle.IsSealIntact}" Value="False">
+                          <Setter Property="Background" Value="{StaticResource ErrorBrush}" />
                         </DataTrigger>
                       </Style.Triggers>
                     </Style>
-                  </Path.Style>
-                </Path>
-                <Path Data="{StaticResource CheckGeometry}" Stroke="{StaticResource InkBrush}" StrokeThickness="2.4" Stretch="Uniform"
-                      Width="18" Height="14" HorizontalAlignment="Center" VerticalAlignment="Center"
-                      Visibility="{Binding IsSealIntact, Converter={StaticResource BoolToVisibility}}" />
-                <Path Data="{StaticResource CrackGeometry}" Stroke="{StaticResource ParchmentBrush}" StrokeThickness="2" Stretch="Uniform"
-                      Width="12" Height="28" HorizontalAlignment="Center" VerticalAlignment="Center"
-                      Visibility="{Binding IsSealIntact, Converter={StaticResource InverseBoolToVisibility}}" />
+                  </Border.Style>
+                  <Grid>
+                    <Path Data="{StaticResource CheckGeometry}" Stroke="White" StrokeThickness="2.6" Stretch="Uniform" Width="11" Height="9"
+                          StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                          Visibility="{Binding Chronicle.IsSealIntact, Converter={StaticResource BoolToVisibility}}" />
+                    <Path Data="{StaticResource CrossGeometry}" Stroke="White" StrokeThickness="2.4" Stretch="Uniform" Width="9" Height="9"
+                          StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                          Visibility="{Binding Chronicle.IsSealIntact, Converter={StaticResource InverseBoolToVisibility}}" />
+                  </Grid>
+                </Border>
+                <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                  <TextBlock Text="{Binding Chronicle.SealHeadline}" FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap" />
+                  <TextBlock Text="Chronik versiegelt (HMAC)" FontSize="12" Foreground="{StaticResource Ink3Brush}" />
+                </StackPanel>
               </Grid>
-              <StackPanel Grid.Column="1">
-                <TextBlock Text="{Binding SealHeadline}" Style="{StaticResource SectionTitle}" Margin="0" />
-                <TextBlock Text="{Binding SealMessage}" Style="{StaticResource BodyInk}" />
-                <TextBlock Text="{Binding ArchiveHint}" Style="{StaticResource BodyInk}" Foreground="{StaticResource CrimsonBrush}"
-                           Margin="0,6,0,0" Visibility="{Binding HasArchiveHint, Converter={StaticResource BoolToVisibility}}" />
-                <TextBlock Style="{StaticResource BodyInk}" FontSize="12" Foreground="#6B5A43" Margin="0,6,0,0"
-                           Text="Jede Wacht wird mit einem geheimen Siegel (HMAC-SHA256) verschlossen und mit ihrer Vorgängerin verkettet. Wird ein Eintrag verändert, entfernt oder vertauscht, bricht das Siegel." />
-              </StackPanel>
-            </Grid>
-          </Border>
+            </Border>
 
-          <!-- Kennzahlen -->
-          <UniformGrid Grid.Row="1" Columns="5" Margin="0,14,0,10">
-            <Border Style="{StaticResource ParchmentCard}" Margin="0,0,8,0" Padding="8,10">
-              <StackPanel>
-                <TextBlock Text="{Binding CompletedCount}" Style="{StaticResource StatValue}" />
-                <TextBlock Text="vollendete Wachten" Style="{StaticResource StatLabel}" />
-              </StackPanel>
-            </Border>
-            <Border Style="{StaticResource ParchmentCard}" Margin="4,0" Padding="8,10">
-              <StackPanel>
-                <TextBlock Text="{Binding TotalFocusedText}" Style="{StaticResource StatValue}" Foreground="{StaticResource SpringBrush}" />
-                <TextBlock Text="Zeit im Licht" Style="{StaticResource StatLabel}" />
-              </StackPanel>
-            </Border>
-            <Border Style="{StaticResource ParchmentCard}" Margin="4,0" Padding="8,10">
-              <StackPanel>
-                <TextBlock Text="{Binding TotalFrostText}" Style="{StaticResource StatValue}" Foreground="#3F7A93" />
-                <TextBlock Text="Zeit im Frost" Style="{StaticResource StatLabel}" />
-              </StackPanel>
-            </Border>
-            <Border Style="{StaticResource ParchmentCard}" Margin="8,0,0,0" Padding="8,10">
-              <StackPanel>
-                <TextBlock Text="{Binding SpringShareText}" Style="{StaticResource StatValue}" />
-                <TextBlock Text="Wachten im Frühling" Style="{StaticResource StatLabel}" />
-              </StackPanel>
-            </Border>
-            <Border Style="{StaticResource ParchmentCard}" Margin="8,0,0,0" Padding="8,10" ToolTip="Deine Bestleistung: längste ununterbrochene Fokusphase">
-              <StackPanel>
-                <TextBlock Text="{Binding BestStreakText}" Style="{StaticResource StatValue}" Foreground="{StaticResource GoldDimBrush}" />
-                <TextBlock Text="längste Serie (Rekord)" Style="{StaticResource StatLabel}" />
-              </StackPanel>
-            </Border>
-          </UniformGrid>
+            <StackPanel IsItemsHost="True" />
+          </DockPanel>
 
-          <!-- Einträge -->
-          <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
-            <StackPanel>
-              <TextBlock Text="Noch ist keine Wacht verzeichnet. Entzünde die Laterne, um das erste Kapitel zu schreiben."
-                         Margin="0,30">
-                <TextBlock.Style>
-                  <Style TargetType="TextBlock" BasedOn="{StaticResource Proverb}">
-                    <Setter Property="Visibility" Value="Collapsed" />
+          <!-- ===== Seiteninhalt ===== -->
+          <ContentPresenter Grid.Column="1" ContentSource="SelectedContent" Margin="8,30,40,30" />
+        </Grid>
+      </ControlTemplate>
+    </TabControl.Template>
+
+    <!-- ********************************** Fokus ********************************** -->
+    <TabItem Style="{StaticResource NavItem}">
+      <TabItem.Header>
+        <StackPanel Orientation="Horizontal">
+          <Path Data="{StaticResource ClockGeometry}" Style="{StaticResource LineIcon}" />
+          <TextBlock Text="Fokus" Margin="12,0,0,0" VerticalAlignment="Center" />
+        </StackPanel>
+      </TabItem.Header>
+
+      <Grid DataContext="{Binding Session}">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel>
+          <TextBlock Text="Fokus" Style="{StaticResource PageTitle}" />
+          <TextBlock Text="{Binding Detail}" Style="{StaticResource PageSubtitle}" />
+        </StackPanel>
+
+        <Grid Grid.Row="1" Margin="0,24,0,0">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="21*" />
+            <ColumnDefinition Width="20" />
+            <ColumnDefinition Width="20*" />
+          </Grid.ColumnDefinitions>
+
+          <!-- Ring mit Restzeit -->
+          <Border Style="{StaticResource Card}">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+              <Grid Width="268" Height="268">
+                <views:ProgressRing Progress="{Binding Progress}" Thickness="16" TrackBrush="{StaticResource TrackBrush}">
+                  <views:ProgressRing.Style>
+                    <Style TargetType="views:ProgressRing">
+                      <Setter Property="RingBrush" Value="{StaticResource LightBrush}" />
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDistracted}" Value="True">
+                          <Setter Property="RingBrush" Value="{StaticResource FrostBrush}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsPaused}" Value="True">
+                          <Setter Property="RingBrush" Value="{StaticResource Ink3Brush}" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </views:ProgressRing.Style>
+                </views:ProgressRing>
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                  <TextBlock Text="VERBLEIBEND" Style="{StaticResource Overline}" HorizontalAlignment="Center" />
+                  <TextBlock Text="{Binding RemainingText}" FontFamily="{StaticResource DisplayFont}" FontSize="64" FontWeight="Bold"
+                             Typography.NumeralAlignment="Tabular" HorizontalAlignment="Center" Margin="0,2,0,0" />
+                  <TextBlock Text="{Binding PlannedText}" FontSize="13" Foreground="{StaticResource Ink3Brush}" HorizontalAlignment="Center" />
+                </StackPanel>
+              </Grid>
+
+              <!-- Statuskapsel -->
+              <Border Margin="0,24,0,0">
+                <Border.Style>
+                  <Style TargetType="Border" BasedOn="{StaticResource StatusPill}">
+                    <Setter Property="Background" Value="{StaticResource TrackBrush}" />
+                    <Setter Property="TextElement.Foreground" Value="{StaticResource Ink2Brush}" />
                     <Style.Triggers>
-                      <DataTrigger Binding="{Binding Entries.Count}" Value="0">
-                        <Setter Property="Visibility" Value="Visible" />
+                      <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                          <Condition Binding="{Binding IsActive}" Value="True" />
+                          <Condition Binding="{Binding IsLit}" Value="True" />
+                          <Condition Binding="{Binding IsPaused}" Value="False" />
+                        </MultiDataTrigger.Conditions>
+                        <Setter Property="Background" Value="{StaticResource LightTintBrush}" />
+                        <Setter Property="TextElement.Foreground" Value="{StaticResource LightInkBrush}" />
+                      </MultiDataTrigger>
+                      <DataTrigger Binding="{Binding IsDistracted}" Value="True">
+                        <Setter Property="Background" Value="{StaticResource FrostTintBrush}" />
+                        <Setter Property="TextElement.Foreground" Value="{StaticResource FrostInkBrush}" />
                       </DataTrigger>
                     </Style.Triggers>
                   </Style>
-                </TextBlock.Style>
+                </Border.Style>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                  <Ellipse Width="8" Height="8" Fill="{Binding (TextElement.Foreground), RelativeSource={RelativeSource AncestorType=Border}}"
+                           VerticalAlignment="Center" />
+                  <TextBlock Text="{Binding Headline}" Margin="8,0,0,0" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
+                </StackPanel>
+              </Border>
+
+              <TextBlock Text="{Binding Proverb}" Style="{StaticResource Caption}" FontSize="13" TextAlignment="Center"
+                         HorizontalAlignment="Center" MaxWidth="320" Margin="0,16,0,0" />
+            </StackPanel>
+          </Border>
+
+          <!-- Rechts: neue Wacht beginnen … -->
+          <Border Grid.Column="2" Style="{StaticResource Card}"
+                  Visibility="{Binding IsActive, Converter={StaticResource InverseBoolToVisibility}}">
+            <DockPanel>
+              <StackPanel DockPanel.Dock="Top">
+                <TextBlock Text="Neue Wacht" Style="{StaticResource CardTitle}" />
+                <TextBlock Style="{StaticResource Body}" Margin="0,6,0,0"
+                           Text="Während der Wacht zeigt die Kapsel oben am Bildschirm deine Restzeit – und wie viel Zeit die Ablenkung dir genommen hat." />
+
+                <TextBlock Text="SCHNELLSTART" Style="{StaticResource Overline}" Margin="0,24,0,8" />
+                <Border Background="{StaticResource TrackBrush}" CornerRadius="23" Padding="4">
+                  <ItemsControl ItemsSource="{x:Static vm:SessionViewModel.Presets}">
+                    <ItemsControl.ItemsPanel>
+                      <ItemsPanelTemplate>
+                        <UniformGrid Rows="1" />
+                      </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Button Style="{StaticResource SegmentButton}"
+                                Command="{Binding DataContext.StartPresetCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                CommandParameter="{Binding}">
+                          <TextBlock><Run Text="{Binding Mode=OneWay}" /><Run Text=" min" /></TextBlock>
+                        </Button>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </Border>
+
+                <TextBlock Text="EIGENE DAUER" Style="{StaticResource Overline}" Margin="0,22,0,8" />
+                <Grid>
+                  <TextBox Text="{Binding DurationMinutes, UpdateSourceTrigger=PropertyChanged}" MaxLength="3" FontSize="16"
+                           Padding="14,10,52,10" AutomationProperties.Name="Dauer in Minuten" />
+                  <TextBlock Text="min" Foreground="{StaticResource Ink3Brush}" HorizontalAlignment="Right" VerticalAlignment="Center"
+                             Margin="0,0,16,0" IsHitTestVisible="False" />
+                </Grid>
+              </StackPanel>
+
+              <Button DockPanel.Dock="Bottom" Style="{StaticResource PrimaryButton}" Command="{Binding StartCommand}" IsDefault="True"
+                      Height="50" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Margin="0,24,0,0">
+                <StackPanel Orientation="Horizontal">
+                  <Path Data="{StaticResource FlameGeometry}" Fill="{StaticResource LightBrush}" Stretch="Uniform" Width="13" Height="15" />
+                  <TextBlock Text="Wacht starten" Margin="10,0,0,0" FontSize="15" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+            </DockPanel>
+          </Border>
+
+          <!-- … oder die laufende Wacht -->
+          <Border Grid.Column="2" Style="{StaticResource Card}"
+                  Visibility="{Binding IsActive, Converter={StaticResource BoolToVisibility}}">
+            <DockPanel>
+              <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,20,0,0">
+                <Button Style="{StaticResource SecondaryButton}" Command="{Binding PauseResumeCommand}">
+                  <StackPanel Orientation="Horizontal">
+                    <Path Style="{StaticResource FillIcon}" Width="12" Height="12">
+                      <Path.Data>
+                        <Binding Path="IsPaused">
+                          <Binding.Converter>
+                            <views:PauseGlyphConverter />
+                          </Binding.Converter>
+                        </Binding>
+                      </Path.Data>
+                    </Path>
+                    <TextBlock Text="{Binding PauseResumeLabel}" Margin="8,0,0,0" VerticalAlignment="Center" />
+                  </StackPanel>
+                </Button>
+                <Button Style="{StaticResource DangerButton}" Command="{Binding AbortCommand}" Content="Wacht beenden" Margin="8,0,0,0" />
+              </StackPanel>
+
+              <StackPanel>
+                <TextBlock Text="Diese Wacht" Style="{StaticResource CardTitle}" />
+
+                <!-- Mahnruf (falls gerade aktiv) -->
+                <Border Margin="0,12,0,0" Padding="12,8" CornerRadius="12" Background="{StaticResource FrostTintBrush}"
+                        Visibility="{Binding HasAdmonition, Converter={StaticResource BoolToVisibility}}">
+                  <TextBlock Text="{Binding Admonition}" FontSize="13" Foreground="{StaticResource FrostInkBrush}" TextWrapping="Wrap" />
+                </Border>
+
+                <UniformGrid Columns="2" Margin="0,8,0,0">
+                  <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,0,1" Padding="0,14">
+                    <StackPanel>
+                      <TextBlock Text="IM LICHT" Style="{StaticResource Overline}" />
+                      <TextBlock Text="{Binding FocusedText}" Style="{StaticResource Metric}" />
+                    </StackPanel>
+                  </Border>
+                  <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,0,1" Padding="0,14" ToolTip="Fokuszeit seit der letzten Ablenkung">
+                    <StackPanel>
+                      <TextBlock Text="AKTUELLE SERIE" Style="{StaticResource Overline}" />
+                      <TextBlock Text="{Binding CurrentStreakText}" Style="{StaticResource Metric}" Foreground="{StaticResource LightInkBrush}" />
+                    </StackPanel>
+                  </Border>
+                  <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,0,1" Padding="0,14">
+                    <StackPanel>
+                      <TextBlock Text="IM FROST" Style="{StaticResource Overline}" />
+                      <TextBlock Text="{Binding FrostText}" Style="{StaticResource Metric}" Foreground="{StaticResource FrostInkBrush}" />
+                    </StackPanel>
+                  </Border>
+                  <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,0,1" Padding="0,14" ToolTip="Längste ununterbrochene Fokusphase dieser Wacht">
+                    <StackPanel>
+                      <TextBlock Text="BESTE SERIE" Style="{StaticResource Overline}" />
+                      <TextBlock Text="{Binding LongestStreakText}" Style="{StaticResource Metric}" />
+                    </StackPanel>
+                  </Border>
+                  <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,0,1" Padding="0,14">
+                    <StackPanel>
+                      <TextBlock Text="VERLOCKUNGEN" Style="{StaticResource Overline}" />
+                      <TextBlock Text="{Binding DistractionCount}" Style="{StaticResource Metric}" />
+                    </StackPanel>
+                  </Border>
+                  <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,0,1" Padding="0,14">
+                    <StackPanel>
+                      <TextBlock Text="JAHRESZEIT" Style="{StaticResource Overline}" />
+                      <TextBlock Style="{StaticResource Metric}">
+                        <Run Text="{Binding MoodName, Mode=OneWay}" />
+                        <Run Text="{Binding FrostPercentText, Mode=OneWay}" FontSize="14" FontWeight="Medium" Foreground="{StaticResource Ink3Brush}" />
+                      </TextBlock>
+                    </StackPanel>
+                  </Border>
+                </UniformGrid>
+
+                <!-- Verteilungsbalken: Licht / Frost / abwesend -->
+                <TextBlock Text="VERTEILUNG" Style="{StaticResource Overline}" Margin="0,20,0,8" />
+                <Border CornerRadius="5" Background="{StaticResource TrackBrush}" Height="10" ClipToBounds="True">
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="{Binding FocusWeight, Converter={StaticResource Star}}" />
+                      <ColumnDefinition Width="{Binding FrostWeight, Converter={StaticResource Star}}" />
+                      <ColumnDefinition Width="{Binding AwayWeight, Converter={StaticResource Star}}" />
+                    </Grid.ColumnDefinitions>
+                    <Border Background="{StaticResource LightBrush}" CornerRadius="5,0,0,5" />
+                    <Border Grid.Column="1" Background="{StaticResource FrostBrush}" />
+                    <Border Grid.Column="2" Background="#CFCAC1" CornerRadius="0,5,5,0" />
+                  </Grid>
+                </Border>
+                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                  <Ellipse Width="8" Height="8" Fill="{StaticResource LightBrush}" VerticalAlignment="Center" />
+                  <TextBlock Text="Licht" Style="{StaticResource Caption}" Margin="6,0,16,0" />
+                  <Ellipse Width="8" Height="8" Fill="{StaticResource FrostBrush}" VerticalAlignment="Center" />
+                  <TextBlock Text="Frost" Style="{StaticResource Caption}" Margin="6,0,16,0" />
+                  <Ellipse Width="8" Height="8" Fill="#CFCAC1" VerticalAlignment="Center" />
+                  <TextBlock Style="{StaticResource Caption}" Margin="6,0,0,0"><Run Text="abwesend" /> <Run Text="{Binding AwayText, Mode=OneWay}" /></TextBlock>
+                </StackPanel>
+              </StackPanel>
+            </DockPanel>
+          </Border>
+        </Grid>
+      </Grid>
+    </TabItem>
+
+    <!-- ********************************** Chronik ********************************** -->
+    <TabItem Style="{StaticResource NavItem}">
+      <TabItem.Header>
+        <StackPanel Orientation="Horizontal">
+          <Path Data="{StaticResource BookGeometry}" Style="{StaticResource LineIcon}" />
+          <TextBlock Text="Chronik" Margin="12,0,0,0" VerticalAlignment="Center" />
+        </StackPanel>
+      </TabItem.Header>
+
+      <Grid DataContext="{Binding Chronicle}">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel>
+          <TextBlock Text="Chronik" Style="{StaticResource PageTitle}" />
+          <TextBlock Text="Jede Wacht wird versiegelt und mit ihrer Vorgängerin verkettet." Style="{StaticResource PageSubtitle}" />
+        </StackPanel>
+
+        <!-- Siegel -->
+        <Border Grid.Row="1" Margin="0,24,0,0" Style="{StaticResource SmallCard}">
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Border Width="40" Height="40" CornerRadius="20" VerticalAlignment="Top">
+              <Border.Style>
+                <Style TargetType="Border">
+                  <Setter Property="Background" Value="{StaticResource InkBrush}" />
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsSealIntact}" Value="False">
+                      <Setter Property="Background" Value="{StaticResource ErrorBrush}" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Border.Style>
+              <Grid>
+                <Path Data="{StaticResource CheckGeometry}" Stroke="White" StrokeThickness="2.6" Stretch="Uniform" Width="16" Height="12"
+                      StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                      Visibility="{Binding IsSealIntact, Converter={StaticResource BoolToVisibility}}" />
+                <Path Data="{StaticResource CrossGeometry}" Stroke="White" StrokeThickness="2.4" Stretch="Uniform" Width="12" Height="12"
+                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                      Visibility="{Binding IsSealIntact, Converter={StaticResource InverseBoolToVisibility}}" />
+              </Grid>
+            </Border>
+            <StackPanel Grid.Column="1" Margin="16,0,0,0">
+              <TextBlock Text="{Binding SealHeadline}" FontSize="15" FontWeight="SemiBold" />
+              <TextBlock Text="{Binding SealMessage}" Style="{StaticResource Body}" Margin="0,2,0,0" />
+              <TextBlock Text="{Binding ArchiveHint}" Style="{StaticResource Body}" Foreground="{StaticResource ErrorBrush}" Margin="0,6,0,0"
+                         Visibility="{Binding HasArchiveHint, Converter={StaticResource BoolToVisibility}}" />
+            </StackPanel>
+          </Grid>
+        </Border>
+
+        <!-- Kennzahlen -->
+        <UniformGrid Grid.Row="2" Columns="5" Margin="-6,14,-6,0">
+          <Border Style="{StaticResource SmallCard}" Margin="6,0">
+            <StackPanel>
+              <TextBlock Text="VOLLENDET" Style="{StaticResource Overline}" />
+              <TextBlock Text="{Binding CompletedCount}" Style="{StaticResource Metric}" FontSize="24" />
+            </StackPanel>
+          </Border>
+          <Border Style="{StaticResource SmallCard}" Margin="6,0">
+            <StackPanel>
+              <TextBlock Text="IM LICHT" Style="{StaticResource Overline}" />
+              <TextBlock Text="{Binding TotalFocusedText}" Style="{StaticResource Metric}" FontSize="24" />
+            </StackPanel>
+          </Border>
+          <Border Style="{StaticResource SmallCard}" Margin="6,0">
+            <StackPanel>
+              <TextBlock Text="IM FROST" Style="{StaticResource Overline}" />
+              <TextBlock Text="{Binding TotalFrostText}" Style="{StaticResource Metric}" FontSize="24" Foreground="{StaticResource FrostInkBrush}" />
+            </StackPanel>
+          </Border>
+          <Border Style="{StaticResource SmallCard}" Margin="6,0">
+            <StackPanel>
+              <TextBlock Text="FRÜHLINGSQUOTE" Style="{StaticResource Overline}" />
+              <TextBlock Text="{Binding SpringShareText}" Style="{StaticResource Metric}" FontSize="24" />
+            </StackPanel>
+          </Border>
+          <Border Style="{StaticResource SmallCard}" Margin="6,0" ToolTip="Deine Bestleistung: längste ununterbrochene Fokusphase">
+            <StackPanel>
+              <TextBlock Text="REKORD-SERIE" Style="{StaticResource Overline}" />
+              <TextBlock Text="{Binding BestStreakText}" Style="{StaticResource Metric}" FontSize="24" Foreground="{StaticResource LightInkBrush}" />
+            </StackPanel>
+          </Border>
+        </UniformGrid>
+
+        <!-- Einträge -->
+        <Border Grid.Row="3" Margin="0,14,0,0" Style="{StaticResource Card}" Padding="8,6">
+          <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+              <TextBlock Text="Noch keine Wacht verzeichnet. Starte deine erste – sie erscheint dann hier."
+                         Style="{StaticResource Body}" Foreground="{StaticResource Ink3Brush}" HorizontalAlignment="Center" Margin="0,40">
+                <TextBlock.Visibility>
+                  <Binding Path="Entries.Count">
+                    <Binding.Converter>
+                      <views:ZeroToVisibleConverter />
+                    </Binding.Converter>
+                  </Binding>
+                </TextBlock.Visibility>
               </TextBlock>
               <ItemsControl ItemsSource="{Binding Entries}">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate DataType="{x:Type vm:ChronicleEntry}">
-                    <Border Background="#14F3E9D2" BorderBrush="#33E8B84A" BorderThickness="0,0,0,1" Padding="12,10">
+                    <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,0,1" Padding="16,14">
                       <Grid>
                         <Grid.ColumnDefinitions>
-                          <ColumnDefinition Width="6" />
+                          <ColumnDefinition Width="Auto" />
                           <ColumnDefinition Width="*" />
                           <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <Border Background="{Binding Mood, Converter={StaticResource MoodToBrush}}" CornerRadius="3" />
-                        <StackPanel Grid.Column="1" Margin="12,0">
-                          <TextBlock FontSize="15" Foreground="{StaticResource ParchmentBrush}">
-                            <Run Text="{Binding DateText, Mode=OneWay}" /> <Run Text="·" Foreground="{StaticResource GoldDimBrush}" />
-                            <Run Text="{Binding OutcomeText, Mode=OneWay}" Foreground="{StaticResource GoldBrush}" />
-                            <Run Text="·" Foreground="{StaticResource GoldDimBrush}" /> <Run Text="{Binding MoodText, Mode=OneWay}" />
+                        <Ellipse Width="10" Height="10" Fill="{Binding Mood, Converter={StaticResource MoodToBrush}}" VerticalAlignment="Center"
+                                 ToolTip="{Binding MoodText}" />
+                        <StackPanel Grid.Column="1" Margin="14,0,16,0">
+                          <TextBlock FontSize="14" FontWeight="SemiBold">
+                            <Run Text="{Binding DateText, Mode=OneWay}" />
+                            <Run Text="  " />
+                            <Run Text="{Binding OutcomeText, Mode=OneWay}" FontWeight="Medium" Foreground="{StaticResource Ink3Brush}" />
+                            <Run Text="·" Foreground="{StaticResource Ink3Brush}" />
+                            <Run Text="{Binding MoodText, Mode=OneWay}" FontWeight="Medium" Foreground="{StaticResource Ink3Brush}" />
                           </TextBlock>
-                          <TextBlock Text="{Binding TopDistractionText}" FontSize="12" FontStyle="Italic" Foreground="{StaticResource MutedTextBrush}" />
+                          <TextBlock Text="{Binding TopDistractionText}" Style="{StaticResource Caption}" Margin="0,2,0,0" />
                         </StackPanel>
                         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                          <TextBlock Foreground="{StaticResource MutedTextBrush}" Margin="0,0,18,0" VerticalAlignment="Center">
-                            <Run Text="geplant" /> <Run Text="{Binding PlannedText, Mode=OneWay}" Foreground="{StaticResource ParchmentBrush}" />
-                          </TextBlock>
-                          <TextBlock Foreground="{StaticResource MutedTextBrush}" Margin="0,0,18,0" VerticalAlignment="Center">
-                            <Run Text="Licht" /> <Run Text="{Binding FocusedText, Mode=OneWay}" Foreground="#9BCB82" />
-                          </TextBlock>
-                          <TextBlock Foreground="{StaticResource MutedTextBrush}" Margin="0,0,18,0" VerticalAlignment="Center">
-                            <Run Text="Serie" /> <Run Text="{Binding LongestStreakText, Mode=OneWay}" Foreground="{StaticResource GoldBrush}" />
-                          </TextBlock>
-                          <TextBlock Foreground="{StaticResource MutedTextBrush}" Margin="0,0,18,0" VerticalAlignment="Center">
-                            <Run Text="Frost" /> <Run Text="{Binding FrostText, Mode=OneWay}" Foreground="{StaticResource FrostBrush}" />
-                          </TextBlock>
-                          <TextBlock Text="{Binding DistractionsText}" Foreground="{StaticResource MutedTextBrush}" VerticalAlignment="Center" />
+                          <StackPanel Margin="0,0,22,0">
+                            <TextBlock Text="LICHT" Style="{StaticResource Overline}" FontSize="10.5" />
+                            <TextBlock Text="{Binding FocusedText}" FontSize="14" FontWeight="SemiBold" Typography.NumeralAlignment="Tabular" />
+                          </StackPanel>
+                          <StackPanel Margin="0,0,22,0">
+                            <TextBlock Text="SERIE" Style="{StaticResource Overline}" FontSize="10.5" />
+                            <TextBlock Text="{Binding LongestStreakText}" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource LightInkBrush}"
+                                       Typography.NumeralAlignment="Tabular" />
+                          </StackPanel>
+                          <StackPanel Margin="0,0,22,0">
+                            <TextBlock Text="FROST" Style="{StaticResource Overline}" FontSize="10.5" />
+                            <TextBlock Text="{Binding FrostText}" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource FrostInkBrush}"
+                                       Typography.NumeralAlignment="Tabular" />
+                          </StackPanel>
+                          <StackPanel>
+                            <TextBlock Text="GEPLANT" Style="{StaticResource Overline}" FontSize="10.5" />
+                            <TextBlock Text="{Binding PlannedText}" FontSize="14" FontWeight="SemiBold" />
+                          </StackPanel>
                         </StackPanel>
                       </Grid>
                     </Border>
@@ -353,144 +530,227 @@
               </ItemsControl>
             </StackPanel>
           </ScrollViewer>
-        </Grid>
-      </TabItem>
+        </Border>
+      </Grid>
+    </TabItem>
 
-      <!-- ********** Gefährten & Verlockungen ********** -->
-      <TabItem Header="Gefährten &amp; Verlockungen">
-        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,18,0,0">
-          <Border Style="{StaticResource ParchmentCard}" DataContext="{Binding Settings}" Margin="0,0,0,8">
-            <StackPanel>
-              <TextBlock Text="Wer dir beisteht – und wer dich vom Pfad lockt" Style="{StaticResource SectionTitle}" />
-              <TextBlock Style="{StaticResource BodyInk}" Margin="0,0,0,10"
-                         Text="Trage Programmnamen ein (z. B. „devenv“ oder „discord.exe“), einen pro Zeile. Die Laternenwacht sieht nur, welches Programm im Vordergrund ist – niemals Fenstertitel, Inhalte oder Tastatureingaben." />
+    <!-- ********************************** Einstellungen ********************************** -->
+    <TabItem Style="{StaticResource NavItem}">
+      <TabItem.Header>
+        <StackPanel Orientation="Horizontal">
+          <Path Data="{StaticResource SlidersGeometry}" Style="{StaticResource LineIcon}" />
+          <TextBlock Text="Einstellungen" Margin="12,0,0,0" VerticalAlignment="Center" />
+        </StackPanel>
+      </TabItem.Header>
 
-              <TextBlock Text="Wie sollen unbekannte Programme gewertet werden?" FontWeight="SemiBold" Style="{StaticResource BodyInk}" />
-              <RadioButton GroupName="Mode" IsChecked="{Binding UseBlockList}"
-                           Content="Milde Wacht – nur die Verlockungen bringen Frost, alles andere gilt als Fokus" />
-              <RadioButton GroupName="Mode" IsChecked="{Binding UseAllowList}"
-                           Content="Strenge Wacht – nur die Gefährten gelten als Fokus, alles andere bringt Frost" />
+      <DockPanel DataContext="{Binding Settings}">
+        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,20">
+          <TextBlock Text="Einstellungen" Style="{StaticResource PageTitle}" />
+          <TextBlock Text="Was zählt als Fokus, was als Ablenkung – und wie die Laternenwacht dich begleitet." Style="{StaticResource PageSubtitle}" />
+        </StackPanel>
 
-              <Grid Margin="0,12,0,0">
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="*" />
-                  <ColumnDefinition Width="16" />
-                  <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <StackPanel>
-                  <TextBlock Text="Gefährten (dienen der Arbeit)" FontWeight="SemiBold" Style="{StaticResource BodyInk}" Foreground="{StaticResource SpringBrush}" />
-                  <TextBox Text="{Binding AllowedText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="150"
-                           VerticalScrollBarVisibility="Auto" TextWrapping="NoWrap" MaxLength="12000"
-                           AutomationProperties.Name="Gefährten" />
-                </StackPanel>
-                <StackPanel Grid.Column="2">
-                  <TextBlock Text="Verlockungen (bringen Frost)" FontWeight="SemiBold" Style="{StaticResource BodyInk}" Foreground="#3F7A93" />
-                  <TextBox Text="{Binding DistractingText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="150"
-                           VerticalScrollBarVisibility="Auto" TextWrapping="NoWrap" MaxLength="12000"
-                           AutomationProperties.Name="Verlockungen" />
-                </StackPanel>
-              </Grid>
-
-              <CheckBox IsChecked="{Binding UseKnownDistractions}" Margin="0,10,0,0"
-                        Content="Zusätzlich bekannte Verlockungen erkennen (wird sofort übernommen)"
-                        ToolTip="{Binding KnownDistractionsList}" />
-              <TextBlock Style="{StaticResource BodyInk}" FontSize="12" Foreground="#6B5A43"
-                         Text="Eingebauter Katalog mit Spielen (z. B. Hearthstone, League of Legends, Minecraft), Launchern (Battle.net, Steam) und Messengern (Discord, WhatsApp). Gefährten haben Vorrang. Tipp: Rechtsklick auf die Fokusleiste markiert das Programm im Vordergrund als Verlockung." />
-              <WrapPanel Margin="0,14,0,0">
-                <StackPanel Margin="0,0,28,0">
-                  <TextBlock Text="Standarddauer einer Wacht (Minuten)" Style="{StaticResource BodyInk}" />
-                  <TextBox Text="{Binding DurationText, UpdateSourceTrigger=PropertyChanged}" Width="120" HorizontalAlignment="Left" MaxLength="3" />
-                </StackPanel>
-                <StackPanel Margin="0,0,28,0">
-                  <TextBlock Text="Als abwesend gelten nach (Sekunden ohne Eingabe)" Style="{StaticResource BodyInk}" />
-                  <TextBox Text="{Binding IdleText, UpdateSourceTrigger=PropertyChanged}" Width="120" HorizontalAlignment="Left" MaxLength="4" />
-                </StackPanel>
-              </WrapPanel>
-              <CheckBox IsChecked="{Binding BarAlwaysOnTop}" Margin="0,12,0,0"
-                        Content="Die Fokusleiste stets über allen Fenstern zeigen" />
-
-              <TextBlock Style="{StaticResource Ornament}" Margin="0,14,0,6" />
-              <TextBlock Text="Sprüche &amp; Botschaften" FontWeight="SemiBold" Style="{StaticResource BodyInk}" />
-              <TextBlock Style="{StaticResource BodyInk}" FontSize="12" Foreground="#6B5A43" Margin="0,0,0,6"
-                         Text="Lässt du dich zu oft ablenken, bringt ein Rabe einen Mahnruf. Wähle, aus welchem Buch der Chroniken er stammt – auch per Rechtsklick auf die Fokusleiste. Diese Einstellungen gelten sofort." />
-              <WrapPanel>
-                <ComboBox ItemsSource="{Binding BookOptions}" SelectedItem="{Binding SelectedBookOption}"
-                          DisplayMemberPath="Label" MinWidth="320" FontFamily="{StaticResource RealmFont}" FontSize="14"
-                          Margin="0,0,16,0" VerticalAlignment="Center" AutomationProperties.Name="Buch der Mahnrufe" />
-                <CheckBox IsChecked="{Binding ShowNotifications}" VerticalAlignment="Center" Margin="0,0,16,0"
-                          Content="Mahnrufe bei vielen Ablenkungen" />
-                <CheckBox IsChecked="{Binding ShowPraise}" VerticalAlignment="Center"
-                          Content="Lob &amp; „Willkommen zurück“ (Serien, Rückkehr, Bestleistung)" />
-              </WrapPanel>
-              <TextBlock Text="Treibgut im Fluss der Ablenkung" FontWeight="SemiBold" Style="{StaticResource BodyInk}" Margin="0,12,0,0" />
-              <TextBlock Style="{StaticResource BodyInk}" FontSize="12" Foreground="#6B5A43" Margin="0,0,0,6"
-                         Text="Bei jeder neuen Ablenkung schwimmt ein Meme über den Bildschirm. Ein Klick lässt es versinken. Eigene Bilder (JPG, PNG, BMP, GIF, je bis 10 MB) kannst du hinzufügen." />
-              <WrapPanel>
-                <CheckBox IsChecked="{Binding ShowMemes}" VerticalAlignment="Center" Margin="0,0,16,0"
-                          Content="Memes bei Ablenkung treiben lassen" />
-                <Button Style="{StaticResource InkButton}" Command="{Binding AddMemesCommand}" Content="Memes hinzufügen …" />
-                <Button Style="{StaticResource InkButton}" Command="{Binding OpenMemeFolderCommand}" Content="Meme-Ordner öffnen" />
-              </WrapPanel>
-              <TextBlock Text="{Binding MemeSummary}" Style="{StaticResource BodyInk}" FontSize="12" FontStyle="Italic" Foreground="#6B5A43" />
-
-              <Button Style="{StaticResource InkButton}" Command="{Binding ResetBarPositionCommand}" HorizontalAlignment="Left"
-                      Margin="0,8,0,0" Content="Fokusleiste zurück an den oberen Rand" />
-
-              <ItemsControl ItemsSource="{Binding Errors}" Margin="0,10,0,0">
+        <!-- Fußzeile mit Speichern -->
+        <Border DockPanel.Dock="Bottom" Margin="0,16,0,0">
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel VerticalAlignment="Center">
+              <ItemsControl ItemsSource="{Binding Errors}">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate>
-                    <TextBlock Text="{Binding StringFormat='✗ {0}'}" Foreground="{StaticResource CrimsonBrush}" Style="{StaticResource BodyInk}" />
+                    <TextBlock Text="{Binding}" Style="{StaticResource Body}" Foreground="{StaticResource ErrorBrush}" FontSize="13" />
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
-              <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource BodyInk}" FontStyle="Italic" Margin="0,6,0,0"
+              <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource Body}" FontSize="13" FontWeight="Medium"
                          Foreground="{Binding StatusIsError, Converter={StaticResource ErrorToBrush}}"
                          Visibility="{Binding StatusMessage, Converter={StaticResource TextToVisibility}}" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+              <Button Style="{StaticResource GhostButton}" Command="{Binding DefaultsCommand}" Content="Standardwerte" />
+              <Button Style="{StaticResource SecondaryButton}" Command="{Binding ResetCommand}" Content="Verwerfen" Margin="8,0,0,0" />
+              <Button Style="{StaticResource PrimaryButton}" Command="{Binding SaveCommand}" Content="Speichern" Margin="8,0,0,0" />
+            </StackPanel>
+          </Grid>
+        </Border>
 
-              <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
-                <Button Style="{StaticResource InkButton}" Command="{Binding DefaultsCommand}" Content="Standardwerte" />
-                <Button Style="{StaticResource InkButton}" Command="{Binding ResetCommand}" Content="Verwerfen" />
-                <Button Style="{StaticResource GoldButton}" Command="{Binding SaveCommand}" Content="In die Schriftrolle übertragen" />
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,8,0">
+          <StackPanel>
+            <!-- Erkennung -->
+            <Border Style="{StaticResource Card}">
+              <StackPanel>
+                <TextBlock Text="Erkennung" Style="{StaticResource CardTitle}" />
+                <TextBlock Style="{StaticResource Body}" Margin="0,4,0,14"
+                           Text="Programmnamen, einer pro Zeile (z. B. devenv oder discord.exe). Erfasst wird nur, welches Programm im Vordergrund ist – nie Fenstertitel, Inhalte oder Tastatureingaben." />
+                <RadioButton GroupName="Mode" IsChecked="{Binding UseBlockList}">
+                  <StackPanel>
+                    <TextBlock Text="Mild" FontWeight="SemiBold" />
+                    <TextBlock Text="Nur Ablenkungen zählen als Frost – alles andere gilt als Fokus." Style="{StaticResource Caption}" FontSize="13" />
+                  </StackPanel>
+                </RadioButton>
+                <RadioButton GroupName="Mode" IsChecked="{Binding UseAllowList}">
+                  <StackPanel>
+                    <TextBlock Text="Streng" FontWeight="SemiBold" />
+                    <TextBlock Text="Nur Arbeitsprogramme zählen als Fokus – alles andere ist Frost." Style="{StaticResource Caption}" FontSize="13" />
+                  </StackPanel>
+                </RadioButton>
+
+                <Grid Margin="0,16,0,0">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" />
+                  </Grid.ColumnDefinitions>
+                  <StackPanel>
+                    <TextBlock Text="ARBEITSPROGRAMME" Style="{StaticResource Overline}" Margin="0,0,0,8" />
+                    <TextBox Text="{Binding AllowedText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="150"
+                             VerticalScrollBarVisibility="Auto" TextWrapping="NoWrap" MaxLength="12000" AutomationProperties.Name="Arbeitsprogramme" />
+                  </StackPanel>
+                  <StackPanel Grid.Column="2">
+                    <TextBlock Text="ABLENKUNGEN" Style="{StaticResource Overline}" Margin="0,0,0,8" />
+                    <TextBox Text="{Binding DistractingText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="150"
+                             VerticalScrollBarVisibility="Auto" TextWrapping="NoWrap" MaxLength="12000" AutomationProperties.Name="Ablenkungen" />
+                  </StackPanel>
+                </Grid>
+
+                <CheckBox IsChecked="{Binding UseKnownDistractions}" Margin="0,16,0,0" ToolTip="{Binding KnownDistractionsList}">
+                  <StackPanel>
+                    <TextBlock Text="Bekannte Ablenkungen automatisch erkennen" />
+                    <TextBlock Text="Spiele, Launcher und Messenger wie Hearthstone, Steam oder Discord. Arbeitsprogramme haben Vorrang." Style="{StaticResource Caption}" FontSize="13" />
+                  </StackPanel>
+                </CheckBox>
               </StackPanel>
-            </StackPanel>
-          </Border>
-        </ScrollViewer>
-      </TabItem>
+            </Border>
 
-      <!-- ********** Über ********** -->
-      <TabItem Header="Über die Laterne">
-        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,18,0,0">
-          <Border Style="{StaticResource ParchmentCard}">
+            <!-- Wacht -->
+            <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+              <StackPanel>
+                <TextBlock Text="Wacht" Style="{StaticResource CardTitle}" />
+                <WrapPanel Margin="0,14,0,0">
+                  <StackPanel Margin="0,0,24,0" Width="220">
+                    <TextBlock Text="STANDARDDAUER (MIN)" Style="{StaticResource Overline}" Margin="0,0,0,8" />
+                    <TextBox Text="{Binding DurationText, UpdateSourceTrigger=PropertyChanged}" MaxLength="3" />
+                  </StackPanel>
+                  <StackPanel Width="220">
+                    <TextBlock Text="ABWESEND NACH (SEK.)" Style="{StaticResource Overline}" Margin="0,0,0,8" />
+                    <TextBox Text="{Binding IdleText, UpdateSourceTrigger=PropertyChanged}" MaxLength="4" />
+                  </StackPanel>
+                </WrapPanel>
+                <CheckBox IsChecked="{Binding BarAlwaysOnTop}" Margin="0,16,0,0" Content="Fokusleiste stets über allen Fenstern" />
+                <Button Style="{StaticResource SecondaryButton}" Command="{Binding ResetBarPositionCommand}" HorizontalAlignment="Left"
+                        Margin="0,10,0,0" Content="Fokusleiste wieder oben mittig anordnen" />
+              </StackPanel>
+            </Border>
+
+            <!-- Botschaften -->
+            <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+              <StackPanel>
+                <TextBlock Text="Botschaften" Style="{StaticResource CardTitle}" />
+                <TextBlock Style="{StaticResource Body}" Margin="0,4,0,14"
+                           Text="Lob für lange Fokus-Serien, ein Gruß bei der Rückkehr und – auf Wunsch – Mahnrufe. Die Figuren stammen aus dem gewählten Buch. Änderungen gelten sofort." />
+                <TextBlock Text="BUCH" Style="{StaticResource Overline}" Margin="0,0,0,8" />
+                <ComboBox ItemsSource="{Binding BookOptions}" SelectedItem="{Binding SelectedBookOption}"
+                          DisplayMemberPath="Label" MaxWidth="420" HorizontalAlignment="Left" MinWidth="340"
+                          AutomationProperties.Name="Buch der Botschaften" />
+                <CheckBox IsChecked="{Binding ShowPraise}" Margin="0,14,0,0">
+                  <StackPanel>
+                    <TextBlock Text="Lob und „Willkommen zurück“" />
+                    <TextBlock Text="Leise Botschaften bei Fokus-Serien, Rückkehr zur Arbeit und neuen Bestleistungen." Style="{StaticResource Caption}" FontSize="13" />
+                  </StackPanel>
+                </CheckBox>
+                <CheckBox IsChecked="{Binding ShowNotifications}">
+                  <StackPanel>
+                    <TextBlock Text="Mahnrufe bei vielen Ablenkungen" />
+                    <TextBlock Text="Mit Ton – abschalten, wenn du nur Positives sehen möchtest." Style="{StaticResource Caption}" FontSize="13" />
+                  </StackPanel>
+                </CheckBox>
+              </StackPanel>
+            </Border>
+
+            <!-- Memes -->
+            <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+              <StackPanel>
+                <TextBlock Text="Memes" Style="{StaticResource CardTitle}" />
+                <TextBlock Style="{StaticResource Body}" Margin="0,4,0,10"
+                           Text="Bei jeder neuen Ablenkung treibt ein Meme über den Bildschirm. Ein Klick lässt es versinken. Erlaubt: JPG, PNG, BMP, GIF bis 10 MB." />
+                <CheckBox IsChecked="{Binding ShowMemes}" Content="Memes bei Ablenkung zeigen" />
+                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                  <Button Style="{StaticResource SecondaryButton}" Command="{Binding AddMemesCommand}">
+                    <StackPanel Orientation="Horizontal">
+                      <Path Data="{StaticResource PlusGeometry}" Style="{StaticResource LineIcon}" Width="14" Height="14" StrokeThickness="2" />
+                      <TextBlock Text="Memes hinzufügen" Margin="8,0,0,0" VerticalAlignment="Center" />
+                    </StackPanel>
+                  </Button>
+                  <Button Style="{StaticResource GhostButton}" Command="{Binding OpenMemeFolderCommand}" Margin="8,0,0,0">
+                    <StackPanel Orientation="Horizontal">
+                      <Path Data="{StaticResource FolderGeometry}" Style="{StaticResource LineIcon}" Width="16" Height="16" />
+                      <TextBlock Text="Ordner öffnen" Margin="8,0,0,0" VerticalAlignment="Center" />
+                    </StackPanel>
+                  </Button>
+                </StackPanel>
+                <TextBlock Text="{Binding MemeSummary}" Style="{StaticResource Caption}" Margin="0,10,0,0" />
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </DockPanel>
+    </TabItem>
+
+    <!-- ********************************** Über ********************************** -->
+    <TabItem Style="{StaticResource NavItem}">
+      <TabItem.Header>
+        <StackPanel Orientation="Horizontal">
+          <Path Data="{StaticResource InfoGeometry}" Style="{StaticResource LineIcon}" />
+          <TextBlock Text="Über" Margin="12,0,0,0" VerticalAlignment="Center" />
+        </StackPanel>
+      </TabItem.Header>
+
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel MaxWidth="760" HorizontalAlignment="Left">
+          <TextBlock Text="Über die Laternenwacht" Style="{StaticResource PageTitle}" />
+          <TextBlock Text="Ein Licht im Schnee – solange du bei der Sache bist." Style="{StaticResource PageSubtitle}" />
+
+          <Border Style="{StaticResource Card}" Margin="0,24,0,0">
             <StackPanel>
-              <TextBlock Text="Vom Hüten des Lichts" Style="{StaticResource SectionTitle}" />
-              <TextBlock Style="{StaticResource BodyInk}" Margin="0,0,0,8"
-                         Text="Tief im verschneiten Wald steht ein einsamer Laternenpfahl. Solange du bei deiner Arbeit bleibst, brennt sein Licht. Lässt du dich von einer Verlockung fortlocken, kriecht Frost über das Glas – und die Fokusleiste am oberen Bildschirmrand zählt jede Sekunde dieses Winters." />
-              <TextBlock Style="{StaticResource BodyInk}" Margin="0,0,0,8"
-                         Text="Am Ende jeder Wacht zeigt die Jahreszeit, wie gut du dein Licht gehütet hast: Frühling (unter 10 % Frost), Tauwetter (unter 25 %) oder Winter." />
-              <TextBlock Style="{StaticResource Ornament}" />
-
-              <TextBlock Text="Sicherheit &amp; Integrität" Style="{StaticResource SectionTitle}" />
-              <TextBlock Style="{StaticResource BodyInk}" Margin="0,0,0,4" Text="• Keine Netzwerkverbindung, keine Telemetrie, keine Administratorrechte." />
-              <TextBlock Style="{StaticResource BodyInk}" Margin="0,0,0,4" Text="• Erfasst wird nur der Name des Vordergrundprogramms und die Leerlaufzeit – keine Fenstertitel, keine Tastatureingaben." />
-              <TextBlock Style="{StaticResource BodyInk}" Margin="0,0,0,4" Text="• Die Chronik ist mit HMAC-SHA256 versiegelt und verkettet; ein Anker erkennt abgeschnittene Einträge." />
-              <TextBlock Style="{StaticResource BodyInk}" Margin="0,0,0,4" Text="• Der Siegelschlüssel wird mit der Windows-Datenschutz-API (DPAPI) an dein Benutzerkonto gebunden." />
-              <TextBlock Style="{StaticResource BodyInk}" Margin="0,0,0,4" Text="• Zeiten werden mit einer monotonen Uhr gemessen – das Verstellen der Systemzeit ändert nichts." />
-              <TextBlock Style="{StaticResource BodyInk}" Margin="0,0,0,10" Text="• Alle Dateien werden atomar geschrieben und beim Laden streng geprüft." />
-
-              <TextBlock Style="{StaticResource BodyInk}" FontSize="12" Foreground="#6B5A43">
-                <Run Text="Datenablage:" /> <Run Text="{Binding DataDirectory, Mode=OneWay}" />
-              </TextBlock>
-              <TextBlock Style="{StaticResource BodyInk}" FontSize="12" Foreground="#6B5A43">
-                <Run Text="{Binding VersionText, Mode=OneWay}" /> <Run Text="· Gestaltung frei inspiriert von der Atmosphäre klassischer Fantasy-Chroniken." />
-              </TextBlock>
+              <TextBlock Style="{StaticResource Body}" FontSize="15" Foreground="{StaticResource InkBrush}"
+                         Text="Solange du an deiner Aufgabe bleibst, brennt die Laterne. Lockt dich etwas fort, zählt die Kapsel oben am Bildschirm den Frost – und sobald du zurückkommst, begrüßt dich eine Figur aus den Chroniken von Narnia." />
+              <TextBlock Style="{StaticResource Body}" Margin="0,10,0,0"
+                         Text="Am Ende jeder Wacht zeigt die Jahreszeit, wie gut es lief: Frühling (unter 10 % Frost), Tauwetter (unter 25 %) oder Winter." />
             </StackPanel>
           </Border>
-        </ScrollViewer>
-      </TabItem>
-    </TabControl>
 
-    <!-- ===== Fußzeile ===== -->
-    <TextBlock Grid.Row="2" Style="{StaticResource Proverb}" FontSize="12" Margin="0,10,0,0"
-               Text="„Solange die Laterne brennt, findet man den Weg zurück.“" />
-  </Grid>
+          <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+            <StackPanel>
+              <TextBlock Text="Sicherheit &amp; Datenschutz" Style="{StaticResource CardTitle}" Margin="0,0,0,8" />
+              <ItemsControl ItemsSource="{x:Static vm:ShellViewModel.SecurityFacts}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Grid Margin="0,6">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                      </Grid.ColumnDefinitions>
+                      <Path Data="{StaticResource CheckGeometry}" Stroke="{StaticResource LightBrush}" StrokeThickness="2.2" Stretch="Uniform"
+                            Width="12" Height="9" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                            VerticalAlignment="Top" Margin="0,6,0,0" />
+                      <TextBlock Grid.Column="1" Text="{Binding}" Style="{StaticResource Body}" Margin="12,0,0,0" />
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+
+          <TextBlock Style="{StaticResource Caption}" Margin="4,16,0,0">
+            <Run Text="Datenablage:" /> <Run Text="{Binding DataDirectory, Mode=OneWay}" />
+          </TextBlock>
+          <TextBlock Style="{StaticResource Caption}" Margin="4,2,0,0">
+            <Run Text="{Binding VersionText, Mode=OneWay}" /> <Run Text="· Inspiriert von den Chroniken von Narnia (C. S. Lewis); alle Texte sind eigene Formulierungen." />
+          </TextBlock>
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
+  </TabControl>
 </Window>

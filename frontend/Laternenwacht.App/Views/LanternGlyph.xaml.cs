@@ -4,7 +4,7 @@ using System.Windows.Media.Animation;
 
 namespace Laternenwacht.App.Views;
 
-/// <summary>Animierte Laterne – das Leitsymbol der Anwendung.</summary>
+/// <summary>Flamme (Licht) oder Schneeflocke (Frost) – das Zustandssymbol der Anwendung.</summary>
 public partial class LanternGlyph : UserControl
 {
     public static readonly DependencyProperty IsLitProperty = DependencyProperty.Register(
@@ -43,7 +43,6 @@ public partial class LanternGlyph : UserControl
         else
         {
             _flicker.Stop(this);
-            Halo.Opacity = 0.15;
         }
     }
 }

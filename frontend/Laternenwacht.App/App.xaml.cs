@@ -229,7 +229,7 @@ public partial class App : Application
         var header = record.Outcome == SessionPhase.Completed
             ? Lore.Completed(RealmMoods.FromFrost(record.Measured <= TimeSpan.Zero ? 0 : record.Distracted / record.Measured)).Headline
             : "Auch eine kurze Wacht zählt";
-        notifications.ShowPraise(header, string.Join(" ", parts), "— die Laternenwacht");
+        notifications.ShowPraise(header, string.Join(" ", parts), "Laternenwacht");
     }
 
     private void OnSessionEnded(SessionRecord record, ChronicleViewModel chronicle)

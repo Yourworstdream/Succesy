@@ -4,19 +4,12 @@ using System.Windows.Input;
 namespace Laternenwacht.App.Views;
 
 /// <summary>
-/// Randloses, stets sichtbares Banner. Standardmäßig hängt es am oberen Bildschirmrand;
+/// Randlose, stets sichtbare Kapsel. Standardmäßig sitzt sie mittig am oberen Bildschirmrand;
 /// per Maus lässt es sich frei verschieben, die Position wird gespeichert.
 /// Es stiehlt beim Anklicken nicht den Fokus – sonst würde es selbst die Messung verfälschen.
 /// </summary>
 public partial class FocusBarWindow : Window
 {
-    private static readonly CornerRadius DockedCorners = new(0, 0, 16, 16);
-    private static readonly Thickness DockedBorder = new(1.5, 0, 1.5, 1.5);
-    private static readonly Thickness DockedMargin = new(10, 0, 10, 12);
-    private static readonly CornerRadius FloatingCorners = new(16);
-    private static readonly Thickness FloatingBorder = new(1.5);
-    private static readonly Thickness FloatingMargin = new(10, 6, 10, 12);
-
     private double? _customLeft;
     private double? _customTop;
     private bool _dragging;
@@ -57,14 +50,12 @@ public partial class FocusBarWindow : Window
 
         if (_customLeft is { } left && _customTop is { } top && IsOnScreen(left, top))
         {
-            SetFloatingLook(true);
             Left = left;
             Top = top;
             return;
         }
 
         // Ohne eigene Position – oder wenn der Bildschirm von damals fehlt – oben zentriert andocken.
-        SetFloatingLook(false);
         var area = SystemParameters.WorkArea;
         Left = area.Left + Math.Max(0, (area.Width - ActualWidth) / 2);
         Top = area.Top;
@@ -82,7 +73,6 @@ public partial class FocusBarWindow : Window
         _dragging = true;
         try
         {
-            SetFloatingLook(true);
             DragMove();
         }
         finally
@@ -108,13 +98,5 @@ public partial class FocusBarWindow : Window
             && left + 80 <= SystemParameters.VirtualScreenLeft + SystemParameters.VirtualScreenWidth
             && top >= SystemParameters.VirtualScreenTop - 10
             && top + 30 <= SystemParameters.VirtualScreenTop + SystemParameters.VirtualScreenHeight;
-    }
-
-    private void SetFloatingLook(bool floating)
-    {
-        Banner.CornerRadius = floating ? FloatingCorners : DockedCorners;
-        Banner.BorderThickness = floating ? FloatingBorder : DockedBorder;
-        Banner.Margin = floating ? FloatingMargin : DockedMargin;
-        FrostVeil.CornerRadius = floating ? new CornerRadius(15) : new CornerRadius(0, 0, 15, 15);
     }
 }

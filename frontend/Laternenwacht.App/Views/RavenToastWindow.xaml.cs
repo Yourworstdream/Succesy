@@ -17,22 +17,23 @@ public partial class RavenToastWindow : Window
     private AnimationClock? _lifetimeClock;
     private bool _closing;
 
-    public RavenToastWindow(string header, string message, string source, TimeSpan lifetime, bool positive)
+    public RavenToastWindow(string header, string message, string source, string avatar, TimeSpan lifetime, bool positive)
     {
         InitializeComponent();
-        HeaderText.Text = header;
+        HeaderText.Text = header.ToUpper(System.Globalization.CultureInfo.CurrentCulture);
         MessageText.Text = message;
-        if (positive)
-        {
-            // Lob trägt ein grünes Frühlingssiegel statt des karmesinroten Mahnsiegels.
-            SealOuter.Fill = (System.Windows.Media.Brush)FindResource("SpringBrush");
-            SealOuter.Stroke = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x3E, 0x5E, 0x2F));
-            SealRing.Stroke = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xC8, 0xE0, 0xB4));
-            SealGlyph.Text = "✦";
-        }
-
         SourceText.Text = source;
+        AvatarText.Text = avatar;
         _lifetime = lifetime;
+
+        if (!positive)
+        {
+            // Mahnrufe gehören zum Frost: Eisblau statt Laternenorange.
+            Avatar.Background = (System.Windows.Media.Brush)FindResource("FrostTintBrush");
+            AvatarText.Foreground = (System.Windows.Media.Brush)FindResource("FrostInkBrush");
+            HeaderText.Foreground = AvatarText.Foreground;
+            Lifetime.Foreground = (System.Windows.Media.Brush)FindResource("FrostBrush");
+        }
 
         SourceInitialized += (_, _) => WindowStyles.MakeNonActivatingToolWindow(this);
         Loaded += (_, _) => FlyIn();

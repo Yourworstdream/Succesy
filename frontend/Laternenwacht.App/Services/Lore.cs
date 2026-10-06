@@ -48,6 +48,30 @@ internal static class Lore
         };
     }
 
+    /// <summary>Kurzer Status für die Fokusleiste, z. B. "Im Licht · Serie 12:30" oder "Frost · Hearthstone".</summary>
+    public static string Short(FocusSession? session)
+    {
+        if (session is null)
+        {
+            return "Bereit für eine Wacht";
+        }
+
+        return session.Phase switch
+        {
+            SessionPhase.Paused => "Rast · die Zeit steht still",
+            SessionPhase.Aborted => "Wacht beendet",
+            SessionPhase.Completed => Completed(RealmMoods.FromFrost(session.FrostRatio)).Headline,
+            _ => session.CurrentState switch
+            {
+                ActivityState.Distracted => session.CurrentProcess is { Length: > 0 } p ? $"Frost · {p}" : "Frost",
+                ActivityState.Away => "Abwesend · die Laterne wartet",
+                _ => session.CurrentStreak >= TimeSpan.FromMinutes(1)
+                    ? $"Im Licht · Serie {TimeFormat.Clock(session.CurrentStreak)}"
+                    : "Im Licht",
+            },
+        };
+    }
+
     public static (string Headline, string Detail) Completed(RealmMood mood) => mood switch
     {
         RealmMood.Spring => ("Der Frühling ist gekommen!", "Der Schnee schmilzt, die Bäche singen – eine würdige Wacht."),

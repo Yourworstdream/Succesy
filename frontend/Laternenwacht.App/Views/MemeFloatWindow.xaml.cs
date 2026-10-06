@@ -26,7 +26,14 @@ public partial class MemeFloatWindow : Window
     public MemeFloatWindow(ImageSource image, string caption, TimeSpan duration)
     {
         InitializeComponent();
-        Picture.Source = image;
+        ArgumentNullException.ThrowIfNull(image);
+        Picture.ImageSource = image;
+
+        // Rahmen an das Seitenverhältnis anpassen (Breite fest, Höhe 160–320).
+        if (image.Width > 0 && image.Height > 0)
+        {
+            ImageFrame.Height = Math.Clamp(ImageFrame.Width * image.Height / image.Width, 160, 320);
+        }
         CaptionText.Text = caption;
         _duration = duration;
 

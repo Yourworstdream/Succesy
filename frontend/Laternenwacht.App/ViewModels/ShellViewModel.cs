@@ -9,6 +9,17 @@ internal sealed class ShellViewModel(SessionViewModel session, ChronicleViewMode
 
     public SettingsViewModel Settings { get; } = settings;
 
+    /// <summary>Sicherheits- und Datenschutzmerkmale für die Seite "Über".</summary>
+    public static IReadOnlyList<string> SecurityFacts { get; } =
+    [
+        "Keine Netzwerkverbindung, keine Telemetrie, keine Administratorrechte.",
+        "Erfasst wird nur der Name des Programms im Vordergrund und die Leerlaufzeit – keine Fenstertitel, keine Tastatureingaben.",
+        "Die Chronik ist mit HMAC-SHA256 versiegelt und verkettet; ein Anker erkennt abgeschnittene Einträge.",
+        "Der Siegelschlüssel ist per Windows-Datenschutz-API (DPAPI) an dein Benutzerkonto gebunden.",
+        "Zeiten werden mit einer monotonen Uhr gemessen – das Verstellen der Systemzeit ändert nichts.",
+        "Alle Dateien werden atomar geschrieben und beim Laden streng geprüft.",
+    ];
+
     public string DataDirectory { get; } = Laternenwacht.Platform.Windows.AppPaths.DataDirectory;
 
     public string VersionText { get; } =

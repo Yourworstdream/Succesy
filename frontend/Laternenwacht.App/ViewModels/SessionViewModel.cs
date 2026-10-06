@@ -26,6 +26,11 @@ internal sealed class SessionViewModel : ObservableObject
     private string _frostText = "00:00";
     private string _awayText = "00:00";
     private string _currentStreakText = "00:00";
+    private string _shortStatus = string.Empty;
+    private string _plannedText = string.Empty;
+    private double _focusWeight;
+    private double _frostWeight;
+    private double _awayWeight;
     private string _longestStreakText = "00:00";
     private int _distractionCount;
     private double _progress;
@@ -99,7 +104,13 @@ internal sealed class SessionViewModel : ObservableObject
     public int DurationMinutes
     {
         get => _durationMinutes;
-        set => SetProperty(ref _durationMinutes, Math.Clamp(value, 1, 480));
+        set
+        {
+            if (SetProperty(ref _durationMinutes, Math.Clamp(value, 1, 480)) && _warden.Current is null)
+            {
+                RemainingText = TimeFormat.Clock(TimeSpan.FromMinutes(_durationMinutes));
+            }
+        }
     }
 
     public bool IsActive => _warden.IsActive;
@@ -122,6 +133,19 @@ internal sealed class SessionViewModel : ObservableObject
     public string FrostText { get => _frostText; private set => SetProperty(ref _frostText, value); }
 
     public string AwayText { get => _awayText; private set => SetProperty(ref _awayText, value); }
+
+    /// <summary>Kurzstatus für die Fokusleiste.</summary>
+    public string ShortStatus { get => _shortStatus; private set => SetProperty(ref _shortStatus, value); }
+
+    /// <summary>"von 25:00" unter der Restzeit.</summary>
+    public string PlannedText { get => _plannedText; private set => SetProperty(ref _plannedText, value); }
+
+    /// <summary>Anteile für den Verteilungsbalken (Licht / Frost / abwesend), als Gewichte.</summary>
+    public double FocusWeight { get => _focusWeight; private set => SetProperty(ref _focusWeight, value); }
+
+    public double FrostWeight { get => _frostWeight; private set => SetProperty(ref _frostWeight, value); }
+
+    public double AwayWeight { get => _awayWeight; private set => SetProperty(ref _awayWeight, value); }
 
     /// <summary>Fokuszeit seit der letzten Ablenkung.</summary>
     public string CurrentStreakText { get => _currentStreakText; private set => SetProperty(ref _currentStreakText, value); }
@@ -237,6 +261,7 @@ internal sealed class SessionViewModel : ObservableObject
     {
         var session = _warden.Current;
         (Headline, Detail) = Lore.Describe(session, _warden.LastSnapshot);
+        ShortStatus = Lore.Short(session);
 
         if (session is not null)
         {
@@ -245,6 +270,10 @@ internal sealed class SessionViewModel : ObservableObject
             FrostText = TimeFormat.Clock(session.Distracted);
             AwayText = TimeFormat.Clock(session.Away);
             CurrentStreakText = TimeFormat.Clock(session.CurrentStreak);
+            PlannedText = "von " + TimeFormat.Clock(session.Planned);
+            FocusWeight = session.Focused.TotalSeconds;
+            FrostWeight = session.Distracted.TotalSeconds;
+            AwayWeight = session.Away.TotalSeconds;
             LongestStreakText = TimeFormat.Clock(session.LongestStreak);
             DistractionCount = session.DistractionCount;
             Progress = session.Progress;
@@ -256,6 +285,7 @@ internal sealed class SessionViewModel : ObservableObject
         else
         {
             RemainingText = TimeFormat.Clock(TimeSpan.FromMinutes(DurationMinutes));
+            PlannedText = "bereit";
         }
 
         OnPropertyChanged(nameof(IsActive));

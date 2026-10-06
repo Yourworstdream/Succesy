@@ -32,9 +32,10 @@ internal sealed class TextToVisibilityConverter : IValueConverter
 [ValueConversion(typeof(RealmMood), typeof(Brush))]
 internal sealed class MoodToBrushConverter : IValueConverter
 {
-    private static readonly Brush Spring = Freeze(new SolidColorBrush(Color.FromRgb(0x6E, 0x9E, 0x55)));
-    private static readonly Brush Thaw = Freeze(new SolidColorBrush(Color.FromRgb(0x4F, 0x8F, 0xA8)));
-    private static readonly Brush Winter = Freeze(new SolidColorBrush(Color.FromRgb(0x5A, 0x6B, 0x86)));
+    // Frühling = Licht (Orange), Tauwetter = Frost (Eisblau), Winter = gedämpftes Grau
+    private static readonly Brush Spring = Freeze(new SolidColorBrush(Color.FromRgb(0xFF, 0x6B, 0x2C)));
+    private static readonly Brush Thaw = Freeze(new SolidColorBrush(Color.FromRgb(0x3F, 0xA9, 0xE6)));
+    private static readonly Brush Winter = Freeze(new SolidColorBrush(Color.FromRgb(0x9A, 0x96, 0x8F)));
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) => value switch
     {
@@ -53,12 +54,45 @@ internal sealed class MoodToBrushConverter : IValueConverter
     }
 }
 
-/// <summary>Fehlerzustand → Karmesin, sonst Frühlingsgrün.</summary>
+/// <summary>Fehlerzustand → Fehlerrot, sonst Laternen-Tinte.</summary>
 [ValueConversion(typeof(bool), typeof(Brush))]
 internal sealed class ErrorToBrushConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
-        Application.Current.FindResource(value is true ? "CrimsonBrush" : "SpringBrush");
+        Application.Current.FindResource(value is true ? "ErrorBrush" : "LightInkBrush");
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
+/// <summary>Zahl → Stern-Spaltenbreite (für proportionale Balken).</summary>
+[ValueConversion(typeof(double), typeof(GridLength))]
+internal sealed class StarConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+        new GridLength(value is double d && d > 0 && !double.IsNaN(d) ? d : 0, GridUnitType.Star);
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
+/// <summary>Pausiert → Wiedergabe-Symbol, sonst Pause-Symbol.</summary>
+[ValueConversion(typeof(bool), typeof(Geometry))]
+internal sealed class PauseGlyphConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+        Application.Current.FindResource(value is true ? "PlayGeometry" : "PauseGeometry");
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
+/// <summary>Anzahl 0 → sichtbar (Leerzustand), sonst ausgeblendet.</summary>
+[ValueConversion(typeof(int), typeof(Visibility))]
+internal sealed class ZeroToVisibleConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+        value is 0 ? Visibility.Visible : Visibility.Collapsed;
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
         throw new NotSupportedException();

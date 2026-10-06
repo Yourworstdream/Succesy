@@ -63,7 +63,7 @@ internal sealed class MemeService
             }
 
             var caption = distraction.ProcessName is { Length: > 0 } p
-                ? $"Verlockung Nr. {distraction.Episode}: {p}"
+                ? $"Verlockung Nr. {distraction.Episode} · {p}"
                 : $"Verlockung Nr. {distraction.Episode}";
             var window = new MemeFloatWindow(image, caption, SwimDuration);
             window.Closed += (_, _) => _current = null;
