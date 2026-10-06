@@ -141,4 +141,32 @@ public class FocusSessionTests
 
         Assert.Equal(["discord", "steam"], top.Select(t => t.ProcessName));
     }
+
+    [Fact]
+    public void Focus_streak_grows_and_is_reset_by_distraction_only()
+    {
+        var session = NewSession();
+        Tick(session, ActivityState.Focused, seconds: 10);
+        Tick(session, ActivityState.Away, seconds: 5);        // 1 s Fokus, dann Abwesenheit
+        Tick(session, ActivityState.Focused, seconds: 4);     // 1 s Abwesenheit, dann 3 s Fokus
+
+        Assert.Equal(TimeSpan.FromSeconds(14), session.CurrentStreak);
+
+        Tick(session, ActivityState.Distracted, "discord", 3);
+
+        Assert.Equal(TimeSpan.Zero, session.CurrentStreak);
+        Assert.Equal(TimeSpan.FromSeconds(15), session.LongestStreak);
+    }
+
+    [Fact]
+    public void Longest_streak_is_kept_in_the_record()
+    {
+        var session = NewSession();
+        Tick(session, ActivityState.Focused, seconds: 20);
+        Tick(session, ActivityState.Distracted, "steam", 2);
+        Tick(session, ActivityState.Focused, seconds: 5);
+        session.Abort();
+
+        Assert.Equal(TimeSpan.FromSeconds(21), session.ToRecord().LongestFocusStreak);
+    }
 }

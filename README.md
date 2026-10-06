@@ -4,10 +4,14 @@
 
 **Laternenwacht** ist ein Fokuswächter für Windows. Während einer Fokuszeit („Wacht“) hängt am
 **oberen Bildschirmrand** ein schmales Banner, das dir live zeigt, **wie lange du dich bereits
-ablenkst** – als *Frost*, der über eine Laterne im verschneiten Wald kriecht. Gestaltet im Geist
-klassischer Fantasy‑Chroniken à la C. S. Lewis: Laternenpfahl, ewiger Winter, wiederkehrender Frühling.
+ablenkst** – als *Frost*, der über das Licht der Laterne kriecht. Die Texte und Figuren stammen aus
+der Welt der Chroniken von Narnia (C. S. Lewis). Gestaltet als **„Nachtwald“**: ein Laternenlicht im
+verschneiten Wald bei Nacht – Tannen‑Schwarzgrün, Glasflächen, Champagner‑Kerzenlicht für Fokus und Lob,
+Eisblau für Ablenkung, eigene Fensterleiste und eine illustrierte Szene mit fallendem Schnee.
 
-![Symbol](frontend/Laternenwacht.App/Assets/laterne.png)
+![Laternenwacht – Fokus](docs/bilder/1-fokus-laufend.png)
+
+![Fokusleiste, Botschaft und Meme](docs/bilder/3-kapsel-botschaft-meme.png)
 
 ## Funktionen
 
@@ -16,8 +20,16 @@ klassischer Fantasy‑Chroniken à la C. S. Lewis: Laternenpfahl, ewiger Winter,
 * **Verschiebbar** – Leiste mit der Maus an jede Stelle ziehen; die Position wird gespeichert.
 * **Rechtsklick auf die Leiste** – wählen, aus welchem Buch der Chroniken von Narnia die Sprüche
   stammen (Band 1–7 oder alle gemischt), Benachrichtigungen an/aus, Leiste zurück an den Rand.
+* **Bekannte Verlockungen** wie Hearthstone, Battle.net, Steam, League of Legends, Minecraft oder
+  Discord werden ab Werk erkannt; jedes andere Programm per Rechtsklick auf die Leiste ▸
+  *„… als Verlockung markieren“*.
 * **Ablenkungserkennung** über das Vordergrundprogramm – *Milde Wacht* (Sperrliste) oder
   *Strenge Wacht* (nur Erlaubnisliste zählt als Fokus); Abwesenheit wird separat erfasst.
+* **Positives sehen** – die App erkennt, was gut läuft: Lob nach 10, 25, 45, 60 und 90 Minuten
+  am Stück, „Willkommen zurück“ nach einer Ablenkung (z. B. *„Kaspian hat lange auf dich gewartet.
+  Wenn es nach mir ginge, wären wir ohne dich losgesegelt.“ — Riepiepich*), Würdigung makelloser
+  Wachten und neuer Bestleistungen. Lob kommt leise mit grünem Siegel; Mahnrufe lassen sich getrennt
+  abschalten.
 * **Schwimmende Memes** – bei jeder neuen Ablenkung treibt ein Meme schaukelnd quer über den
   Bildschirm („Treibgut im Fluss der Ablenkung“); ein Klick lässt es versinken. Eigene Bilder per
   Rechtsklick ▸ *Memes hinzufügen …* oder im Reiter *Gefährten & Verlockungen*.
@@ -30,6 +42,9 @@ klassischer Fantasy‑Chroniken à la C. S. Lewis: Laternenpfahl, ewiger Winter,
   Manipulation, Löschung oder Vertauschung wird erkannt und angezeigt.
 * **Sicherheit & Datenschutz** – keine Fenstertitel, keine Tastatureingaben, kein Netzwerk,
   keine Adminrechte, Schlüssel per DPAPI an das Windows‑Konto gebunden.
+* **Ressourcenschonend** – während der Wacht praktisch keine Prozessor‑ und Grafiklast: Animationen ruhen,
+  sobald das Hauptfenster im Hintergrund ist, die Leiste bewegt sich nicht dauerhaft, Schatten sind
+  zwischengespeichert, minimiert gibt die App Arbeitsspeicher zurück. Details: Projektdokumentation, Abschnitt 6.3.
 
 ## Schnellstart
 
@@ -38,13 +53,21 @@ klassischer Fantasy‑Chroniken à la C. S. Lewis: Laternenpfahl, ewiger Winter,
 3. Im Reiter **„Die Wacht“** eine Dauer wählen → **„Laterne entzünden“**.
 4. Im Reiter **„Gefährten & Verlockungen“** eigene Programme eintragen (z. B. `discord`, `steam`).
 
-**Als EXE veröffentlichen:** Doppelklick auf **`Veroeffentlichen.cmd`** – Tests laufen, die EXE
-(Frontend + Backend in einer Datei) liegt danach unter `publish\win-x64\Laternenwacht.exe`.
+**Als EXE veröffentlichen:** Doppelklick auf **`Veroeffentlichen.cmd`** – Tests laufen, danach liegen
+zwei EXE‑Varianten bereit (Frontend + Backend jeweils in einer Datei):
+
+| Variante | Datei | Größe | Hinweis |
+|---|---|---|---|
+| Eigenständig | `publish\win-x64\Laternenwacht.exe` | ~65 MB | läuft auf jedem Windows ohne Installation |
+| Schlank | `publish\win-x64-schlank\Laternenwacht.exe` | ~1,3 MB | sparsamste Variante; braucht die „.NET Desktop Runtime 10“ (x64) |
+
 Ausführlich inkl. GitHub‑Release: → [docs/Veroeffentlichung-VS2026.md](docs/Veroeffentlichung-VS2026.md)
 
 ```powershell
 dotnet publish frontend/Laternenwacht.App/Laternenwacht.App.csproj -p:PublishProfile=Win-x64-EinzelneExe
 # Ergebnis: publish\win-x64\Laternenwacht.exe
+dotnet publish frontend/Laternenwacht.App/Laternenwacht.App.csproj -p:PublishProfile=Win-x64-Schlank
+# Ergebnis: publish\win-x64-schlank\Laternenwacht.exe
 ```
 
 ## Begriffe im Reich
@@ -64,7 +87,7 @@ dotnet publish frontend/Laternenwacht.App/Laternenwacht.App.csproj -p:PublishPro
 backend/                               BACKEND – eigenständig baubar (Laternenwacht.Backend.sln)
   src/Laternenwacht.Core               Fachlogik: Messung, Bewertung, Sprüche, versiegelte Chronik
   src/Laternenwacht.Platform.Windows   Win32-Messung, DPAPI, Pfade, Protokoll (ohne Oberfläche)
-  tests/Laternenwacht.Core.Tests       106 xUnit-Tests
+  tests/Laternenwacht.Core.Tests       143 xUnit-Tests
   GEMINI.md                            Übergabe-Anweisung & Schnittstellenvertrag für KI-Assistenten
 frontend/                              FRONTEND – nur Darstellung
   Laternenwacht.App                    WPF: Fokusleiste, Hauptfenster, Rabenbote, Gestaltung

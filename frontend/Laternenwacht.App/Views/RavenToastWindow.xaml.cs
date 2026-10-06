@@ -13,16 +13,33 @@ namespace Laternenwacht.App.Views;
 public partial class RavenToastWindow : Window
 {
     private static readonly Duration FlyDuration = new(TimeSpan.FromMilliseconds(450));
+
+    /// <summary>Der Restzeit-Balken ist schmal und langsam – 20 Bilder je Sekunde genügen.</summary>
+    private const int CountdownFrameRate = 20;
     private readonly TimeSpan _lifetime;
     private AnimationClock? _lifetimeClock;
     private bool _closing;
 
-    public RavenToastWindow(string message, string source, TimeSpan lifetime)
+    public RavenToastWindow(string header, string message, string source, string avatar, TimeSpan lifetime, bool positive)
     {
         InitializeComponent();
+        HeaderText.Text = header.ToUpper(System.Globalization.CultureInfo.CurrentCulture);
         MessageText.Text = message;
         SourceText.Text = source;
+        AvatarText.Text = avatar;
         _lifetime = lifetime;
+
+        if (!positive)
+        {
+            // Mahnrufe gehören zum Frost: Eisblau statt Kerzenlicht.
+            var frost = (System.Windows.Media.Brush)FindResource("FrostBrush");
+            Avatar.Background = (System.Windows.Media.Brush)FindResource("FrostTintBrush");
+            Avatar.BorderBrush = frost;
+            AvatarGlow.Color = (System.Windows.Media.Color)FindResource("FrostColor");
+            AvatarText.Foreground = frost;
+            HeaderText.Foreground = frost;
+            Lifetime.Background = frost;
+        }
 
         SourceInitialized += (_, _) => WindowStyles.MakeNonActivatingToolWindow(this);
         Loaded += (_, _) => FlyIn();
@@ -70,8 +87,9 @@ public partial class RavenToastWindow : Window
         Root.BeginAnimation(OpacityProperty, new DoubleAnimation(1, FlyDuration));
 
         var countdown = new DoubleAnimation(1, 0, new Duration(_lifetime));
+        Timeline.SetDesiredFrameRate(countdown, CountdownFrameRate);
         countdown.Completed += (_, _) => FlyOut();
         _lifetimeClock = countdown.CreateClock();
-        Lifetime.ApplyAnimationClock(System.Windows.Controls.Primitives.RangeBase.ValueProperty, _lifetimeClock);
+        LifetimeScale.ApplyAnimationClock(System.Windows.Media.ScaleTransform.ScaleXProperty, _lifetimeClock);
     }
 }

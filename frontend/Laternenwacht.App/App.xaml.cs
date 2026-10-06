@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Media;
 using System.Windows;
+using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using Laternenwacht.App.Services;
 using Laternenwacht.App.ViewModels;
@@ -23,11 +24,26 @@ public partial class App : Application
     private const string SingleInstanceMutexName = @"Local\Laternenwacht.EinzigeInstanz";
     private static readonly TimeSpan CompletionBannerDuration = TimeSpan.FromSeconds(12);
 
+    /// <summary>Wartezeit nach dem Minimieren, bevor Speicher zurückgegeben wird (kurzes Hin und Her soll nichts auslösen).</summary>
+    private static readonly TimeSpan BackgroundReliefDelay = TimeSpan.FromSeconds(3);
+
+    /// <summary>Höchste Bildrate für Animationen, sofern eine Animation nichts anderes verlangt.</summary>
+    private const int DefaultAnimationFrameRate = 30;
+
     private Mutex? _singleInstance;
     private FocusBarWindow? _bar;
     private MainWindow? _main;
     private SessionViewModel? _session;
     private DispatcherTimer? _hideBarTimer;
+    private DispatcherTimer? _reliefTimer;
+
+    static App()
+    {
+        // WPF animiert sonst mit bis zu 60 Bildern je Sekunde. Für Überblendungen und Bewegungen dieser
+        // Oberfläche genügen 30 – das halbiert die Arbeit, solange etwas animiert wird.
+        Timeline.DesiredFrameRateProperty.OverrideMetadata(
+            typeof(Timeline), new FrameworkPropertyMetadata { DefaultValue = DefaultAnimationFrameRate });
+    }
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -106,6 +122,25 @@ public partial class App : Application
         };
 
         var notifications = new NotificationService();
+
+        // Positives würdigen: Rückkehr zur Arbeit und lange Fokus-Serien.
+        warden.ReturnedToWork += (_, back) =>
+        {
+            memes.SinkCurrent();
+            if (settingsViewModel.ShowPraise)
+            {
+                notifications.ShowEncouragement("Willkommen zurück im Licht",
+                    Homecomings.For(settingsViewModel.SelectedBook, back.Absence, Random.Shared.Next()));
+            }
+        };
+        warden.FocusStreakReached += (_, streak) =>
+        {
+            if (settingsViewModel.ShowPraise)
+            {
+                notifications.ShowEncouragement($"{streak.Minutes} Minuten am Stück im Licht",
+                    Praises.ForStreak(settingsViewModel.SelectedBook, streak.Index, Random.Shared.Next()));
+            }
+        };
         _session.AdmonitionRaised += (_, admonition) =>
         {
             if (settingsViewModel.ShowNotifications)
@@ -120,7 +155,16 @@ public partial class App : Application
 
         _session.SessionStarted += (_, _) => ShowBar();
         _session.ShowChamberRequested += (_, _) => _main.BringToFront();
-        _session.SessionEnded += (_, record) => OnSessionEnded(record, chronicle);
+        _session.SessionEnded += (_, record) =>
+        {
+            var previousBest = chronicle.BestStreak;
+            var hadHistory = chronicle.Entries.Count > 0;
+            OnSessionEnded(record, chronicle);
+            if (settingsViewModel.ShowPraise)
+            {
+                PraiseFinishedSession(notifications, record, previousBest, hadHistory);
+            }
+        };
 
         settingsViewModel.SettingsSaved += (_, saved) =>
         {
@@ -145,6 +189,7 @@ public partial class App : Application
             _session.Abort();
         };
         _main.Closed += (_, _) => _bar.Close();
+        WatchForBackground(_main);
 
         _main.Show();
 
@@ -165,6 +210,32 @@ public partial class App : Application
         base.OnExit(e);
     }
 
+    /// <summary>
+    /// Ist das Hauptfenster einige Sekunden minimiert, gibt die Anwendung nicht mehr benötigten
+    /// Arbeitsspeicher an Windows zurück. Danach läuft nur noch die schlanke Messung im Sekundentakt.
+    /// </summary>
+    private void WatchForBackground(Window main)
+    {
+        _reliefTimer = new DispatcherTimer(DispatcherPriority.ApplicationIdle) { Interval = BackgroundReliefDelay };
+        _reliefTimer.Tick += (_, _) =>
+        {
+            _reliefTimer.Stop();
+            if (main.WindowState == WindowState.Minimized)
+            {
+                MemoryRelief.Release();
+            }
+        };
+
+        main.StateChanged += (_, _) =>
+        {
+            _reliefTimer.Stop();
+            if (main.WindowState == WindowState.Minimized)
+            {
+                _reliefTimer.Start();
+            }
+        };
+    }
+
     private void ShowBar()
     {
         if (_bar is null)
@@ -175,6 +246,33 @@ public partial class App : Application
         _hideBarTimer?.Stop();
         _bar.Show();
         _bar.Reposition();
+    }
+
+    /// <summary>Würdigt am Ende einer Wacht, was gut lief – auch bei einer abgebrochenen.</summary>
+    private static void PraiseFinishedSession(NotificationService notifications, SessionRecord record, TimeSpan previousBest, bool hadHistory)
+    {
+        if (record.Focused < TimeSpan.FromMinutes(1))
+        {
+            return;
+        }
+
+        var parts = new List<string>();
+        if (record.Outcome == SessionPhase.Completed && record.DistractionCount == 0)
+        {
+            parts.Add("Makellose Wacht – kein einziges Mal verlockt!");
+        }
+
+        if (hadHistory && record.LongestFocusStreak > previousBest)
+        {
+            parts.Add($"Neue Bestleistung: {TimeFormat.Clock(record.LongestFocusStreak)} am Stück im Licht!");
+        }
+
+        parts.Add($"{TimeFormat.Clock(record.Focused)} im Licht – gut gemacht.");
+
+        var header = record.Outcome == SessionPhase.Completed
+            ? Lore.Completed(RealmMoods.FromFrost(record.Measured <= TimeSpan.Zero ? 0 : record.Distracted / record.Measured)).Headline
+            : "Auch eine kurze Wacht zählt";
+        notifications.ShowPraise(header, string.Join(" ", parts), "Laternenwacht");
     }
 
     private void OnSessionEnded(SessionRecord record, ChronicleViewModel chronicle)

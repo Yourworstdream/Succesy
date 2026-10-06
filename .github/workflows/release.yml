@@ -21,15 +21,20 @@ jobs:
       - name: Testen
         run: dotnet test Laternenwacht.sln -c Release
 
-      - name: Als einzelne EXE veröffentlichen (Version aus dem Tag)
+      - name: Als einzelne EXE veröffentlichen – eigenständig und schlank (Version aus dem Tag)
         shell: pwsh
         run: |
           $version = "${{ github.ref_name }}".TrimStart('v')
-          dotnet publish frontend/Laternenwacht.App/Laternenwacht.App.csproj -p:PublishProfile=Win-x64-EinzelneExe -p:Version=$version
-          if ($LASTEXITCODE -ne 0) { exit 1 }
-          $ziel = "Laternenwacht-${{ github.ref_name }}-win-x64.exe"
-          Move-Item publish/win-x64/Laternenwacht.exe $ziel
-          (Get-FileHash $ziel -Algorithm SHA256).Hash.ToLower() + "  $ziel" | Out-File "$ziel.sha256" -Encoding ascii
+          $varianten = @(
+            @{ Profil = 'Win-x64-EinzelneExe'; Ordner = 'publish/win-x64';         Ziel = "Laternenwacht-${{ github.ref_name }}-win-x64.exe" },
+            @{ Profil = 'Win-x64-Schlank';     Ordner = 'publish/win-x64-schlank'; Ziel = "Laternenwacht-${{ github.ref_name }}-win-x64-schlank.exe" }
+          )
+          foreach ($v in $varianten) {
+            dotnet publish frontend/Laternenwacht.App/Laternenwacht.App.csproj "-p:PublishProfile=$($v.Profil)" -p:Version=$version
+            if ($LASTEXITCODE -ne 0) { exit 1 }
+            Move-Item "$($v.Ordner)/Laternenwacht.exe" $v.Ziel
+            (Get-FileHash $v.Ziel -Algorithm SHA256).Hash.ToLower() + "  $($v.Ziel)" | Out-File "$($v.Ziel).sha256" -Encoding ascii
+          }
 
       - name: GitHub-Release erstellen
         shell: pwsh
@@ -37,6 +42,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           $ziel = "Laternenwacht-${{ github.ref_name }}-win-x64.exe"
-          gh release create "${{ github.ref_name }}" $ziel "$ziel.sha256" `
+          $schlank = "Laternenwacht-${{ github.ref_name }}-win-x64-schlank.exe"
+          gh release create "${{ github.ref_name }}" $ziel "$ziel.sha256" $schlank "$schlank.sha256" `
             --title "Laternenwacht ${{ github.ref_name }}" `
             --generate-notes

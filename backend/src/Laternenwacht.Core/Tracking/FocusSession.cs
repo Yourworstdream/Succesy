@@ -64,6 +64,15 @@ public sealed class FocusSession
     /// <summary>Anzahl der Wechsel in den Zustand "abgelenkt".</summary>
     public int DistractionCount { get; private set; }
 
+    /// <summary>
+    /// Laufende Fokus-Serie: Fokuszeit seit der letzten Ablenkung. Abwesenheit (Leerlauf, Standby)
+    /// unterbricht die Serie nicht, zählt aber auch nicht mit – nur eine Ablenkung setzt sie zurück.
+    /// </summary>
+    public TimeSpan CurrentStreak { get; private set; }
+
+    /// <summary>Längste Fokus-Serie dieser Wacht.</summary>
+    public TimeSpan LongestStreak { get; private set; }
+
     public TimeSpan Measured => Focused + Distracted + Away;
 
     public TimeSpan Remaining => Planned - Measured is var r && r > TimeSpan.Zero ? r : TimeSpan.Zero;
@@ -92,6 +101,7 @@ public sealed class FocusSession
         if (state == ActivityState.Distracted && CurrentState != ActivityState.Distracted)
         {
             DistractionCount++;
+            CurrentStreak = TimeSpan.Zero;
         }
 
         CurrentState = state;
@@ -161,6 +171,7 @@ public sealed class FocusSession
             DistractionCount = DistractionCount,
             Outcome = Phase,
             TopDistractions = TopDistractions(5),
+            LongestFocusStreak = LongestStreak,
         };
     }
 
@@ -192,6 +203,12 @@ public sealed class FocusSession
         {
             case ActivityState.Focused:
                 Focused += credited;
+                CurrentStreak += credited;
+                if (CurrentStreak > LongestStreak)
+                {
+                    LongestStreak = CurrentStreak;
+                }
+
                 break;
             case ActivityState.Distracted:
                 Distracted += credited;

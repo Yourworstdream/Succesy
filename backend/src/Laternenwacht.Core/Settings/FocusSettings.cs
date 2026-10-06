@@ -35,14 +35,26 @@ public sealed record FocusSettings
     public IReadOnlyList<string> DistractingProcesses { get; set; } =
         ["discord", "steam", "epicgameslauncher", "spotify", "whatsapp", "telegram", "netflix", "battle.net"];
 
+    /// <summary>
+    /// Zusätzlich den eingebauten Katalog bekannter Verlockungen (<see cref="KnownDistractions"/>) verwenden,
+    /// z. B. Hearthstone, Steam, Discord. Gefährten haben Vorrang.
+    /// </summary>
+    public bool UseKnownDistractions { get; set; } = true;
+
     /// <summary>Soll die Leiste am oberen Rand stets sichtbar sein?</summary>
     public bool BarAlwaysOnTop { get; set; } = true;
 
     /// <summary>Aus welchem Buch der Chroniken die Mahnrufe stammen.</summary>
     public ChronicleBook SayingsBook { get; set; } = ChronicleBook.All;
 
-    /// <summary>Mahnrufe als Benachrichtigung ("Rabenbote") unten rechts einblenden.</summary>
+    /// <summary>Mahnrufe (bei vielen Ablenkungen) als Benachrichtigung ("Rabenbote") unten rechts einblenden.</summary>
     public bool ShowNotifications { get; set; } = true;
+
+    /// <summary>
+    /// Positives würdigen: Lob für Fokus-Serien, "Willkommen zurück" nach einer Ablenkung,
+    /// Würdigung makelloser Wachten und neuer Bestleistungen.
+    /// </summary>
+    public bool ShowPraise { get; set; } = true;
 
     /// <summary>Bei jeder neuen Ablenkung treibt ein Meme über den Bildschirm.</summary>
     public bool ShowMemes { get; set; } = true;

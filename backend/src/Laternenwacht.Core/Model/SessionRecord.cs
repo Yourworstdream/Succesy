@@ -23,6 +23,12 @@ public sealed record SessionRecord
 
     public IReadOnlyList<DistractionEntry> TopDistractions { get; init; } = [];
 
+    /// <summary>
+    /// Längste ununterbrochene Fokusphase der Wacht (seit Version 1.3; ältere Einträge: 0).
+    /// Neues optionales Feld – bestehende Chronik-Einträge bleiben gültig versiegelt.
+    /// </summary>
+    public TimeSpan LongestFocusStreak { get; init; }
+
     /// <summary>Gemessene Gesamtzeit (ohne Pausen).</summary>
     public TimeSpan Measured => Focused + Distracted + Away;
 

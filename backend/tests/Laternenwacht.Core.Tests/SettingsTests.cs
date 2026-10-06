@@ -34,6 +34,22 @@ public sealed class SettingsTests : IDisposable
         Assert.Equal(expected, ProcessNames.Normalize(raw));
 
     [Theory]
+    [InlineData(@"C:\Program Files (x86)\Hearthstone\Hearthstone.exe", "Hearthstone")]
+    [InlineData(@"\Device\HarddiskVolume3\Windows\System32\notepad.EXE", "notepad")]
+    [InlineData(@"C:\Spiele\Battle.net\Battle.net.exe", "Battle.net")]
+    [InlineData(@"C:\Werkzeuge\tool.com", "tool.com")]
+    [InlineData("Code.exe", "Code")]
+    public void Process_name_is_derived_from_image_path(string path, string expected) =>
+        Assert.Equal(expected, ProcessNames.FromImagePath(path));
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(@"C:\Ordner\")]
+    [InlineData(@"C:\Ordner\.exe")]
+    public void Image_path_without_file_name_yields_no_process_name(string path) =>
+        Assert.Null(ProcessNames.FromImagePath(path));
+
+    [Theory]
     [InlineData(@"C:\Windows\evil")]
     [InlineData("../../etc")]
     [InlineData("name\u0000with-null")]
@@ -128,6 +144,8 @@ public sealed class SettingsTests : IDisposable
         Assert.False(loaded.HasCustomBarPosition);
         Assert.True(loaded.ShowNotifications);
         Assert.True(loaded.ShowMemes);
+        Assert.True(loaded.ShowPraise);
+        Assert.True(loaded.UseKnownDistractions);
         Assert.Equal(FocusSettings.Default.IdleThreshold, loaded.IdleThreshold);
     }
 

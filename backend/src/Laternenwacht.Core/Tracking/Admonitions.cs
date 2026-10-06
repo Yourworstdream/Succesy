@@ -70,7 +70,7 @@ public static class Admonitions
         [
             "Trumpkin brummt: „Bei allen Bärten – schon wieder abgeschweift?“",
             "König Miraz freut sich über jede Minute, die du nicht für die alten Narnianen kämpfst.",
-            "Reepicheep zückt den Degen: Eine Maus von Ehre duldet keine Tändelei!",
+            "Riepiepich zückt den Degen: Eine Maus von Ehre duldet keine Tändelei!",
             "Der Dachs Trüffeljäger vergisst nichts. Auch diese Ablenkungen nicht.",
             "Prinz Kaspian, die Telmarer stehen vor den Toren – und Ihr scrollt?",
             "Susans Horn liegt bereit. Doch zum Ablenken bläst man es nicht.",
@@ -88,7 +88,7 @@ public static class Admonitions
             "Vorsicht: Wer zu lange über Drachenschätzen brütet, wird selbst zum Drachen.",
             "König Kaspian, der Kurs führt nach Osten – nicht in jede Bucht der Verlockung!",
             "Die Seeschlange umkreist dein Schiff. Sie hat Zeit. Du nicht.",
-            "Reepicheep paddelt allein zum Ende der Welt. Er hat aufgehört, auf dich zu warten.",
+            "Riepiepich paddelt allein zum Ende der Welt. Er hat aufgehört, auf dich zu warten.",
             "Fünf Minuten Flaute – die Segel hängen schlaff.",
             "Zehn Minuten! Der Zauberer klappt sein Buch zu und schaut dich vorwurfsvoll an.",
             "Zwanzig Minuten Frost. Die Dunkle Insel lässt grüßen – dort werden Träume wahr, auch die schlechten.",

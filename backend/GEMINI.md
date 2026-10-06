@@ -35,11 +35,12 @@ backend/
 │   │   ├── Media/          MemeCatalog (eigene Meme-Bilder sicher einlesen)
 │   │   └── Settings/       FocusSettings, SettingsValidator, SettingsStore, ProcessNames
 │   └── Laternenwacht.Platform.Windows/  net10.0-windows, ohne Oberfläche
-│       ├── Win32ActivityProbe     Vordergrundprozess + Leerlaufzeit (user32.dll, nur lesend)
+│       ├── Win32ActivityProbe     Vordergrundprozess + Leerlaufzeit (nur lesend, Name je Fenster zwischengespeichert)
+│       ├── MemoryRelief           gibt Arbeitsspeicher zurück, wenn die App in den Hintergrund geht
 │       ├── DpapiSecretProtector   Schlüsselschutz per DPAPI (CurrentUser)
 │       ├── AppPaths, AppLog       %LOCALAPPDATA%\Laternenwacht, Fehlerprotokoll
 │       └── Native/NativeMethods   P/Invoke-Deklarationen
-└── tests/Laternenwacht.Core.Tests/      xUnit, 106 Tests, deterministische Uhr
+└── tests/Laternenwacht.Core.Tests/      xUnit, 143 Tests, deterministische Uhr
 ```
 
 ## 3. Bauen und testen
@@ -63,6 +64,15 @@ Parameter mit Standardwert) sind erlaubt.
 |---|---|
 | `FocusWarden` | Konstruktor `(IActivityProbe, TimeProvider, FocusSettings, string selfProcessName)`, `Start(TimeSpan)`, `Pulse()` (1×/s vom UI-Timer), `Pause()`, `Resume()`, `Abort()`, `ApplySettings(FocusSettings)`, `Current`, `IsActive`, `LastSnapshot`, Ereignis `SessionEnded` (**genau einmal** je Wacht), Ereignis `DistractionStarted` (**einmal je neuer Ablenkungs-Episode**, löst das schwimmende Meme aus) |
 | `DistractionStarted` | `ProcessName`, `Episode` |
+| `FocusWarden` (Ereignisse) | `ReturnedToWork` (Rückkehr nach ≥ `MinimumAbsenceForWelcome` Ablenkung), `FocusStreakReached` (Fokus-Serie erreicht eine Schwelle aus `Praises.StreakMilestones`, je Serie einmal) |
+| `ReturnedToWork` | `ProcessName`, `Absence`, `Episode` |
+| `FocusStreakReached` | `Minutes`, `Index` |
+| `FocusSession` (Serien) | `CurrentStreak`, `LongestStreak` – nur Ablenkung setzt die Serie zurück, Abwesenheit nicht |
+| `SessionRecord.LongestFocusStreak` | neues optionales Feld (alte Einträge: 0) |
+| `Homecomings` / `Praises` / `Encouragement` | `Homecomings.For(book, absence, seed)`, `Praises.ForStreak(book, index, seed)`; `Encouragement.Text`, `.Speaker`, `.Book` |
+| `FocusWarden.SelfProcessName` | Name der eigenen App (für „als Verlockung markieren“) |
+| `KnownDistractions` | `Names` – eingebauter Katalog (Spiele, Launcher, Messenger); greift bei `FocusSettings.UseKnownDistractions` |
+| `SettingsEditing` | `MarkAsDistraction(FocusSettings, string)` → neue Einstellungen oder `null` |
 | `ShuffleBag<T>` | Konstruktor `(IEnumerable<T>, Random? = null)`, `TryNext(out T)`, `Count` – nie zweimal dasselbe Element hintereinander |
 | `MemeCatalog` | `Scan(string directory)`, `AllowedExtensions`, `MaxFileSizeBytes`, `MaxFiles` |
 | `FocusSession` | `Phase`, `CurrentState`, `CurrentProcess`, `Focused`, `Distracted`, `Away`, `DistractionCount`, `Remaining`, `Progress`, `FrostRatio`, `IsFinished` |
@@ -76,13 +86,14 @@ Parameter mit Standardwert) sind erlaubt.
 | `FocusSettings` | alle Eigenschaften, `Default`, `HasCustomBarPosition`; Änderungen nur per `with` |
 | `SettingsValidator` | `Validate(FocusSettings)` → Liste deutscher Fehlermeldungen |
 | `SettingsStore` | Konstruktor `(string path)`, `Load()`, `Save(FocusSettings)`, `LastLoadWarning`, `FilePath` |
-| `ProcessNames` | `ParseList(string?)` |
+| `ProcessNames` | `ParseList(string?)`, `FromImagePath(ReadOnlySpan<char>)` |
 | `JournalBootstrapper` / `JournalOpenResult` | `Open(string dir, ISecretProtector, TimeProvider)`; `.Journal`, `.Verification`, `.ArchivedTo` |
 | `SessionJournal` | `Append(SessionRecord)`, `Verify()`, `Records` |
 | `JournalVerification` | `Status`, `Message` |
 | `Win32ActivityProbe`, `DpapiSecretProtector` | parameterlose Konstruktoren |
 | `AppPaths` | `DataDirectory`, `SettingsFile`, `LogFile`, `MemeDirectory` |
 | `AppLog` | `Error(string context, Exception)`, `Info(string)` |
+| `MemoryRelief` | `Release()` (nur bei Zustandswechseln aufrufen, nie periodisch) |
 
 ## 5. Unverhandelbare Regeln
 
@@ -117,7 +128,10 @@ Parameter mit Standardwert) sind erlaubt.
 14. **Sprache:** Kommentare, XML-Doku, Fehlermeldungen und Sprüche auf **Deutsch**; Bezeichner auf Englisch.
 15. Jede Verhaltensänderung bekommt Tests. Zeitabhängiges mit `ManualTimeProvider` (siehe `TestDoubles.cs`) testen,
     nie mit `Thread.Sleep`.
-16. Sprüche (`Admonitions`) sind **eigene Formulierungen** – keine wörtlichen Zitate aus den Büchern.
+16. **Ressourcen schonen:** `FocusWarden.Pulse` läuft jede Sekunde, die ganze Wacht lang. Dort keine teuren
+    Systemabfragen (z. B. keine Prozessliste, kein `Process`-Objekt pro Takt), keine Dateizugriffe, möglichst
+    keine Speicheranforderungen. `Win32ActivityProbe` fragt den Prozessnamen nur beim Fensterwechsel neu ab.
+17. Sprüche (`Admonitions`) sind **eigene Formulierungen** – keine wörtlichen Zitate aus den Büchern.
     Jedes Buch braucht genau einen Spruch je Schwelle (aktuell 7 Anzahl- + 4 Frost-Schwellen = 11).
 
 ## 6. Bekannte Grenzen (bewusst so)

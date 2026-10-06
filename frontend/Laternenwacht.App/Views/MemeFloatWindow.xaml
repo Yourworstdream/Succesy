@@ -1,37 +1,45 @@
 <!--
-  Treibgut im Fluss der Ablenkung: Ein Meme schwimmt schaukelnd quer über den Bildschirm.
+  Ein Meme treibt schaukelnd über den Bildschirm – wie ein Polaroid auf dem Wasser.
   Ein Klick lässt es versinken.
+  Ressourcen: Karte und Schatten werden einmal in eine Bitmap gezeichnet; das Schaukeln dreht nur noch
+  diese Bitmap, statt Bild und Schatten in jedem Schritt neu zu berechnen.
 -->
 <Window x:Class="Laternenwacht.App.Views.MemeFloatWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Laternenwacht – Treibgut"
+        xmlns:views="clr-namespace:Laternenwacht.App.Views"
+        Title="Laternenwacht – Meme"
         SizeToContent="WidthAndHeight" Left="-10000" Top="-10000"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         ResizeMode="NoResize" ShowInTaskbar="False" ShowActivated="False" Topmost="True"
         UseLayoutRounding="True" Cursor="Hand" Opacity="0"
-        ToolTip="Klicken, um das Treibgut versinken zu lassen"
+        ToolTip="Klicken, um das Meme versinken zu lassen"
         AutomationProperties.Name="Meme bei Ablenkung">
   <!-- Rand lässt Platz für Schaukeln und Schatten -->
-  <Grid Margin="26">
-    <Border x:Name="Card" Background="{StaticResource ParchmentGradientBrush}" BorderBrush="{StaticResource GoldDimBrush}"
-            BorderThickness="1.5" CornerRadius="8" Padding="8,8,8,6" RenderTransformOrigin="0.5,0.5">
-      <Border.RenderTransform>
+  <Grid Margin="30">
+    <Grid views:RenderCache.IsEnabled="True" RenderTransformOrigin="0.5,0.5">
+      <Grid.RenderTransform>
         <RotateTransform x:Name="Tilt" />
-      </Border.RenderTransform>
-      <Border.Effect>
-        <DropShadowEffect BlurRadius="16" ShadowDepth="4" Opacity="0.5" Color="Black" />
-      </Border.Effect>
-      <StackPanel>
-        <Border CornerRadius="4" ClipToBounds="True">
-          <Image x:Name="Picture" MaxWidth="300" MaxHeight="300" Stretch="Uniform"
-                 RenderOptions.BitmapScalingMode="HighQuality" />
-        </Border>
-        <TextBlock Text="Treibgut im Fluss der Ablenkung" FontSize="12" FontStyle="Italic"
-                   Foreground="#6B5A43" HorizontalAlignment="Center" Margin="0,6,0,0" />
-        <TextBlock x:Name="CaptionText" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource CrimsonBrush}"
-                   HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="300" />
-      </StackPanel>
-    </Border>
+      </Grid.RenderTransform>
+      <Border x:Name="Card" Background="{StaticResource MemePaperBrush}" CornerRadius="16" Padding="8,8,8,10">
+        <Border.Effect>
+          <DropShadowEffect BlurRadius="28" ShadowDepth="8" Direction="270" Opacity="0.35" Color="Black" />
+        </Border.Effect>
+        <StackPanel>
+          <!-- Abgerundetes Bild: Bildpinsel statt Image, damit die Ecken wirklich rund sind -->
+          <Border x:Name="ImageFrame" Width="260" Height="200" CornerRadius="10">
+            <Border.Background>
+              <ImageBrush x:Name="Picture" Stretch="UniformToFill" />
+            </Border.Background>
+          </Border>
+          <StackPanel Orientation="Horizontal" Margin="4,9,4,0">
+            <Ellipse Width="8" Height="8" Fill="{StaticResource FrostDeepBrush}" VerticalAlignment="Center" />
+            <TextBlock x:Name="CaptionText" Margin="7,0,0,0" FontSize="12.5" FontWeight="SemiBold"
+                       Foreground="{StaticResource MemeInkBrush}" TextTrimming="CharacterEllipsis" MaxWidth="236"
+                       VerticalAlignment="Center" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+    </Grid>
   </Grid>
 </Window>

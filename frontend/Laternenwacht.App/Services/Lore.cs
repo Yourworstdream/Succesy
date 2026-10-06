@@ -41,7 +41,33 @@ internal static class Lore
                     session.CurrentProcess is { Length: > 0 } p ? $"Eine Verlockung ruft: {p}" : "Eine Verlockung ruft."),
                 ActivityState.Away => ("Die Laterne wacht allein",
                     $"Keine Spur im Schnee seit {TimeFormat.Clock(snapshot?.IdleTime ?? TimeSpan.Zero)}."),
-                _ => ("Die Laterne brennt hell", "Du wandelst auf dem rechten Pfad."),
+                _ => ("Die Laterne brennt hell", session.CurrentStreak >= TimeSpan.FromMinutes(1)
+                    ? $"Seit {TimeFormat.Clock(session.CurrentStreak)} ununterbrochen im Licht – stark!"
+                    : "Du wandelst auf dem rechten Pfad."),
+            },
+        };
+    }
+
+    /// <summary>Kurzer Status für die Fokusleiste, z. B. "Im Licht · Serie 12:30" oder "Frost · Hearthstone".</summary>
+    public static string Short(FocusSession? session)
+    {
+        if (session is null)
+        {
+            return "Bereit für eine Wacht";
+        }
+
+        return session.Phase switch
+        {
+            SessionPhase.Paused => "Rast · die Zeit steht still",
+            SessionPhase.Aborted => "Wacht beendet",
+            SessionPhase.Completed => Completed(RealmMoods.FromFrost(session.FrostRatio)).Headline,
+            _ => session.CurrentState switch
+            {
+                ActivityState.Distracted => session.CurrentProcess is { Length: > 0 } p ? $"Frost · {p}" : "Frost",
+                ActivityState.Away => "Abwesend · die Laterne wartet",
+                _ => session.CurrentStreak >= TimeSpan.FromMinutes(1)
+                    ? $"Im Licht · Serie {TimeFormat.Clock(session.CurrentStreak)}"
+                    : "Im Licht",
             },
         };
     }

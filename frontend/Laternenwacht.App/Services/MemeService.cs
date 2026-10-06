@@ -63,7 +63,7 @@ internal sealed class MemeService
             }
 
             var caption = distraction.ProcessName is { Length: > 0 } p
-                ? $"Verlockung Nr. {distraction.Episode}: {p}"
+                ? $"Verlockung Nr. {distraction.Episode} · {p}"
                 : $"Verlockung Nr. {distraction.Episode}";
             var window = new MemeFloatWindow(image, caption, SwimDuration);
             window.Closed += (_, _) => _current = null;
@@ -72,6 +72,9 @@ internal sealed class MemeService
             return;
         }
     }
+
+    /// <summary>Lässt ein gerade treibendes Meme versinken (z. B. bei der Rückkehr zur Arbeit).</summary>
+    public void SinkCurrent() => _current?.Sink();
 
     private static FileStream? OpenUserFile(string path)
     {

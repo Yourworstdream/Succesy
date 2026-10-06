@@ -60,6 +60,20 @@ internal sealed class ChronicleViewModel : ObservableObject
 
     public string SealMessage { get => _sealMessage; private set => SetProperty(ref _sealMessage, value); }
 
+    /// <summary>Kurzform für die Navigationsleiste.</summary>
+    public string SealShort => SealStatus switch
+    {
+        SealStatus.Intact => "Siegel intakt",
+        SealStatus.Empty => "Chronik bereit",
+        _ => "Siegel gebrochen",
+    };
+
+    public string SealDetailShort => SealStatus switch
+    {
+        SealStatus.Broken => "Details in der Chronik",
+        _ => Entries.Count == 1 ? "1 Wacht geprüft" : $"{Entries.Count} Wachten geprüft",
+    };
+
     public string? ArchiveHint { get => _archiveHint; private set => SetProperty(ref _archiveHint, value); }
 
     public bool HasArchiveHint => !string.IsNullOrEmpty(ArchiveHint);
@@ -71,6 +85,11 @@ internal sealed class ChronicleViewModel : ObservableObject
     public int CompletedCount { get; private set; }
 
     public string SpringShareText { get; private set; } = "–";
+
+    /// <summary>Bisher längste ununterbrochene Fokusphase über alle Wachten.</summary>
+    public TimeSpan BestStreak => Entries.Count == 0 ? TimeSpan.Zero : Entries.Max(e => e.Record.LongestFocusStreak);
+
+    public string BestStreakText => BestStreak > TimeSpan.Zero ? TimeFormat.Clock(BestStreak) : "–";
 
     /// <summary>Trägt eine beendete Wacht versiegelt in die Chronik ein.</summary>
     public void Record(SessionRecord record)
@@ -116,8 +135,11 @@ internal sealed class ChronicleViewModel : ObservableObject
         OnPropertyChanged(nameof(TotalFrostText));
         OnPropertyChanged(nameof(CompletedCount));
         OnPropertyChanged(nameof(SpringShareText));
+        OnPropertyChanged(nameof(BestStreakText));
         OnPropertyChanged(nameof(IsSealIntact));
         OnPropertyChanged(nameof(SealHeadline));
+        OnPropertyChanged(nameof(SealShort));
+        OnPropertyChanged(nameof(SealDetailShort));
         OnPropertyChanged(nameof(HasArchiveHint));
     }
 }
@@ -138,6 +160,8 @@ internal sealed class ChronicleEntry(SessionRecord record)
     public string FocusedText => TimeFormat.Clock(Record.Focused);
 
     public string FrostText => TimeFormat.Clock(Record.Distracted);
+
+    public string LongestStreakText => Record.LongestFocusStreak > TimeSpan.Zero ? TimeFormat.Clock(Record.LongestFocusStreak) : "–";
 
     public string DistractionsText => Record.DistractionCount == 1 ? "1 Verlockung" : $"{Record.DistractionCount} Verlockungen";
 

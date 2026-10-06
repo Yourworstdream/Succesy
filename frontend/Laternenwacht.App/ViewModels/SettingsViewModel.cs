@@ -43,6 +43,8 @@ internal sealed class SettingsViewModel : ObservableObject
         ResetBarPositionCommand = new RelayCommand(ResetBarPosition, () => _current.HasCustomBarPosition);
         ToggleNotificationsCommand = new RelayCommand(() => ShowNotifications = !ShowNotifications);
         ToggleMemesCommand = new RelayCommand(() => ShowMemes = !ShowMemes);
+        TogglePraiseCommand = new RelayCommand(() => ShowPraise = !ShowPraise);
+        ToggleKnownDistractionsCommand = new RelayCommand(() => UseKnownDistractions = !UseKnownDistractions);
         OpenMemeFolderCommand = new RelayCommand(OpenMemeFolder);
         AddMemesCommand = new RelayCommand(AddMemes);
         ResetCommand = new RelayCommand(() => LoadFrom(_current));
@@ -61,6 +63,56 @@ internal sealed class SettingsViewModel : ObservableObject
     public ICommand ToggleNotificationsCommand { get; }
 
     public ICommand ToggleMemesCommand { get; }
+
+    public ICommand TogglePraiseCommand { get; }
+
+    /// <summary>Lob für Fokus-Serien, "Willkommen zurück" und Bestleistungen. Wird sofort gespeichert.</summary>
+    public bool ShowPraise
+    {
+        get => _current.ShowPraise;
+        set
+        {
+            if (value != _current.ShowPraise && ApplyQuickChange(_current with { ShowPraise = value }))
+            {
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public ICommand ToggleKnownDistractionsCommand { get; }
+
+    /// <summary>Eingebauten Katalog bekannter Verlockungen (Spiele, Launcher, Messenger) verwenden. Wird sofort gespeichert.</summary>
+    public bool UseKnownDistractions
+    {
+        get => _current.UseKnownDistractions;
+        set
+        {
+            if (value != _current.UseKnownDistractions && ApplyQuickChange(_current with { UseKnownDistractions = value }))
+            {
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public string KnownDistractionsList { get; } = string.Join(", ", KnownDistractions.Names.Order(StringComparer.Ordinal));
+
+    /// <summary>Trägt ein Programm sofort als Verlockung ein (Rechtsklick auf die Leiste).</summary>
+    public void MarkAsDistraction(string processName)
+    {
+        if (SettingsEditing.MarkAsDistraction(_current, processName) is not { } updated)
+        {
+            SetStatus($"„{processName}“ konnte nicht als Verlockung eingetragen werden.", isError: true);
+            return;
+        }
+
+        if (ApplyQuickChange(updated))
+        {
+            // Nur die Listenfelder aktualisieren, übrige ungespeicherte Formulareingaben bleiben erhalten.
+            AllowedText = string.Join(Environment.NewLine, updated.AllowedProcesses);
+            DistractingText = string.Join(Environment.NewLine, updated.DistractingProcesses);
+            SetStatus($"„{ProcessNames.Normalize(processName)}“ zählt ab sofort als Verlockung.", isError: false);
+        }
+    }
 
     public ICommand OpenMemeFolderCommand { get; }
 
