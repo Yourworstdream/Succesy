@@ -1,0 +1,34 @@
+name: "Anmeldung"
+description: Melde dich für das Klassen-Repository der FST AUD 25 an.
+title: "Anmeldung: "
+labels: ["anmeldung"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Nach dem Absenden wirst du ins Repository eingeladen. Die Einladung kommt per E-Mail.
+        Das Repository ist öffentlich, deshalb bitte nur Vorname und Anfangsbuchstabe vom Nachnamen.
+  - type: input
+    id: name
+    attributes:
+      label: Name (Vorname und Anfangsbuchstabe vom Nachnamen)
+      placeholder: "z. B. Max M."
+    validations:
+      required: true
+  - type: dropdown
+    id: erfahrung
+    attributes:
+      label: Hast du schon mit Git oder GitHub gearbeitet?
+      options:
+        - Nein, noch nie
+        - Ein bisschen
+        - Ja, regelmäßig
+    validations:
+      required: true
+  - type: checkboxes
+    id: regeln
+    attributes:
+      label: Regeln
+      options:
+        - label: Ich halte mich an die [Regeln](https://github.com/Yourworstdream/FSTAUD25/blob/main/CONTRIBUTING.md).
+          required: true

@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GitHub-Anleitung · FST AUD 25</title>
+<meta name="description" content="In sieben Schritten ins gemeinsame GitHub-Repository der FST AUD 25.">
+<meta property="og:title" content="GitHub-Anleitung für die FST AUD 25">
+<meta property="og:description" content="In sieben Schritten ins gemeinsame GitHub-Repository. Du brauchst nur einen Browser.">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/common.js" defer></script>
+<script src="assets/anleitung.js" defer></script>
+</head>
+<body>
+
+<header class="kopf">
+  <div class="kopf-innen">
+    <a class="seitenname" href="./">FST AUD 25</a>
+    <nav aria-label="Seiten">
+      <a href="./" aria-current="page">Anleitung</a>
+      <a href="fortschritt.html">Fortschritt</a>
+      <a href="hilfe.html">Hilfe</a>
+      <a href="https://github.com/Yourworstdream/FSTAUD25" data-repo="">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <h1>GitHub-Anleitung für die FST AUD 25</h1>
+  <p class="nur-druck druck-kopf"><img src="assets/qr-anleitung.svg" alt="">Online mit allen Links und dem Anmeldeformular:<br>yourworstdream.github.io/FSTAUD25</p>
+  <p>Wir arbeiten dieses Schuljahr gemeinsam in einem GitHub-Repository. Diese Seite bringt dich in sieben Schritten dorthin. Du brauchst nur einen Browser, rechne mit etwa 30 Minuten. Am besten suchst du dir einen Partner aus der Klasse, ihr prüft euch in Schritt 4 und 5 gegenseitig.</p>
+
+  <ol class="uebersicht" id="uebersicht">
+    <li data-schritt="anmeldung"><a href="#schritt-1">Konto erstellen und anmelden</a></li>
+    <li data-schritt="team"><a href="#schritt-2">Einladung annehmen</a></li>
+    <li data-schritt="pr"><a href="#schritt-3">Steckbrief vorschlagen</a></li>
+    <li data-schritt="merge"><a href="#schritt-4">Review abwarten und mergen</a></li>
+    <li data-schritt="review"><a href="#schritt-5">Einen Pull Request prüfen</a></li>
+    <li data-schritt="diskussion"><a href="#schritt-6">In einem Issue mitreden</a></li>
+    <li data-schritt="projekt"><a href="#schritt-7">Eine Wiki-Seite schreiben</a></li>
+  </ol>
+
+  <div class="kasten" id="ich" hidden>
+    <p>Du bist als <b>@<span data-ich-login></span></b> eingetragen. <span id="ich-stand"></span></p>
+    <p class="leise"><a id="ich-link" href="fortschritt.html">Zur Klassenliste</a> · <a href="#schritt-1" id="ich-aendern">Anderen Namen eintragen</a></p>
+  </div>
+
+  <section class="schritt" id="schritt-1">
+    <p class="schritt-nr">Schritt 1 von 7</p>
+    <h2>Konto erstellen und anmelden</h2>
+    <p>Falls du noch kein GitHub-Konto hast, registriere dich auf <a href="https://github.com/signup">github.com/signup</a>. Merk dir deinen Benutzernamen. GitHub verlangt eine Zwei-Faktor-Anmeldung, das geht am einfachsten mit einer Authenticator-App auf dem Handy.</p>
+    <p>Dann trägst du dich hier ein. Danach öffnet sich GitHub mit einem fertig ausgefüllten Formular, dort klickst du nur noch auf <b>Create</b>.</p>
+
+    <p class="nur-druck">Das Formular dazu findest du auf der Online-Seite (QR-Code oben).</p>
+    <form class="formular" id="anmelde-form" novalidate>
+      <label>Name <span class="leise">(Vorname und erster Buchstabe vom Nachnamen, z.&nbsp;B. Max M.)</span>
+        <input id="f-name" required maxlength="40" autocomplete="off">
+      </label>
+      <label>GitHub-Benutzername
+        <input id="f-login" required maxlength="39" autocomplete="off" autocapitalize="off" spellcheck="false">
+      </label>
+      <p class="meldung" id="f-meldung" aria-live="polite" hidden></p>
+      <button class="knopf" type="submit">Weiter zu GitHub</button>
+    </form>
+    <noscript><p>Ohne JavaScript geht es direkt über das <a href="https://github.com/Yourworstdream/FSTAUD25/issues/new?template=anmeldung.yml">Anmelde-Formular auf GitHub</a>.</p></noscript>
+
+    <div class="kasten" id="anmelde-erfolg" hidden>
+      <p>GitHub wurde in einem neuen Tab geöffnet. Klick dort auf <b>Create</b>, dann bist du angemeldet. Kein neuer Tab? <a id="anmelde-link" href="#" target="_blank" rel="noopener">Formular hier öffnen</a>.</p>
+    </div>
+    <p class="leise">Das Repository ist öffentlich. Deshalb bitte nur Vorname und Anfangsbuchstabe.</p>
+    <p class="fertig"><b>Fertig, wenn</b> du auf GitHub die Seite „Anmeldung: dein Name“ siehst.</p>
+  </section>
+
+  <section class="schritt" id="schritt-2">
+    <p class="schritt-nr">Schritt 2 von 7</p>
+    <h2>Einladung annehmen</h2>
+    <p>Nach deiner Anmeldung lädt dich @Yourworstdream ins Repository ein. Du bekommst dazu eine E-Mail von GitHub. Schau auch im Spam-Ordner nach.</p>
+    <p>Klick in der E-Mail auf <b>View invitation</b> und dann auf <b>Accept invitation</b>. Du kannst die Einladung auch <a href="https://github.com/Yourworstdream/FSTAUD25/invitations" data-repo="/invitations">direkt hier öffnen</a>. Sie gilt 7 Tage.</p>
+    <p>Schreib danach in <a id="anmelde-issue-link" href="https://github.com/Yourworstdream/FSTAUD25/issues?q=is%3Aissue+label%3Aanmeldung">dein Anmelde-Issue</a> kurz „angenommen“. Dann wird es geschlossen und dein Häkchen erscheint gleich in der Klassenliste.</p>
+    <p class="fertig"><b>Fertig, wenn</b> dein Anmelde-Issue geschlossen ist. Bietet dir GitHub an, das Repository zu „forken“, ist die Einladung noch nicht angenommen.</p>
+  </section>
+
+  <section class="schritt" id="schritt-3">
+    <p class="schritt-nr">Schritt 3 von 7</p>
+    <h2>Steckbrief vorschlagen</h2>
+    <p>Am Hauptstand des Projekts (<code>main</code>) ändert niemand direkt etwas. Du machst deine Änderung auf einem eigenen Zweig, einem <b>Branch</b>, und schlägst sie dann vor. Dieser Vorschlag heißt <b>Pull Request</b>.</p>
+    <ol>
+      <li>Öffne die vorbereitete Datei: <a id="steckbrief-link" href="https://github.com/Yourworstdream/FSTAUD25/new/main/teilnehmer">Steckbrief anlegen</a>. Name und Text sind schon eingetragen, du kannst den Text noch ändern.</li>
+      <li>Klick auf <b>Commit changes</b>.</li>
+      <li>Wähle <b>Create a new branch for this commit and start a pull request</b> und klick auf <b>Propose changes</b>.</li>
+      <li>Wähl rechts bei <b>Reviewers</b> eine Person aus der Klasse aus und klick auf <b>Create pull request</b>.</li>
+    </ol>
+    <p class="leise" id="steckbrief-hinweis">Die Datei muss genauso heißen wie dein Benutzername, also <code><span data-ich-login>benutzername</span>.md</code>. Trag in Schritt 1 deinen Namen ein, dann stimmt das automatisch.</p>
+    <p class="fertig"><b>Fertig, wenn</b> oben im Pull Request ein grünes „Open“ steht.</p>
+  </section>
+
+  <section class="schritt" id="schritt-4">
+    <p class="schritt-nr">Schritt 4 von 7</p>
+    <h2>Review abwarten und mergen</h2>
+    <p>Jetzt schaut sich eine andere Person deinen Pull Request an. Gibt sie ihn frei (<b>Approve</b>), klickst du unten auf <b>Merge pull request</b> und dann auf <b>Confirm merge</b>. Damit ist deine Änderung im Hauptstand. Den Branch kannst du danach mit <b>Delete branch</b> löschen.</p>
+    <p>Soll noch etwas geändert werden, bearbeite die Datei direkt im Pull Request unter <b>Files changed</b>. Einen neuen Pull Request brauchst du dafür nicht.</p>
+    <p class="fertig"><b>Fertig, wenn</b> oben ein lila „Merged“ steht. Ist der Merge-Knopf grau, fehlt noch die Freigabe.</p>
+  </section>
+
+  <section class="schritt" id="schritt-5">
+    <p class="schritt-nr">Schritt 5 von 7</p>
+    <h2>Einen Pull Request prüfen</h2>
+    <p>Öffne einen <a href="https://github.com/Yourworstdream/FSTAUD25/pulls" data-repo="/pulls">offenen Pull Request</a> von jemand anderem. Unter <b>Files changed</b> siehst du, was geändert wurde: Grün ist neu, Rot wurde gelöscht.</p>
+    <p>Klick oben rechts auf <b>Review changes</b>, wähle <b>Approve</b>, wenn alles passt, oder <b>Request changes</b>, wenn etwas fehlt, und schreib kurz dazu, warum. Bleib dabei freundlich und konkret.</p>
+    <p class="fertig"><b>Fertig, wenn</b> im Pull Request „dein-name approved these changes“ steht.</p>
+  </section>
+
+  <section class="schritt" id="schritt-6">
+    <p class="schritt-nr">Schritt 6 von 7</p>
+    <h2>In einem Issue mitreden</h2>
+    <p>Issues sind unsere Aufgabenliste. Öffne eines der <a href="https://github.com/Yourworstdream/FSTAUD25/issues?q=is%3Aissue+label%3Athema" data-repo="/issues?q=is%3Aissue+label%3Athema">Themen fürs Wiki</a> und schreib unten einen Kommentar, zum Beispiel welches Thema dich interessiert.</p>
+    <p class="fertig"><b>Fertig, wenn</b> dein Kommentar unter dem Issue steht.</p>
+  </section>
+
+  <section class="schritt" id="schritt-7">
+    <p class="schritt-nr">Schritt 7 von 7</p>
+    <h2>Eine Wiki-Seite schreiben</h2>
+    <p>Zusammen schreiben wir ein kleines Wiki zur Automatisierungstechnik. Es gibt 12 Themen, jede Person übernimmt eins.</p>
+    <ol>
+      <li>Such dir bei den <a href="https://github.com/Yourworstdream/FSTAUD25/issues?q=is%3Aissue+is%3Aopen+label%3Athema" data-repo="/issues?q=is%3Aissue+is%3Aopen+label%3Athema">Themen</a> ein freies aus, schreib „Ich übernehme das“ und trag dich rechts bei <b>Assignees</b> ein.</li>
+      <li>Klick im Themen-Issue auf den Link zum Anlegen der Datei, der Dateiname ist dort schon eingetragen. Den Text kopierst du aus der Vorlage, die im Issue verlinkt ist.</li>
+      <li>Weiter wie in Schritt 3 und 4: neuer Branch, Pull Request, Review, Merge. Schreib in den Pull Request <code>Closes #</code> und die Nummer deines Themen-Issues.</li>
+    </ol>
+    <p class="fertig"><b>Fertig, wenn</b> dein Pull Request mit der Wiki-Seite gemerged ist.</p>
+  </section>
+
+  <section class="schritt">
+    <p>Das war's. Wenn du irgendwo hängst, schau auf die <a href="hilfe.html">Hilfe-Seite</a> oder frag in der Klasse.</p>
+  </section>
+</main>
+
+<footer class="fuss">
+  FST AUD 25 · Diese Seite liegt selbst im <a href="https://github.com/Yourworstdream/FSTAUD25" data-repo="">Repository</a> und kann per Pull Request verbessert werden.
+</footer>
+
+</body>
+</html>
