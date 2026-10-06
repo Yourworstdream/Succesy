@@ -23,6 +23,7 @@
   <ItemGroup>
     <Resource Include="Assets\laterne.ico" />
     <Resource Include="Assets\laterne.png" />
+    <Resource Include="Assets\korn.png" />
   </ItemGroup>
 
   <ItemGroup>

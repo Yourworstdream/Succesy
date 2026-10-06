@@ -5,8 +5,9 @@
 **Laternenwacht** ist ein Fokuswächter für Windows. Während einer Fokuszeit („Wacht“) hängt am
 **oberen Bildschirmrand** ein schmales Banner, das dir live zeigt, **wie lange du dich bereits
 ablenkst** – als *Frost*, der über das Licht der Laterne kriecht. Die Texte und Figuren stammen aus
-der Welt der Chroniken von Narnia (C. S. Lewis); die Oberfläche folgt dem modernen Gestaltungssystem
-„Schneelicht“: warmes Papierweiß, Tinte, ein Laternenorange für Fokus und Lob, Eisblau für Ablenkung.
+der Welt der Chroniken von Narnia (C. S. Lewis). Gestaltet als **„Nachtwald“**: ein Laternenlicht im
+verschneiten Wald bei Nacht – Tannen‑Schwarzgrün, Glasflächen, Champagner‑Kerzenlicht für Fokus und Lob,
+Eisblau für Ablenkung, eigene Fensterleiste und eine illustrierte Szene mit fallendem Schnee.
 
 ![Laternenwacht – Fokus](docs/bilder/1-fokus-laufend.png)
 

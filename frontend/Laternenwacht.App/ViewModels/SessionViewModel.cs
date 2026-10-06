@@ -31,6 +31,9 @@ internal sealed class SessionViewModel : ObservableObject
     private double _focusWeight;
     private double _frostWeight;
     private double _awayWeight;
+    private string _nextGoalText = string.Empty;
+    private string _nextGoalRemainingText = string.Empty;
+    private double _nextGoalProgress;
     private string _longestStreakText = "00:00";
     private int _distractionCount;
     private double _progress;
@@ -146,6 +149,15 @@ internal sealed class SessionViewModel : ObservableObject
     public double FrostWeight { get => _frostWeight; private set => SetProperty(ref _frostWeight, value); }
 
     public double AwayWeight { get => _awayWeight; private set => SetProperty(ref _awayWeight, value); }
+
+    /// <summary>Nächste Lob-Schwelle der Fokus-Serie, z. B. "25 Minuten am Stück im Licht".</summary>
+    public string NextGoalText { get => _nextGoalText; private set => SetProperty(ref _nextGoalText, value); }
+
+    /// <summary>z. B. "noch 4:29".</summary>
+    public string NextGoalRemainingText { get => _nextGoalRemainingText; private set => SetProperty(ref _nextGoalRemainingText, value); }
+
+    /// <summary>Fortschritt zur nächsten Schwelle (0–1).</summary>
+    public double NextGoalProgress { get => _nextGoalProgress; private set => SetProperty(ref _nextGoalProgress, value); }
 
     /// <summary>Fokuszeit seit der letzten Ablenkung.</summary>
     public string CurrentStreakText { get => _currentStreakText; private set => SetProperty(ref _currentStreakText, value); }
@@ -274,6 +286,7 @@ internal sealed class SessionViewModel : ObservableObject
             FocusWeight = session.Focused.TotalSeconds;
             FrostWeight = session.Distracted.TotalSeconds;
             AwayWeight = session.Away.TotalSeconds;
+            UpdateNextGoal(session.CurrentStreak);
             LongestStreakText = TimeFormat.Clock(session.LongestStreak);
             DistractionCount = session.DistractionCount;
             Progress = session.Progress;
@@ -302,6 +315,29 @@ internal sealed class SessionViewModel : ObservableObject
         OnPropertyChanged(nameof(HasMarkCandidate));
         OnPropertyChanged(nameof(MarkCandidateLabel));
         RelayCommand.Refresh();
+    }
+
+    /// <summary>Berechnet das nächste positive Ziel (Lob-Schwelle) aus der laufenden Fokus-Serie.</summary>
+    private void UpdateNextGoal(TimeSpan streak)
+    {
+        var previous = TimeSpan.Zero;
+        foreach (var minutes in Praises.StreakMilestones)
+        {
+            var target = TimeSpan.FromMinutes(minutes);
+            if (streak < target)
+            {
+                NextGoalText = $"{minutes} Minuten am Stück im Licht";
+                NextGoalRemainingText = "noch " + TimeFormat.Clock(target - streak);
+                NextGoalProgress = (streak - previous) / (target - previous);
+                return;
+            }
+
+            previous = target;
+        }
+
+        NextGoalText = "Alle Ziele erreicht – eine Legende!";
+        NextGoalRemainingText = TimeFormat.Clock(streak);
+        NextGoalProgress = 1;
     }
 
     private void UpdateAdmonition(FocusSession session)

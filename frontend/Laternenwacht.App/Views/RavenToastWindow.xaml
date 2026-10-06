@@ -16,10 +16,10 @@
       <TranslateTransform x:Name="Slide" X="60" />
     </Grid.RenderTransform>
 
-    <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1"
+    <Border Background="{StaticResource CapsuleBrush}" BorderBrush="{StaticResource Edge2Brush}" BorderThickness="1"
             CornerRadius="20" Padding="16,16,18,14">
       <Border.Effect>
-        <DropShadowEffect BlurRadius="32" ShadowDepth="8" Direction="270" Opacity="0.22" Color="Black" />
+        <DropShadowEffect BlurRadius="34" ShadowDepth="10" Direction="270" Opacity="0.4" Color="Black" />
       </Border.Effect>
       <Grid>
         <Grid.ColumnDefinitions>
@@ -27,24 +27,28 @@
           <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <Border x:Name="Avatar" Width="40" Height="40" CornerRadius="20" Background="{StaticResource LightTintBrush}"
-                VerticalAlignment="Top">
-          <TextBlock x:Name="AvatarText" FontFamily="{StaticResource DisplayFont}" FontSize="16" FontWeight="Bold"
-                     Foreground="{StaticResource LightInkBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        <!-- Avatar: Anfangsbuchstabe des Sprechers in einem leuchtenden Ring -->
+        <Border x:Name="Avatar" Width="42" Height="42" CornerRadius="21" BorderBrush="{StaticResource GoldBrush}" BorderThickness="1.5"
+                Background="{StaticResource GoldTintBrush}" VerticalAlignment="Top">
+          <Border.Effect>
+            <DropShadowEffect x:Name="AvatarGlow" BlurRadius="16" ShadowDepth="0" Color="{StaticResource GoldColor}" Opacity="0.35" />
+          </Border.Effect>
+          <TextBlock x:Name="AvatarText" FontFamily="{StaticResource SerifFont}" FontSize="19"
+                     Foreground="{StaticResource GoldBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,2" />
         </Border>
 
         <StackPanel Grid.Column="1" Margin="14,0,0,0">
           <Grid>
-            <TextBlock x:Name="HeaderText" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource LightInkBrush}" />
-            <Path Data="{StaticResource CrossGeometry}" Stroke="{StaticResource Ink3Brush}" StrokeThickness="1.8"
+            <TextBlock x:Name="HeaderText" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource GoldBrush}" />
+            <Path Data="{StaticResource CrossGeometry}" Stroke="{StaticResource MossBrush}" StrokeThickness="1.8"
                   StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stretch="Uniform" Width="9" Height="9"
                   HorizontalAlignment="Right" VerticalAlignment="Center" ToolTip="Schließen" />
           </Grid>
-          <TextBlock x:Name="MessageText" Margin="0,4,0,0" FontSize="15" LineHeight="21"
-                     Foreground="{StaticResource InkBrush}" TextWrapping="Wrap"
+          <TextBlock x:Name="MessageText" Margin="0,5,0,0" FontFamily="{StaticResource SerifTextFont}" FontSize="16" LineHeight="23"
+                     Foreground="{StaticResource IvoryBrush}" TextWrapping="Wrap"
                      AutomationProperties.LiveSetting="Assertive" />
-          <TextBlock x:Name="SourceText" Margin="0,8,0,0" FontSize="12" Foreground="{StaticResource Ink3Brush}" TextWrapping="Wrap" />
-          <ProgressBar x:Name="Lifetime" Margin="0,12,0,0" Style="{StaticResource SlimProgress}" Value="1" />
+          <TextBlock x:Name="SourceText" Margin="0,8,0,0" FontSize="12" Foreground="{StaticResource MossBrush}" TextWrapping="Wrap" />
+          <ProgressBar x:Name="Lifetime" Margin="0,12,0,0" Style="{StaticResource SlimProgress}" Height="3" Value="1" />
         </StackPanel>
       </Grid>
     </Border>

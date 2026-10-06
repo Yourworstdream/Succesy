@@ -60,6 +60,20 @@ internal sealed class ChronicleViewModel : ObservableObject
 
     public string SealMessage { get => _sealMessage; private set => SetProperty(ref _sealMessage, value); }
 
+    /// <summary>Kurzform für die Navigationsleiste.</summary>
+    public string SealShort => SealStatus switch
+    {
+        SealStatus.Intact => "Siegel intakt",
+        SealStatus.Empty => "Chronik bereit",
+        _ => "Siegel gebrochen",
+    };
+
+    public string SealDetailShort => SealStatus switch
+    {
+        SealStatus.Broken => "Details in der Chronik",
+        _ => Entries.Count == 1 ? "1 Wacht geprüft" : $"{Entries.Count} Wachten geprüft",
+    };
+
     public string? ArchiveHint { get => _archiveHint; private set => SetProperty(ref _archiveHint, value); }
 
     public bool HasArchiveHint => !string.IsNullOrEmpty(ArchiveHint);
@@ -124,6 +138,8 @@ internal sealed class ChronicleViewModel : ObservableObject
         OnPropertyChanged(nameof(BestStreakText));
         OnPropertyChanged(nameof(IsSealIntact));
         OnPropertyChanged(nameof(SealHeadline));
+        OnPropertyChanged(nameof(SealShort));
+        OnPropertyChanged(nameof(SealDetailShort));
         OnPropertyChanged(nameof(HasArchiveHint));
     }
 }

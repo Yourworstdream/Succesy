@@ -294,50 +294,58 @@ Laternenpfahl. Die Metaphern sind durchgängig und selbsterklärend:
 | Ergebnisbewertung | **Jahreszeit**: Frühling (< 10 % Frost), Tauwetter (< 25 %), Winter |
 | Hinweis bei vielen Ablenkungen | **Mahnruf** (z. B. bei 20 Verlockungen: *„Herrscher von Cair Paravel, Ihr gefährdet Euer Königreich mit Eurem Müßiggang!“*) |
 
-**Gestaltungssystem „Schneelicht“ (ab Version 1.4).** Die erste Fassung arbeitete mit Nachtblau,
-Gold, Pergament, Serifenschrift und Ornamenten. Im Nutzertest wirkte das zu klassisch und „generiert“.
-Die Überarbeitung trennt deshalb **Erzählung** (Texte, Figuren, Metaphern) von **Form** (ruhig, modern,
-eigenständig): Die Fantasy lebt in der Sprache, die Oberfläche bleibt klar.
+**Gestaltungssystem „Nachtwald“ (ab Version 1.5).** Die Oberfläche hat zwei Iterationen durchlaufen,
+die beide im Nutzertest scheiterten – ein lehrreicher Teil des Projekts:
+
+1. *Fantasy‑klassisch* (Nachtblau, Gold, Pergament, Serifen, Ornamente): wirkte altmodisch und „generiert“.
+2. *„Schneelicht“* (Cremeweiß, Tinte, Orange, schlichte weiße Karten): wirkte beliebig – Cremeweiß mit Orange
+   ist zudem die Markenfarbwelt eines bekannten KI‑Assistenten, die App sah dadurch „nach KI“ aus.
+
+Die dritte Fassung leitet Farbe und Form konsequent aus dem Motiv ab – **ein Laternenlicht in einem
+verschneiten Wald bei Nacht** – statt aus einem Baukasten:
 
 | Rolle | Farbe | Verwendung |
 |---|---|---|
-| Paper | `#F6F4F0` | Fensterhintergrund (warmes Papierweiß statt Nachtblau) |
-| Card / Line | `#FFFFFF` / `#E8E4DD` | Flächen mit Haarlinie statt Schlagschatten |
-| Ink · Ink2 · Ink3 | `#141414` · `#5C5A55` · `#9A968F` | Text in drei Stufen, Hauptschaltflächen |
-| **Light** | `#FF6B2C` | der **einzige** Akzent: Fokus, Fortschritt, Lob |
-| **Frost** | `#3FA9E6` | ausschließlich Ablenkung |
-| Error | `#D63B3B` | nur echte Fehler (z. B. gebrochenes Siegel) |
+| Nacht | `#08100E`–`#0D1915` | Fensterhintergrund: Tannen‑Schwarzgrün statt Schwarz oder Navy, mit warmem Lichtschimmer und feinem Korn |
+| Glas | 4–7 % Weiß, Kante 9–14 % | Flächen mit feiner Lichtkante statt flacher Karten |
+| Ivory · Sage · Moss | `#EDE8DD` · `#A3AEA6` · `#6E7C74` | Text in drei Stufen, leicht grünstichig passend zum Wald |
+| **Kerzenlicht** | `#E2C48D` | einziger warmer Akzent: Fokus, Fortschritt, Lob – mit sanftem Lichtschein |
+| **Frost** | `#9FD3EA` | ausschließlich Ablenkung – kaltes Licht |
 
-* **Farbsemantik statt Dekoration:** Orange bedeutet immer „Licht/gut“, Eisblau immer „Frost/Ablenkung“.
-  Dadurch ist der Zustand ohne Lesen erfassbar – auch im Augenwinkel in der Fokusleiste.
-* **Form:** Kapseln (Fokusleiste, Statusanzeigen, Schaltflächen), Fortschrittsringe mit runden Enden,
-  Karten mit 24 px Radius, Kennzahlen mit kleinen Großbuchstaben‑Beschriftungen. Keine Verläufe,
-  keine Ornamente.
-* **Schrift:** Segoe UI Variable (Windows 11, Rückfall Segoe UI) – Display‑Schnitt für große, tabellarische
-  Ziffern (die Zeit springt beim Zählen nicht), Text‑Schnitt für Fließtext.
-* **Symbole:** eigene 24‑px‑Linienpfade (Flamme, Schneeflocke, Uhr, Buch, Regler …) – auf jeder DPI‑Stufe scharf.
-* **App‑Symbol:** tintenschwarze Kachel mit oranger Flamme.
-* **Barrierefreiheit:** Tastaturfokus wird mit orangem Ring sichtbar; Steuerelemente tragen
-  `AutomationProperties.Name`; Kontrast Ink auf Paper > 15 : 1.
+* **Illustration statt Kasten:** Im Zentrum der Fokus‑Seite steht eine Szene (Sternenhimmel, drei Ebenen
+  Tannen, verschneiter Boden, Laternenpfahl). Der Fortschritt läuft als **Lichtring um die Laterne**;
+  bei Ablenkung wird das Licht kalt und eisblau. Fallender Schnee und ein leicht atmender Lichtschein
+  geben Leben – beides entfällt, wenn Windows „Animationen anzeigen“ ausgeschaltet ist.
+  Die Tannenreihen sind per Skript generiert (unregelmäßig wie echte Waldkanten) und als Vektorpfade eingebettet.
+* **Eigene Fensterleiste** (`WindowChrome`) statt der weißen Standard‑Titelleiste; Größenänderung,
+  Andocken und Maximieren bleiben erhalten.
+* **Typografie:** Überschriften in *Sitka* (moderne Serifenschrift, Bestandteil von Windows), Zahlen in
+  *Segoe UI Variable Display* im leichten Schnitt (groß, ruhig, tabellarisch), Fließtext in *Segoe UI Variable Text*.
+* **Details:** leuchtende Marke am aktiven Navigationseintrag, Schalter und Hauptschaltfläche in Champagner,
+  dunkle Auswahllisten, Kontextmenüs und Tooltips, schmale Bildlaufleisten.
+* **Positiv gestaltet:** Die rechte Spalte zeigt neben Kennzahlen und Verteilung ein **„Nächstes Ziel“**
+  (z. B. „25 Minuten am Stück im Licht – noch 4:29“).
+* **Barrierefreiheit:** sichtbarer Tastaturfokus (Kerzenlicht‑Rahmen), `AutomationProperties.Name` an
+  Steuerelementen, reduzierte Bewegung respektiert, Kontrast Ivory auf Nacht > 14 : 1.
 
 ![Fokus – laufende Wacht](bilder/1-fokus-laufend.png)
 
-*Abb.: Hauptfenster, laufende Wacht (Entwurfsvorschau als HTML‑Nachbau). Links Navigation, Mitte
-Fortschrittsring mit Restzeit, rechts Kennzahlen und Verteilungsbalken (Licht / Frost / abwesend).*
+*Abb.: Fokus‑Seite während einer Wacht (Entwurfsvorschau als HTML‑Nachbau). Mitte: Szene mit Lichtring
+und Restzeit; rechts: Kennzahlen, Verteilung und nächstes Ziel.*
+
+![Fokus – bereit](bilder/2-fokus-bereit.png)
+
+*Abb.: Fokus‑Seite vor dem Start mit Schnellstart und eigener Dauer.*
 
 ![Fokusleiste, Botschaft und Meme](bilder/3-kapsel-botschaft-meme.png)
 
-*Abb.: Fokusleiste als dunkle Kapsel – oben im Fokus (Orange), darunter abgelenkt (Eisblau‑Rand und
-Frost‑Chip). Unten rechts eine Lob‑Botschaft mit Initial‑Avatar, links ein treibendes Meme.*
-
-![Chronik](bilder/4-chronik.png)
-
-*Abb.: Chronik mit Siegelstatus, Kennzahlen und versiegelten Einträgen.*
+*Abb.: Fokusleiste aus dunklem Waldglas – oben im Fokus, darunter abgelenkt (eisblauer Schimmer).
+Rechts eine Botschaft mit Initial‑Avatar und Serifen‑Zitat, links ein treibendes Meme.*
 
 **Fokusleiste (Kapsel)**
 
-* Dunkle Kapsel (Ink, 95 % deckend), damit sie auf hellen wie dunklen Hintergründen trägt.
-  Ring = Fortschritt der Wacht, große Zahl = Restzeit, Unterzeile = Kurzstatus
+* Kapsel aus dunklem Waldglas, damit sie auf hellen wie dunklen Hintergründen trägt.
+  Lichtring = Fortschritt der Wacht, große Zahl = Restzeit, Unterzeile = Kurzstatus
   („Im Licht · Serie 12:30“ bzw. „Frost · Hearthstone“), Chip = Frostzeit und Anzahl der Ablenkungen.
 * **Verschiebbar:** Ziehen mit der linken Maustaste; die Position wird gespeichert. Fehlt der Bildschirm
   später (z. B. Laptop ohne Zweitmonitor), sitzt sie wieder oben mittig. Rechtsklick ▸
@@ -346,7 +354,7 @@ Frost‑Chip). Unten rechts eine Lob‑Botschaft mit Initial‑Avatar, links ein
   (Band 1–7 oder gemischt), Lob/Mahnrufe/Memes schalten, Wacht steuern.
 * `WS_EX_NOACTIVATE`: Klicks stehlen **nicht** den Tastaturfokus – sonst würde die Leiste selbst
   die Messung verfälschen. `WS_EX_TOOLWINDOW`: kein Eintrag in Alt+Tab/Taskleiste.
-* Bei Ablenkung wechseln Ring, Rand und Chip von Orange zu Eisblau, die Flamme wird zur Schneeflocke.
+* Bei Ablenkung wechseln Ring, Rand und Chip von Kerzenlicht zu Eisblau, die Kapsel schimmert kalt und die Flamme wird zur Schneeflocke.
 
 ---
 

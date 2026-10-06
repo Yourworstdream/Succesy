@@ -18,7 +18,7 @@
 
   <Viewbox Stretch="Uniform">
     <Grid Width="24" Height="24">
-      <Path x:Name="Flame" Data="{StaticResource FlameGeometry}" Fill="{StaticResource LightBrush}" RenderTransformOrigin="0.5,0.9">
+      <Path x:Name="Flame" Data="{StaticResource FlameGeometry}" Fill="{StaticResource GoldBrush}" RenderTransformOrigin="0.5,0.9">
         <Path.RenderTransform>
           <ScaleTransform x:Name="FlameScale" />
         </Path.RenderTransform>
@@ -32,7 +32,7 @@
           </Style>
         </Path.Style>
       </Path>
-      <Path Data="{StaticResource SnowflakeGeometry}" Stroke="{StaticResource FrostPaleBrush}" StrokeThickness="2"
+      <Path Data="{StaticResource SnowflakeGeometry}" Stroke="{StaticResource FrostBrush}" StrokeThickness="2"
             StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stretch="Uniform" Margin="1">
         <Path.Style>
           <Style TargetType="Path">

@@ -32,10 +32,10 @@ internal sealed class TextToVisibilityConverter : IValueConverter
 [ValueConversion(typeof(RealmMood), typeof(Brush))]
 internal sealed class MoodToBrushConverter : IValueConverter
 {
-    // Frühling = Licht (Orange), Tauwetter = Frost (Eisblau), Winter = gedämpftes Grau
-    private static readonly Brush Spring = Freeze(new SolidColorBrush(Color.FromRgb(0xFF, 0x6B, 0x2C)));
-    private static readonly Brush Thaw = Freeze(new SolidColorBrush(Color.FromRgb(0x3F, 0xA9, 0xE6)));
-    private static readonly Brush Winter = Freeze(new SolidColorBrush(Color.FromRgb(0x9A, 0x96, 0x8F)));
+    // Frühling = Kerzenlicht (Champagner), Tauwetter = Frost (Eisblau), Winter = Moosgrau
+    private static readonly Brush Spring = Freeze(new SolidColorBrush(Color.FromRgb(0xE2, 0xC4, 0x8D)));
+    private static readonly Brush Thaw = Freeze(new SolidColorBrush(Color.FromRgb(0x9F, 0xD3, 0xEA)));
+    private static readonly Brush Winter = Freeze(new SolidColorBrush(Color.FromRgb(0x6E, 0x7C, 0x74)));
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) => value switch
     {
@@ -54,12 +54,12 @@ internal sealed class MoodToBrushConverter : IValueConverter
     }
 }
 
-/// <summary>Fehlerzustand → Fehlerrot, sonst Laternen-Tinte.</summary>
+/// <summary>Fehlerzustand → Fehlerrot, sonst Kerzenlicht.</summary>
 [ValueConversion(typeof(bool), typeof(Brush))]
 internal sealed class ErrorToBrushConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
-        Application.Current.FindResource(value is true ? "ErrorBrush" : "LightInkBrush");
+        Application.Current.FindResource(value is true ? "ErrorBrush" : "GoldBrush");
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
         throw new NotSupportedException();

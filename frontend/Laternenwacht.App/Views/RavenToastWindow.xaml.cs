@@ -28,11 +28,14 @@ public partial class RavenToastWindow : Window
 
         if (!positive)
         {
-            // Mahnrufe gehören zum Frost: Eisblau statt Laternenorange.
+            // Mahnrufe gehören zum Frost: Eisblau statt Kerzenlicht.
+            var frost = (System.Windows.Media.Brush)FindResource("FrostBrush");
             Avatar.Background = (System.Windows.Media.Brush)FindResource("FrostTintBrush");
-            AvatarText.Foreground = (System.Windows.Media.Brush)FindResource("FrostInkBrush");
-            HeaderText.Foreground = AvatarText.Foreground;
-            Lifetime.Foreground = (System.Windows.Media.Brush)FindResource("FrostBrush");
+            Avatar.BorderBrush = frost;
+            AvatarGlow.Color = (System.Windows.Media.Color)FindResource("FrostColor");
+            AvatarText.Foreground = frost;
+            HeaderText.Foreground = frost;
+            Lifetime.Foreground = frost;
         }
 
         SourceInitialized += (_, _) => WindowStyles.MakeNonActivatingToolWindow(this);
