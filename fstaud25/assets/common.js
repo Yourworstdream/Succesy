@@ -4,7 +4,7 @@ window.FST = (() => {
 
   // Auf GitHub Pages (<owner>.github.io/<repo>/) werden Owner und Repo aus der Adresse
   // abgeleitet, damit auch eine Kopie des Repositorys ohne Änderungen funktioniert.
-  const STANDARD = { owner: 'Yourworstdream', repo: 'fstaud25' };
+  const STANDARD = { owner: 'Yourworstdream', repo: 'FSTAUD25' };
 
   function repoErmitteln() {
     const host = location.hostname.match(/^([a-z\d-]+)\.github\.io$/i);

@@ -2,10 +2,10 @@
 
 Das gemeinsame GitHub-Repository der Automatisierungsklasse FST AUD 25. Hier üben wir, mit Git und GitHub im Team zu arbeiten, und schreiben zusammen ein kleines Wiki zur Automatisierungstechnik.
 
-- Anleitung: https://yourworstdream.github.io/fstaud25/
-- Klassenliste: https://yourworstdream.github.io/fstaud25/fortschritt.html
-- Hilfe: https://yourworstdream.github.io/fstaud25/hilfe.html
-- Anmelden: [Anmelde-Formular öffnen](https://github.com/Yourworstdream/fstaud25/issues/new?template=anmeldung.yml)
+- Anleitung: https://yourworstdream.github.io/FSTAUD25/
+- Klassenliste: https://yourworstdream.github.io/FSTAUD25/fortschritt.html
+- Hilfe: https://yourworstdream.github.io/FSTAUD25/hilfe.html
+- Anmelden: [Anmelde-Formular öffnen](https://github.com/Yourworstdream/FSTAUD25/issues/new?template=anmeldung.yml)
 
 ## Die sieben Schritte
 
@@ -43,7 +43,7 @@ Außerdem beantwortet die Action neue Anmeldungen mit den nächsten Schritten un
 ## Einrichtung (einmalig, für @Yourworstdream)
 
 1. Settings → Pages → *Build and deployment* → Source: **GitHub Actions**.
-2. Actions → *Fortschritt & Webseite* → **Run workflow**. Danach ist die Seite unter https://yourworstdream.github.io/fstaud25/ erreichbar.
+2. Actions → *Fortschritt & Webseite* → **Run workflow**. Danach ist die Seite unter https://yourworstdream.github.io/FSTAUD25/ erreichbar.
 3. Settings → Rules → Rulesets → *New branch ruleset*, Target: *Include default branch*, dann **Restrict deletions**, **Require a pull request before merging** (1 Approval) und **Block force pushes** anhaken.
 4. Settings → General → *Automatically delete head branches* anhaken.
 5. Für jede neue Anmeldung unter Settings → Collaborators → *Add people* den Benutzernamen eintragen.

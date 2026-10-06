@@ -88,6 +88,8 @@ main { max-width: 46rem; margin: 0 auto; padding: 2rem 1rem 2.5rem; }
 .schritt { border-top: 1px solid var(--linie); padding: 1.8rem 0 .8rem; }
 .schritt-nr { color: var(--muted); font-size: .9rem; margin: 0 0 .15rem; }
 .schritt-nr .ok { font-weight: 600; }
+.fertig { color: var(--muted); font-size: .95rem; }
+.fertig b { color: var(--text); font-weight: 600; }
 
 .formular { margin: 1rem 0; }
 .formular label { display: block; font-weight: 600; margin-bottom: .9rem; }
@@ -148,6 +150,9 @@ table.liste { width: 100%; border-collapse: collapse; font-size: .95rem; }
 }
 
 .legende { color: var(--muted); font-size: .88rem; margin-top: .9rem; }
+
+.qr { display: flex; align-items: center; gap: 1rem; margin: 1.6rem 0 0; color: var(--muted); font-size: .88rem; }
+.qr img { width: 112px; height: 112px; background: #fff; padding: 6px; border-radius: 4px; flex: none; }
 
 .verlauf { list-style: none; padding: 0; margin: 0; }
 .verlauf li { padding: .45rem 0; border-bottom: 1px solid var(--linie); font-size: .93rem; margin: 0; }

@@ -1,6 +1,6 @@
 # Steckbriefe
 
-Hier legt jede Person aus der Klasse **eine** Datei an – das ist dein erster Pull Request (Schritt 3 der [Anleitung](https://yourworstdream.github.io/fstaud25/#schritt-3)).
+Hier legt jede Person aus der Klasse **eine** Datei an – das ist dein erster Pull Request (Schritt 3 der [Anleitung](https://yourworstdream.github.io/FSTAUD25/#schritt-3)).
 
 - Dateiname: **genau dein GitHub-Benutzername**, z. B. `max-m.md`
 - Nur deine eigene Datei bearbeiten
@@ -15,4 +15,4 @@ Hier legt jede Person aus der Klasse **eine** Datei an – das ist dein erster P
 - Lieblingsthema in der Automatisierung: SPS-Programmierung
 ```
 
-Dein Name erscheint dann so in der [Klassenliste](https://yourworstdream.github.io/fstaud25/fortschritt.html).
+Dein Name erscheint dann so in der [Klassenliste](https://yourworstdream.github.io/FSTAUD25/fortschritt.html).

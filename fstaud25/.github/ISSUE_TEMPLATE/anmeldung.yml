@@ -30,5 +30,5 @@ body:
     attributes:
       label: Regeln
       options:
-        - label: Ich halte mich an die [Regeln](https://github.com/Yourworstdream/fstaud25/blob/main/CONTRIBUTING.md).
+        - label: Ich halte mich an die [Regeln](https://github.com/Yourworstdream/FSTAUD25/blob/main/CONTRIBUTING.md).
           required: true

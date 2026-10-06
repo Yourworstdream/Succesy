@@ -11,4 +11,4 @@ Damit zwölf Leute gleichzeitig an einem Repository arbeiten können, halten wir
 
 Branch-Namen kurz und klein geschrieben, zum Beispiel `steckbrief-max-m` oder `thema/03-sensoren`.
 
-Die Anleitung steht unter https://yourworstdream.github.io/fstaud25/.
+Die Anleitung steht unter https://yourworstdream.github.io/FSTAUD25/.
