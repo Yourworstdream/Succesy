@@ -6,6 +6,8 @@ namespace Laternenwacht.App.Views;
 /// <summary>
 /// Kreisförmiger Fortschrittsring mit abgerundeten Enden – das zentrale Formelement
 /// des Designs (Hauptansicht und Fokusleiste). Zeichnet direkt, ohne Vorlagen.
+/// Der Lichtschein (<see cref="Glow"/>) entsteht aus zwei breiteren, blassen Strichen statt aus einem
+/// Schatteneffekt: Effekte werden bei jeder Änderung als Pixel-Shader neu berechnet – der Ring ändert sich jede Sekunde.
 /// </summary>
 public sealed class ProgressRing : FrameworkElement
 {
@@ -24,6 +26,10 @@ public sealed class ProgressRing : FrameworkElement
     public static readonly DependencyProperty RingBrushProperty = DependencyProperty.Register(
         nameof(RingBrush), typeof(Brush), typeof(ProgressRing),
         new FrameworkPropertyMetadata(Brushes.OrangeRed, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public static readonly DependencyProperty GlowProperty = DependencyProperty.Register(
+        nameof(Glow), typeof(double), typeof(ProgressRing),
+        new FrameworkPropertyMetadata(0d, FrameworkPropertyMetadataOptions.AffectsRender));
 
     /// <summary>Fortschritt von 0 bis 1.</summary>
     public double Progress
@@ -50,6 +56,13 @@ public sealed class ProgressRing : FrameworkElement
         set => SetValue(RingBrushProperty, value);
     }
 
+    /// <summary>Breite des Lichtscheins um den Fortschrittsbogen (0 = kein Schein).</summary>
+    public double Glow
+    {
+        get => (double)GetValue(GlowProperty);
+        set => SetValue(GlowProperty, value);
+    }
+
     protected override void OnRender(DrawingContext drawingContext)
     {
         ArgumentNullException.ThrowIfNull(drawingContext);
@@ -70,24 +83,49 @@ public sealed class ProgressRing : FrameworkElement
             return;
         }
 
-        var pen = new Pen(RingBrush, Thickness) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
+        Geometry arc;
         if (progress >= 0.9999)
         {
-            drawingContext.DrawEllipse(null, pen, center, radius, radius);
-            return;
+            arc = new EllipseGeometry(center, radius, radius);
         }
-
-        var angle = progress * 360;
-        var geometry = new StreamGeometry();
-        using (var context = geometry.Open())
+        else
         {
-            context.BeginFigure(PointOnCircle(center, radius, 0), isFilled: false, isClosed: false);
-            context.ArcTo(PointOnCircle(center, radius, angle), new Size(radius, radius), 0,
-                isLargeArc: angle > 180, SweepDirection.Clockwise, isStroked: true, isSmoothJoin: false);
+            var angle = progress * 360;
+            var geometry = new StreamGeometry();
+            using (var context = geometry.Open())
+            {
+                context.BeginFigure(PointOnCircle(center, radius, 0), isFilled: false, isClosed: false);
+                context.ArcTo(PointOnCircle(center, radius, angle), new Size(radius, radius), 0,
+                    isLargeArc: angle > 180, SweepDirection.Clockwise, isStroked: true, isSmoothJoin: false);
+            }
+
+            arc = geometry;
         }
 
-        geometry.Freeze();
-        drawingContext.DrawGeometry(null, pen, geometry);
+        arc.Freeze();
+
+        if (Glow > 0)
+        {
+            DrawStroke(drawingContext, arc, Thickness + (Glow * 2), opacity: 0.10);
+            DrawStroke(drawingContext, arc, Thickness + Glow, opacity: 0.22);
+        }
+
+        DrawStroke(drawingContext, arc, Thickness, opacity: 1);
+    }
+
+    private void DrawStroke(DrawingContext drawingContext, Geometry arc, double thickness, double opacity)
+    {
+        var pen = new Pen(RingBrush, thickness) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
+        if (opacity < 1)
+        {
+            drawingContext.PushOpacity(opacity);
+        }
+
+        drawingContext.DrawGeometry(null, pen, arc);
+        if (opacity < 1)
+        {
+            drawingContext.Pop();
+        }
     }
 
     /// <summary>Punkt auf dem Kreis; 0° liegt oben (12 Uhr), gezählt im Uhrzeigersinn.</summary>

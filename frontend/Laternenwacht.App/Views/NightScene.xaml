@@ -3,6 +3,8 @@
   Laternenpfahl, dessen Licht den Schnee wärmt. Um das Licht läuft der Fortschrittsring.
   Bei Ablenkung (IsFrost) wird das Licht kalt und eisblau. Die Formen sind generiert
   (unregelmäßige Tannenreihen) und gelten für ein 560×520-Raster, das die Fläche füllt.
+  Sparsam: Die Bewegung (Atmen, Funkeln, Schnee) läuft mit niedriger Bildrate und nur, solange das
+  Fenster im Vordergrund ist – sonst steht sie still (siehe AmbientMotion).
 -->
 <UserControl x:Class="Laternenwacht.App.Views.NightScene"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -11,7 +13,8 @@
              x:Name="Root" IsHitTestVisible="False"
              AutomationProperties.Name="Laterne im verschneiten Wald">
   <UserControl.Resources>
-    <Storyboard x:Key="Breathe" RepeatBehavior="Forever" AutoReverse="True">
+    <!-- Langsame Helligkeitswechsel: 15 Bilder je Sekunde genügen -->
+    <Storyboard x:Key="Breathe" RepeatBehavior="Forever" AutoReverse="True" Timeline.DesiredFrameRate="15">
       <DoubleAnimation Storyboard.TargetName="WarmGlow" Storyboard.TargetProperty="Opacity" From="0.82" To="1" Duration="0:0:2.6">
         <DoubleAnimation.EasingFunction>
           <SineEase EasingMode="EaseInOut" />
@@ -105,17 +108,13 @@
       <Path Data="M262,256 L298,256 L292,264 L268,264 Z" Fill="#0A0F0D" />
       <Ellipse Canvas.Left="276" Canvas.Top="202" Width="8" Height="8" Stroke="#0A0F0D" StrokeThickness="2" />
 
-      <!-- Fallender Schnee (wird im Code erzeugt) -->
+      <!-- Fallender Schnee: drei Tiefenebenen, im Code erzeugt -->
       <Canvas x:Name="SnowLayer" Width="560" Height="520" />
 
       <!-- Fortschritt als Lichtring um die Laterne -->
       <views:ProgressRing x:Name="Ring" Canvas.Left="203" Canvas.Top="163" Width="154" Height="154" Thickness="2.5"
                           TrackBrush="#14FFFFFF" Progress="{Binding Progress, ElementName=Root}"
-                          RingBrush="{Binding RingBrush, ElementName=Root}">
-        <views:ProgressRing.Effect>
-          <DropShadowEffect BlurRadius="10" ShadowDepth="0" Color="#E2C48D" Opacity="0.85" />
-        </views:ProgressRing.Effect>
-      </views:ProgressRing>
+                          RingBrush="{Binding RingBrush, ElementName=Root}" Glow="4" />
     </Canvas>
   </Viewbox>
 </UserControl>

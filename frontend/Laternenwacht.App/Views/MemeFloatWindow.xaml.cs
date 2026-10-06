@@ -1,27 +1,36 @@
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 namespace Laternenwacht.App.Views;
 
 /// <summary>
-/// Ein kleines, nicht aktivierendes Fenster, das in einer Bahn über den Arbeitsbereich treibt.
-/// Die Bewegung wird pro Bildschirmbild zeitbasiert berechnet (kein Ruckeln bei Last),
-/// statt ein bildschirmgroßes transparentes Fenster zu animieren (das wäre teuer).
+/// Ein kleines, nicht aktivierendes Fenster, das in einer Bahn über den Arbeitsbereich treibt
+/// (statt ein bildschirmgroßes transparentes Fenster zu animieren – das wäre teuer).
 /// </summary>
+/// <remarks>
+/// Die Bewegung wird zeitbasiert berechnet (kein Ruckeln bei Last) und von einem eigenen 30-Hz-Takt angestoßen.
+/// Bewusst nicht <see cref="CompositionTarget.Rendering"/>: Solange sich jemand dort anmeldet, zeichnet WPF
+/// ununterbrochen mit voller Bildwiederholrate. Die Neigung wird auf Viertelgrad gerundet, damit das
+/// transparente Fenster nur neu gezeichnet wird, wenn sich sichtbar etwas ändert – das reine Verschieben kostet fast nichts.
+/// </remarks>
 public partial class MemeFloatWindow : Window
 {
     private static readonly TimeSpan SinkDuration = TimeSpan.FromMilliseconds(700);
+    private static readonly TimeSpan FrameInterval = TimeSpan.FromMilliseconds(1000.0 / 30);
     private const double BobAmplitude = 22;
     private const double TiltDegrees = 5;
 
     private readonly TimeSpan _duration;
     private readonly Stopwatch _clock = new();
+    private readonly DispatcherTimer _frames;
     private readonly bool _leftToRight = Random.Shared.Next(2) == 0;
     private readonly double _laneFraction = 0.2 + (Random.Shared.NextDouble() * 0.45);
     private readonly double _phase = Random.Shared.NextDouble() * Math.PI * 2;
     private TimeSpan? _sinkStartedAt;
     private Point _sinkFrom;
+    private double _sinkTilt;
 
     public MemeFloatWindow(ImageSource image, string caption, TimeSpan duration)
     {
@@ -37,13 +46,17 @@ public partial class MemeFloatWindow : Window
         CaptionText.Text = caption;
         _duration = duration;
 
+        _frames = new DispatcherTimer(DispatcherPriority.Render) { Interval = FrameInterval };
+        _frames.Tick += (_, _) => OnFrame();
+
         SourceInitialized += (_, _) => WindowStyles.MakeNonActivatingToolWindow(this);
         Loaded += (_, _) =>
         {
             _clock.Start();
-            CompositionTarget.Rendering += OnFrame;
+            OnFrame();
+            _frames.Start();
         };
-        Closed += (_, _) => CompositionTarget.Rendering -= OnFrame;
+        Closed += (_, _) => _frames.Stop();
         MouseLeftButtonUp += (_, _) => Sink();
     }
 
@@ -54,10 +67,11 @@ public partial class MemeFloatWindow : Window
         {
             _sinkStartedAt = _clock.Elapsed;
             _sinkFrom = new Point(Left, Top);
+            _sinkTilt = Tilt.Angle;
         }
     }
 
-    private void OnFrame(object? sender, EventArgs e)
+    private void OnFrame()
     {
         var area = SystemParameters.WorkArea;
         var elapsed = _clock.Elapsed;
@@ -67,7 +81,7 @@ public partial class MemeFloatWindow : Window
             var s = Math.Clamp((elapsed - sinkStart) / SinkDuration, 0, 1);
             Top = _sinkFrom.Y + (s * s * 160);
             Opacity = 1 - s;
-            Tilt.Angle += _leftToRight ? 1.5 : -1.5;
+            SetTilt(_sinkTilt + ((_leftToRight ? 60 : -60) * s));
             if (s >= 1)
             {
                 Close();
@@ -91,9 +105,12 @@ public partial class MemeFloatWindow : Window
 
         Left = startX + ((endX - startX) * progress);
         Top = area.Top + ((area.Height - ActualHeight) * _laneFraction) + (wave * BobAmplitude);
-        Tilt.Angle = Math.Sin((t * Math.PI * 2 * 1.7) + _phase) * TiltDegrees;
+        SetTilt(Math.Sin((t * Math.PI * 2 * 1.7) + _phase) * TiltDegrees);
 
         // Sanftes Auf- und Abtauchen an den Rändern.
         Opacity = Math.Min(1, Math.Min(t, 1 - t) / 0.06);
     }
+
+    /// <summary>Neigung auf Viertelgrad gerundet: Gleiche Werte lösen kein Neuzeichnen aus.</summary>
+    private void SetTilt(double degrees) => Tilt.Angle = Math.Round(degrees * 4) / 4;
 }

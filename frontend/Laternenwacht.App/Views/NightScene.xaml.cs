@@ -2,14 +2,22 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using System.Windows.Shapes;
 
 namespace Laternenwacht.App.Views;
 
 /// <summary>
 /// Illustrierte Nachtwald-Szene mit Laterne, Lichtring (Fortschritt) und fallendem Schnee.
-/// Animationen entfallen, wenn Windows "Animationen anzeigen" ausgeschaltet ist.
 /// </summary>
+/// <remarks>
+/// Ressourcenschonend aufgebaut:
+/// <list type="bullet">
+/// <item>Der Schnee besteht aus nur drei Tiefenebenen (je ein Element mit allen Flocken als eine Geometrie)
+/// mit je einer Fall- und einer Pendelanimation – statt einem eigenen Element mit zwei Animationen pro Flocke.
+/// Jede Ebene enthält ihre Flocken doppelt, um eine Szenenhöhe versetzt; so schließt die Endlosschleife nahtlos.</item>
+/// <item>Bildraten sind gedrosselt (Schnee 24, Atmen 15 Bilder je Sekunde).</item>
+/// <item>Alles ruht, solange das Fenster nicht im Vordergrund ist (<see cref="AmbientMotion"/>).</item>
+/// </list>
+/// </remarks>
 public partial class NightScene : UserControl
 {
     public static readonly DependencyProperty ProgressProperty = DependencyProperty.Register(
@@ -21,24 +29,32 @@ public partial class NightScene : UserControl
     public static readonly DependencyProperty RingBrushProperty = DependencyProperty.Register(
         nameof(RingBrush), typeof(Brush), typeof(NightScene), new PropertyMetadata(Brushes.Goldenrod));
 
-    private const int FlakeCount = 26;
+    private const double SceneWidth = 560;
+    private const double SceneHeight = 520;
+    private const int SnowFrameRate = 24;
+
+    /// <summary>Tiefenebenen des Schnees: fern = klein, blass, langsam; nah = groß, hell, schneller.</summary>
+    private static readonly SnowDepth[] SnowDepths =
+    [
+        new(Count: 12, MinSize: 1.4, MaxSize: 2.2, Opacity: 0.28, FallSeconds: 30, Sway: 4, SwaySeconds: 4.6),
+        new(Count: 9, MinSize: 2.0, MaxSize: 3.0, Opacity: 0.42, FallSeconds: 20, Sway: 7, SwaySeconds: 3.7),
+        new(Count: 5, MinSize: 2.8, MaxSize: 4.2, Opacity: 0.58, FallSeconds: 13, Sway: 10, SwaySeconds: 2.9),
+    ];
+
     private static readonly Duration FadeDuration = new(TimeSpan.FromMilliseconds(900));
+    private static readonly Brush WarmGlass = Frozen(new SolidColorBrush(Color.FromRgb(0xFF, 0xE3, 0xB3)));
+    private static readonly Brush ColdGlass = Frozen(new SolidColorBrush(Color.FromRgb(0xCF, 0xEA, 0xF5)));
 
     private readonly Storyboard _breathe;
+    private readonly Storyboard _snow;
+    private bool _motionStarted;
 
     public NightScene()
     {
         InitializeComponent();
         _breathe = (Storyboard)Resources["Breathe"];
-        CreateSnow();
-        Loaded += (_, _) =>
-        {
-            if (SystemParameters.ClientAreaAnimation)
-            {
-                _breathe.Begin(this, isControllable: true);
-            }
-        };
-        Unloaded += (_, _) => _breathe.Stop(this);
+        _snow = CreateSnow();
+        _ = new AmbientMotion(this, SetMotion);
         SizeChanged += (_, _) => Clip = new RectangleGeometry(new Rect(RenderSize), 24, 24);
     }
 
@@ -70,60 +86,91 @@ public partial class NightScene : UserControl
         Fade(scene.ColdGround, frost ? 1 : 0);
         Fade(scene.WarmGround, frost ? 0 : 1);
         scene.WarmGlow.Visibility = frost ? Visibility.Hidden : Visibility.Visible;
-        scene.Glass.Fill = new SolidColorBrush(frost ? Color.FromRgb(0xCF, 0xEA, 0xF5) : Color.FromRgb(0xFF, 0xE3, 0xB3));
-        if (scene.Ring.Effect is System.Windows.Media.Effects.DropShadowEffect glow)
-        {
-            glow.Color = frost ? Color.FromRgb(0x9F, 0xD3, 0xEA) : Color.FromRgb(0xE2, 0xC4, 0x8D);
-        }
+        scene.Glass.Fill = frost ? ColdGlass : WarmGlass;
     }
 
     private static void Fade(UIElement element, double to) =>
         element.BeginAnimation(OpacityProperty, new DoubleAnimation(to, FadeDuration));
 
-    /// <summary>Erzeugt sanft fallende Schneeflocken mit unterschiedlicher Größe, Tiefe und Geschwindigkeit.</summary>
-    private void CreateSnow()
+    /// <summary>Startet, pausiert oder setzt die Bewegung fort – angehaltene Uhren kosten keine Rechenzeit.</summary>
+    private void SetMotion(bool run)
+    {
+        if (run && !_motionStarted)
+        {
+            _breathe.Begin(this, isControllable: true);
+            _snow.Begin(this, isControllable: true);
+            _motionStarted = true;
+        }
+        else if (run)
+        {
+            _breathe.Resume(this);
+            _snow.Resume(this);
+        }
+        else if (_motionStarted)
+        {
+            _breathe.Pause(this);
+            _snow.Pause(this);
+        }
+    }
+
+    /// <summary>Erzeugt die drei Schneeebenen und ihre Animationen (noch nicht gestartet).</summary>
+    private Storyboard CreateSnow()
     {
         var random = new Random(42);
-        var animate = SystemParameters.ClientAreaAnimation;
+        var storyboard = new Storyboard();
+        Timeline.SetDesiredFrameRate(storyboard, SnowFrameRate);
 
-        for (var i = 0; i < FlakeCount; i++)
+        foreach (var depth in SnowDepths)
         {
-            var size = 1.6 + (random.NextDouble() * 2.6);
-            var flake = new Ellipse
+            var flakes = new GeometryGroup { FillRule = FillRule.Nonzero };
+            for (var i = 0; i < depth.Count; i++)
             {
-                Width = size,
-                Height = size,
-                Fill = Brushes.White,
-                Opacity = 0.25 + (random.NextDouble() * 0.4),
-            };
-            var x = random.NextDouble() * 560;
-            var y = random.NextDouble() * 520;
-            Canvas.SetLeft(flake, x);
-            Canvas.SetTop(flake, 0);
-
-            var move = new TranslateTransform(0, y);
-            flake.RenderTransform = move;
-            SnowLayer.Children.Add(flake);
-
-            if (!animate)
-            {
-                continue;
+                var radius = (depth.MinSize + (random.NextDouble() * (depth.MaxSize - depth.MinSize))) / 2;
+                var x = random.NextDouble() * SceneWidth;
+                var y = random.NextDouble() * SceneHeight;
+                flakes.Children.Add(new EllipseGeometry(new Point(x, y), radius, radius));
+                flakes.Children.Add(new EllipseGeometry(new Point(x, y - SceneHeight), radius, radius));
             }
 
-            var seconds = 10 + (random.NextDouble() * 9);
-            var fall = new DoubleAnimation(-10, 530, TimeSpan.FromSeconds(seconds))
+            flakes.Freeze();
+            var layer = new System.Windows.Shapes.Path
+            {
+                Data = flakes,
+                Fill = Brushes.White,
+                Opacity = depth.Opacity,
+                RenderTransform = new TranslateTransform(),
+            };
+            SnowLayer.Children.Add(layer);
+
+            var fall = new DoubleAnimation(0, SceneHeight, TimeSpan.FromSeconds(depth.FallSeconds))
             {
                 RepeatBehavior = RepeatBehavior.Forever,
-                BeginTime = TimeSpan.FromSeconds(-seconds * (y / 520)),
             };
-            var sway = new DoubleAnimation(-6 - (random.NextDouble() * 6), 6 + (random.NextDouble() * 6), TimeSpan.FromSeconds(2.5 + (random.NextDouble() * 2)))
+            var sway = new DoubleAnimation(-depth.Sway, depth.Sway, TimeSpan.FromSeconds(depth.SwaySeconds))
             {
                 AutoReverse = true,
                 RepeatBehavior = RepeatBehavior.Forever,
                 EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut },
             };
-            move.BeginAnimation(TranslateTransform.YProperty, fall);
-            move.BeginAnimation(TranslateTransform.XProperty, sway);
+            AddAnimation(storyboard, fall, layer, "(UIElement.RenderTransform).(TranslateTransform.Y)");
+            AddAnimation(storyboard, sway, layer, "(UIElement.RenderTransform).(TranslateTransform.X)");
         }
+
+        return storyboard;
     }
+
+    private static void AddAnimation(Storyboard storyboard, AnimationTimeline animation, DependencyObject target, string path)
+    {
+        Storyboard.SetTarget(animation, target);
+        Storyboard.SetTargetProperty(animation, new PropertyPath(path));
+        storyboard.Children.Add(animation);
+    }
+
+    private static Brush Frozen(Brush brush)
+    {
+        brush.Freeze();
+        return brush;
+    }
+
+    private sealed record SnowDepth(int Count, double MinSize, double MaxSize, double Opacity, double FallSeconds, double Sway, double SwaySeconds);
 }

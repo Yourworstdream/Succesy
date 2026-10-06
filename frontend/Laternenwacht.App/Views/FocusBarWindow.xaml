@@ -2,6 +2,8 @@
   Die Fokusleiste: eine Kapsel aus dunklem Waldglas am oberen Bildschirmrand.
   Lichtring = Fortschritt der Wacht, große Zahl = Restzeit, Chip = Frost (Ablenkungszeit).
   Bei Ablenkung wechseln Ring, Rand und Chip von Kerzenlicht zu Eisblau, und die Kapsel schimmert kalt.
+  Ressourcen: Die Leiste ist ein transparentes (geschichtetes) Fenster und bleibt die ganze Wacht sichtbar.
+  Deshalb bewegt sich nichts dauerhaft, und Schatten liegen in einer zwischengespeicherten Ebene.
 -->
 <Window x:Class="Laternenwacht.App.Views.FocusBarWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -64,40 +66,49 @@
   </Window.ContextMenu>
 
   <Grid Margin="16,10,16,22">
-    <!-- Eisblauer Schimmer bei Ablenkung -->
-    <Border CornerRadius="32" Background="{StaticResource FrostTintBrush}" IsHitTestVisible="False">
-      <Border.Effect>
-        <DropShadowEffect BlurRadius="28" ShadowDepth="0" Color="{StaticResource FrostColor}" Opacity="0.55" />
-      </Border.Effect>
-      <Border.Style>
-        <Style TargetType="Border">
-          <Setter Property="Opacity" Value="0" />
-          <Style.Triggers>
-            <DataTrigger Binding="{Binding Session.IsDistracted}" Value="True">
-              <Setter Property="Opacity" Value="1" />
-            </DataTrigger>
-          </Style.Triggers>
-        </Style>
-      </Border.Style>
-    </Border>
+    <!--
+      Körper der Kapsel (Hintergrund, Rand, Schatten, Frostschimmer) als eigene, zwischengespeicherte Ebene:
+      Er ändert sich nur beim Wechsel zwischen Licht und Frost. Die sekündlich wechselnden Zahlen liegen darüber
+      und lassen die Schatten daher nicht jedes Mal neu berechnen.
+    -->
+    <Grid views:RenderCache.IsEnabled="True" IsHitTestVisible="False" DataContext="{Binding Session}">
+      <!-- Eisblauer Schimmer bei Ablenkung -->
+      <Border CornerRadius="32" Background="{StaticResource FrostTintBrush}">
+        <Border.Effect>
+          <DropShadowEffect BlurRadius="28" ShadowDepth="0" Color="{StaticResource FrostColor}" Opacity="0.55" />
+        </Border.Effect>
+        <Border.Style>
+          <Style TargetType="Border">
+            <Setter Property="Visibility" Value="Hidden" />
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding IsDistracted}" Value="True">
+                <Setter Property="Visibility" Value="Visible" />
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </Border.Style>
+      </Border>
 
-    <Border x:Name="Banner" Height="64" CornerRadius="32" BorderThickness="1"
-            Background="{StaticResource CapsuleBrush}" DataContext="{Binding Session}" Cursor="SizeAll"
+      <Border Height="64" CornerRadius="32" BorderThickness="1" Background="{StaticResource CapsuleBrush}">
+        <Border.Style>
+          <Style TargetType="Border">
+            <Setter Property="BorderBrush" Value="{StaticResource Edge2Brush}" />
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding IsDistracted}" Value="True">
+                <Setter Property="BorderBrush" Value="{StaticResource FrostEdgeBrush}" />
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </Border.Style>
+        <Border.Effect>
+          <DropShadowEffect BlurRadius="26" ShadowDepth="8" Direction="270" Opacity="0.4" Color="Black" />
+        </Border.Effect>
+      </Border>
+    </Grid>
+
+    <!-- Inhalt: transparent, aber treffbar (zum Ziehen) -->
+    <Border x:Name="Banner" Height="64" Padding="1" Background="Transparent" DataContext="{Binding Session}" Cursor="SizeAll"
             ToolTip="Ziehen zum Verschieben · Rechtsklick für Optionen">
-      <Border.Style>
-        <Style TargetType="Border">
-          <Setter Property="BorderBrush" Value="{StaticResource Edge2Brush}" />
-          <Style.Triggers>
-            <DataTrigger Binding="{Binding IsDistracted}" Value="True">
-              <Setter Property="BorderBrush" Value="{StaticResource FrostEdgeBrush}" />
-            </DataTrigger>
-          </Style.Triggers>
-        </Style>
-      </Border.Style>
-      <Border.Effect>
-        <DropShadowEffect BlurRadius="26" ShadowDepth="8" Direction="270" Opacity="0.4" Color="Black" />
-      </Border.Effect>
-
       <Grid Margin="8,0,10,0">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="Auto" />
@@ -108,23 +119,13 @@
 
         <!-- Lichtring mit Zustandssymbol -->
         <Grid Width="48" Height="48" VerticalAlignment="Center">
-          <views:ProgressRing Progress="{Binding Progress}" Thickness="2.5" TrackBrush="#17FFFFFF">
+          <views:ProgressRing Progress="{Binding Progress}" Thickness="2.5" Glow="2.5" TrackBrush="#17FFFFFF">
             <views:ProgressRing.Style>
               <Style TargetType="views:ProgressRing">
                 <Setter Property="RingBrush" Value="{StaticResource GoldBrush}" />
-                <Setter Property="Effect">
-                  <Setter.Value>
-                    <DropShadowEffect BlurRadius="8" ShadowDepth="0" Color="{StaticResource GoldColor}" Opacity="0.7" />
-                  </Setter.Value>
-                </Setter>
                 <Style.Triggers>
                   <DataTrigger Binding="{Binding IsDistracted}" Value="True">
                     <Setter Property="RingBrush" Value="{StaticResource FrostBrush}" />
-                    <Setter Property="Effect">
-                      <Setter.Value>
-                        <DropShadowEffect BlurRadius="8" ShadowDepth="0" Color="{StaticResource FrostColor}" Opacity="0.7" />
-                      </Setter.Value>
-                    </Setter>
                   </DataTrigger>
                   <DataTrigger Binding="{Binding IsPaused}" Value="True">
                     <Setter Property="RingBrush" Value="{StaticResource MossBrush}" />

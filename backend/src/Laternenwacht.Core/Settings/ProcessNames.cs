@@ -29,6 +29,23 @@ public static partial class ProcessNames
         return name.Trim();
     }
 
+    /// <summary>
+    /// Leitet aus einem Programmpfad den Prozessnamen ab – so, wie ihn auch <c>Process.ProcessName</c> liefert:
+    /// Dateiname ohne Verzeichnis und ohne Endung ".exe"; die Schreibweise bleibt erhalten.
+    /// Gibt <c>null</c> zurück, wenn der Pfad keinen Dateinamen enthält.
+    /// </summary>
+    public static string? FromImagePath(ReadOnlySpan<char> path)
+    {
+        var name = path[(path.LastIndexOfAny('\\', '/') + 1)..];
+        if (name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+        {
+            name = name[..^4];
+        }
+
+        name = name.Trim();
+        return name.IsEmpty ? null : name.ToString();
+    }
+
     public static bool IsValid(string normalized) =>
         !string.IsNullOrEmpty(normalized) && ValidPattern().IsMatch(normalized);
 

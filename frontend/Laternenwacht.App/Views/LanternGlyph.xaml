@@ -1,27 +1,16 @@
 <!--
   Zustandssymbol: eine Flamme, solange das Licht brennt – eine Schneeflocke, sobald der Frost kommt.
+  Bewusst ohne Dauerflackern: Die Fokusleiste ist ständig im Blickfeld. Bewegung im Augenwinkel lenkt ab,
+  und jedes Bild würde das transparente Leistenfenster neu zeichnen lassen.
 -->
 <UserControl x:Class="Laternenwacht.App.Views.LanternGlyph"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Name="Root"
              AutomationProperties.Name="Zustand">
-  <UserControl.Resources>
-    <Storyboard x:Key="Flicker" RepeatBehavior="Forever" AutoReverse="True">
-      <DoubleAnimation Storyboard.TargetName="FlameScale" Storyboard.TargetProperty="ScaleY" From="0.94" To="1.06" Duration="0:0:1.1">
-        <DoubleAnimation.EasingFunction>
-          <SineEase EasingMode="EaseInOut" />
-        </DoubleAnimation.EasingFunction>
-      </DoubleAnimation>
-    </Storyboard>
-  </UserControl.Resources>
-
   <Viewbox Stretch="Uniform">
     <Grid Width="24" Height="24">
-      <Path x:Name="Flame" Data="{StaticResource FlameGeometry}" Fill="{StaticResource GoldBrush}" RenderTransformOrigin="0.5,0.9">
-        <Path.RenderTransform>
-          <ScaleTransform x:Name="FlameScale" />
-        </Path.RenderTransform>
+      <Path x:Name="Flame" Data="{StaticResource FlameGeometry}" Fill="{StaticResource GoldBrush}">
         <Path.Style>
           <Style TargetType="Path">
             <Style.Triggers>

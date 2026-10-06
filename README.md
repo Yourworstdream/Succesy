@@ -42,6 +42,9 @@ Eisblau für Ablenkung, eigene Fensterleiste und eine illustrierte Szene mit fal
   Manipulation, Löschung oder Vertauschung wird erkannt und angezeigt.
 * **Sicherheit & Datenschutz** – keine Fenstertitel, keine Tastatureingaben, kein Netzwerk,
   keine Adminrechte, Schlüssel per DPAPI an das Windows‑Konto gebunden.
+* **Ressourcenschonend** – während der Wacht praktisch keine Prozessor‑ und Grafiklast: Animationen ruhen,
+  sobald das Hauptfenster im Hintergrund ist, die Leiste bewegt sich nicht dauerhaft, Schatten sind
+  zwischengespeichert, minimiert gibt die App Arbeitsspeicher zurück. Details: Projektdokumentation, Abschnitt 6.3.
 
 ## Schnellstart
 
@@ -50,13 +53,21 @@ Eisblau für Ablenkung, eigene Fensterleiste und eine illustrierte Szene mit fal
 3. Im Reiter **„Die Wacht“** eine Dauer wählen → **„Laterne entzünden“**.
 4. Im Reiter **„Gefährten & Verlockungen“** eigene Programme eintragen (z. B. `discord`, `steam`).
 
-**Als EXE veröffentlichen:** Doppelklick auf **`Veroeffentlichen.cmd`** – Tests laufen, die EXE
-(Frontend + Backend in einer Datei) liegt danach unter `publish\win-x64\Laternenwacht.exe`.
+**Als EXE veröffentlichen:** Doppelklick auf **`Veroeffentlichen.cmd`** – Tests laufen, danach liegen
+zwei EXE‑Varianten bereit (Frontend + Backend jeweils in einer Datei):
+
+| Variante | Datei | Größe | Hinweis |
+|---|---|---|---|
+| Eigenständig | `publish\win-x64\Laternenwacht.exe` | ~65 MB | läuft auf jedem Windows ohne Installation |
+| Schlank | `publish\win-x64-schlank\Laternenwacht.exe` | ~1,3 MB | sparsamste Variante; braucht die „.NET Desktop Runtime 10“ (x64) |
+
 Ausführlich inkl. GitHub‑Release: → [docs/Veroeffentlichung-VS2026.md](docs/Veroeffentlichung-VS2026.md)
 
 ```powershell
 dotnet publish frontend/Laternenwacht.App/Laternenwacht.App.csproj -p:PublishProfile=Win-x64-EinzelneExe
 # Ergebnis: publish\win-x64\Laternenwacht.exe
+dotnet publish frontend/Laternenwacht.App/Laternenwacht.App.csproj -p:PublishProfile=Win-x64-Schlank
+# Ergebnis: publish\win-x64-schlank\Laternenwacht.exe
 ```
 
 ## Begriffe im Reich
@@ -76,7 +87,7 @@ dotnet publish frontend/Laternenwacht.App/Laternenwacht.App.csproj -p:PublishPro
 backend/                               BACKEND – eigenständig baubar (Laternenwacht.Backend.sln)
   src/Laternenwacht.Core               Fachlogik: Messung, Bewertung, Sprüche, versiegelte Chronik
   src/Laternenwacht.Platform.Windows   Win32-Messung, DPAPI, Pfade, Protokoll (ohne Oberfläche)
-  tests/Laternenwacht.Core.Tests       135 xUnit-Tests
+  tests/Laternenwacht.Core.Tests       143 xUnit-Tests
   GEMINI.md                            Übergabe-Anweisung & Schnittstellenvertrag für KI-Assistenten
 frontend/                              FRONTEND – nur Darstellung
   Laternenwacht.App                    WPF: Fokusleiste, Hauptfenster, Rabenbote, Gestaltung

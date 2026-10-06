@@ -12,9 +12,16 @@ namespace Laternenwacht.App.ViewModels;
 /// Präsentationslogik der laufenden Wacht. Wird von der Fokusleiste und vom Hauptfenster
 /// gemeinsam verwendet, damit beide stets denselben Zustand zeigen.
 /// </summary>
+/// <remarks>
+/// Sparsam im Sekundentakt: Alle angezeigten Werte sind gespeichert und melden sich nur, wenn sie sich
+/// tatsächlich ändern (sonst müssten beide Fenster jede Sekunde alle Bindungen neu auswerten).
+/// Die Ausführbarkeit der Befehle wird nur bei einem Zustandswechsel neu abgefragt.
+/// </remarks>
 internal sealed class SessionViewModel : ObservableObject
 {
     public static readonly int[] Presets = [15, 25, 50, 90];
+
+    private static readonly CultureInfo German = CultureInfo.GetCultureInfo("de-DE");
 
     private readonly FocusWarden _warden;
     private readonly DispatcherTimer _timer;
@@ -40,6 +47,14 @@ internal sealed class SessionViewModel : ObservableObject
     private double _frostRatio;
     private RealmMood _mood = RealmMood.Spring;
     private ActivityState _state = ActivityState.Focused;
+    private bool _isActive;
+    private bool _isPaused;
+    private bool _hasSession;
+    private bool _isDistracted;
+    private bool _isAway;
+    private bool _isLit = true;
+    private string _frostPercentText = "0 %";
+    private string? _markCandidate;
     private string _proverb = Lore.Proverb(Environment.TickCount);
     private readonly HashSet<string> _shownAdmonitions = [];
     private string? _admonition;
@@ -116,11 +131,21 @@ internal sealed class SessionViewModel : ObservableObject
         }
     }
 
-    public bool IsActive => _warden.IsActive;
+    public bool IsActive { get => _isActive; private set => SetProperty(ref _isActive, value); }
 
-    public bool IsPaused => _warden.Current?.Phase == SessionPhase.Paused;
+    public bool IsPaused
+    {
+        get => _isPaused;
+        private set
+        {
+            if (SetProperty(ref _isPaused, value))
+            {
+                OnPropertyChanged(nameof(PauseResumeLabel));
+            }
+        }
+    }
 
-    public bool HasSession => _warden.Current is not null;
+    public bool HasSession { get => _hasSession; private set => SetProperty(ref _hasSession, value); }
 
     public string PauseResumeLabel => IsPaused ? "Weiterziehen" : "Rasten";
 
@@ -171,40 +196,66 @@ internal sealed class SessionViewModel : ObservableObject
 
     public double FrostRatio { get => _frostRatio; private set => SetProperty(ref _frostRatio, value); }
 
-    public string FrostPercentText => FrostRatio.ToString("P0", CultureInfo.GetCultureInfo("de-DE"));
+    public string FrostPercentText { get => _frostPercentText; private set => SetProperty(ref _frostPercentText, value); }
 
-    public RealmMood Mood { get => _mood; private set => SetProperty(ref _mood, value); }
+    public RealmMood Mood
+    {
+        get => _mood;
+        private set
+        {
+            if (SetProperty(ref _mood, value))
+            {
+                OnPropertyChanged(nameof(MoodName));
+            }
+        }
+    }
 
     public string MoodName => Lore.MoodName(Mood);
 
     public ActivityState State { get => _state; private set => SetProperty(ref _state, value); }
 
-    public bool IsDistracted => IsActive && !IsPaused && State == ActivityState.Distracted;
+    public bool IsDistracted { get => _isDistracted; private set => SetProperty(ref _isDistracted, value); }
 
-    public bool IsAway => IsActive && !IsPaused && State == ActivityState.Away;
+    public bool IsAway { get => _isAway; private set => SetProperty(ref _isAway, value); }
 
     /// <summary>
     /// Fremdes Programm im Vordergrund, das gerade nicht als Ablenkung zählt – Kandidat für
     /// "als Verlockung markieren" im Rechtsklick-Menü (die Leiste stiehlt keinen Fokus,
     /// daher ist das beim Rechtsklick noch das eben benutzte Programm).
     /// </summary>
-    public string? MarkCandidate =>
-        IsActive && State != ActivityState.Distracted
-        && _warden.LastSnapshot?.ProcessName is { Length: > 0 } process
-        && !string.Equals(process, _warden.SelfProcessName, StringComparison.OrdinalIgnoreCase)
-            ? process
-            : null;
+    public string? MarkCandidate
+    {
+        get => _markCandidate;
+        private set
+        {
+            if (SetProperty(ref _markCandidate, value))
+            {
+                OnPropertyChanged(nameof(HasMarkCandidate));
+                OnPropertyChanged(nameof(MarkCandidateLabel));
+            }
+        }
+    }
 
     public bool HasMarkCandidate => MarkCandidate is not null;
 
     public string MarkCandidateLabel => MarkCandidate is { } p ? $"„{p}“ als Verlockung markieren" : "Aktuelles Programm als Verlockung markieren";
 
-    public bool IsLit => !IsActive || IsPaused || State == ActivityState.Focused;
+    public bool IsLit { get => _isLit; private set => SetProperty(ref _isLit, value); }
 
     public string Proverb { get => _proverb; private set => SetProperty(ref _proverb, value); }
 
     /// <summary>Aktueller augenzwinkernder Mahnruf (wird einige Sekunden lang gezeigt).</summary>
-    public string? Admonition { get => _admonition; private set => SetProperty(ref _admonition, value); }
+    public string? Admonition
+    {
+        get => _admonition;
+        private set
+        {
+            if (SetProperty(ref _admonition, value))
+            {
+                OnPropertyChanged(nameof(HasAdmonition));
+            }
+        }
+    }
 
     public bool HasAdmonition => !string.IsNullOrEmpty(Admonition);
 
@@ -301,20 +352,27 @@ internal sealed class SessionViewModel : ObservableObject
             PlannedText = "bereit";
         }
 
-        OnPropertyChanged(nameof(IsActive));
-        OnPropertyChanged(nameof(IsPaused));
-        OnPropertyChanged(nameof(HasSession));
-        OnPropertyChanged(nameof(PauseResumeLabel));
-        OnPropertyChanged(nameof(IsDistracted));
-        OnPropertyChanged(nameof(IsAway));
-        OnPropertyChanged(nameof(IsLit));
-        OnPropertyChanged(nameof(FrostPercentText));
-        OnPropertyChanged(nameof(MoodName));
-        OnPropertyChanged(nameof(HasAdmonition));
-        OnPropertyChanged(nameof(MarkCandidate));
-        OnPropertyChanged(nameof(HasMarkCandidate));
-        OnPropertyChanged(nameof(MarkCandidateLabel));
-        RelayCommand.Refresh();
+        // Abgeleitete Zustände – melden sich nur bei Änderung.
+        var commandState = (IsActive, IsPaused, HasMarkCandidate);
+        IsActive = _warden.IsActive;
+        IsPaused = session?.Phase == SessionPhase.Paused;
+        HasSession = session is not null;
+        var running = IsActive && !IsPaused;
+        IsDistracted = running && State == ActivityState.Distracted;
+        IsAway = running && State == ActivityState.Away;
+        IsLit = !running || State == ActivityState.Focused;
+        FrostPercentText = FrostRatio.ToString("P0", German);
+        MarkCandidate = IsActive && State != ActivityState.Distracted
+            && _warden.LastSnapshot?.ProcessName is { Length: > 0 } process
+            && !string.Equals(process, _warden.SelfProcessName, StringComparison.OrdinalIgnoreCase)
+                ? process
+                : null;
+
+        // Schaltflächen nur dann neu bewerten, wenn sich etwas für ihre Ausführbarkeit geändert hat.
+        if (commandState != (IsActive, IsPaused, HasMarkCandidate))
+        {
+            RelayCommand.Refresh();
+        }
     }
 
     /// <summary>Berechnet das nächste positive Ziel (Lob-Schwelle) aus der laufenden Fokus-Serie.</summary>

@@ -20,6 +20,18 @@
     <Description>Zeigt am oberen Bildschirmrand, wie lange du dich während der Fokuszeit ablenkst.</Description>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <!--
+      Laufzeit auf Sparsamkeit eingestellt (die Anwendung ruht fast immer und misst nur einmal pro Sekunde):
+      - Keine nebenläufige Speicherbereinigung: spart den Hintergrund-Thread samt Reserve; bei einem Heap
+        von wenigen MB dauert ein blockierender Lauf nur Millisekunden.
+      - Keine dynamische Profilierung (Tiered PGO): Rechenleistung ist hier nicht gefragt; ohne Instrumentierung
+        muss der JIT-Compiler heiße Methoden nur einmal statt zweimal neu übersetzen.
+    -->
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+    <TieredPGO>false</TieredPGO>
+  </PropertyGroup>
+
   <ItemGroup>
     <Resource Include="Assets\laterne.ico" />
     <Resource Include="Assets\laterne.png" />

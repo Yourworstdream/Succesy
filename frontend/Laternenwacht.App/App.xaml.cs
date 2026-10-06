@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Media;
 using System.Windows;
+using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using Laternenwacht.App.Services;
 using Laternenwacht.App.ViewModels;
@@ -23,11 +24,26 @@ public partial class App : Application
     private const string SingleInstanceMutexName = @"Local\Laternenwacht.EinzigeInstanz";
     private static readonly TimeSpan CompletionBannerDuration = TimeSpan.FromSeconds(12);
 
+    /// <summary>Wartezeit nach dem Minimieren, bevor Speicher zurückgegeben wird (kurzes Hin und Her soll nichts auslösen).</summary>
+    private static readonly TimeSpan BackgroundReliefDelay = TimeSpan.FromSeconds(3);
+
+    /// <summary>Höchste Bildrate für Animationen, sofern eine Animation nichts anderes verlangt.</summary>
+    private const int DefaultAnimationFrameRate = 30;
+
     private Mutex? _singleInstance;
     private FocusBarWindow? _bar;
     private MainWindow? _main;
     private SessionViewModel? _session;
     private DispatcherTimer? _hideBarTimer;
+    private DispatcherTimer? _reliefTimer;
+
+    static App()
+    {
+        // WPF animiert sonst mit bis zu 60 Bildern je Sekunde. Für Überblendungen und Bewegungen dieser
+        // Oberfläche genügen 30 – das halbiert die Arbeit, solange etwas animiert wird.
+        Timeline.DesiredFrameRateProperty.OverrideMetadata(
+            typeof(Timeline), new FrameworkPropertyMetadata { DefaultValue = DefaultAnimationFrameRate });
+    }
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -173,6 +189,7 @@ public partial class App : Application
             _session.Abort();
         };
         _main.Closed += (_, _) => _bar.Close();
+        WatchForBackground(_main);
 
         _main.Show();
 
@@ -191,6 +208,32 @@ public partial class App : Application
         }
 
         base.OnExit(e);
+    }
+
+    /// <summary>
+    /// Ist das Hauptfenster einige Sekunden minimiert, gibt die Anwendung nicht mehr benötigten
+    /// Arbeitsspeicher an Windows zurück. Danach läuft nur noch die schlanke Messung im Sekundentakt.
+    /// </summary>
+    private void WatchForBackground(Window main)
+    {
+        _reliefTimer = new DispatcherTimer(DispatcherPriority.ApplicationIdle) { Interval = BackgroundReliefDelay };
+        _reliefTimer.Tick += (_, _) =>
+        {
+            _reliefTimer.Stop();
+            if (main.WindowState == WindowState.Minimized)
+            {
+                MemoryRelief.Release();
+            }
+        };
+
+        main.StateChanged += (_, _) =>
+        {
+            _reliefTimer.Stop();
+            if (main.WindowState == WindowState.Minimized)
+            {
+                _reliefTimer.Start();
+            }
+        };
     }
 
     private void ShowBar()

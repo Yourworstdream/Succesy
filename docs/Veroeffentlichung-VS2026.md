@@ -11,8 +11,14 @@ Diese Anleitung führt Schritt für Schritt vom Quellcode zur fertigen, eigenst�
 ## Kurzfassung: in 1 Minute zur EXE
 
 **Doppelklick auf `Veroeffentlichen.cmd`** im Repository‑Ordner. Das Skript führt alle Tests aus,
-veröffentlicht die EXE und öffnet den Explorer mit der fertigen Datei
-`publish\win-x64\Laternenwacht.exe`. Voraussetzung ist nur Visual Studio 2026 mit der Workload
+veröffentlicht beide EXE‑Varianten und öffnet den Explorer mit der fertigen Datei:
+
+| Variante | Datei | Größe | Wann wählen? |
+|---|---|---|---|
+| **Eigenständig** (Profil `Win-x64-EinzelneExe`) | `publish\win-x64\Laternenwacht.exe` | ~65 MB | Weitergabe an Rechner, auf denen nichts installiert werden soll |
+| **Schlank** (Profil `Win-x64-Schlank`) | `publish\win-x64-schlank\Laternenwacht.exe` | ~1,3 MB | Eigener Rechner (Visual Studio 2026 bringt die Laufzeit mit) – **sparsamste Variante** für Festplatte und Arbeitsspeicher |
+
+Nur eine Variante: `.\Veroeffentlichen.ps1 -Variante Schlank` bzw. `-Variante Eigenstaendig`. Voraussetzung ist nur Visual Studio 2026 mit der Workload
 „.NET‑Desktopentwicklung“ (Abschnitt 1). Der ausführliche Weg über Visual Studio folgt unten.
 
 ---
@@ -66,12 +72,13 @@ Projektmappe "Laternenwacht"
 
 ## 4. Veröffentlichen mit dem mitgelieferten Profil (empfohlen)
 
-Das Repository enthält bereits ein fertiges Veröffentlichungsprofil
-(`frontend/Laternenwacht.App/Properties/PublishProfiles/Win-x64-EinzelneExe.pubxml`).
+Das Repository enthält bereits zwei fertige Veröffentlichungsprofile
+(`frontend/Laternenwacht.App/Properties/PublishProfiles/`):
+**`Win-x64-EinzelneExe`** (eigenständig) und **`Win-x64-Schlank`** (nutzt die installierte .NET‑10‑Desktop‑Laufzeit).
 
 1. Im Projektmappen‑Explorer **Rechtsklick auf `Laternenwacht.App` → „Veröffentlichen…“**.
 2. Visual Studio erkennt das Profil **„Win-x64-EinzelneExe“** automatisch und zeigt die Übersichtsseite.
-   *(Falls mehrere Profile existieren: oben im Auswahlfeld dieses Profil wählen.)*
+   *(Oben im Auswahlfeld lässt sich zwischen „Win-x64-EinzelneExe“ und „Win-x64-Schlank“ wechseln.)*
 3. Auf **„Veröffentlichen“** klicken.
 4. Nach Abschluss erscheint der Hinweis *„Veröffentlichung erfolgreich“*. Über
    **„Zielspeicherort öffnen“** gelangst du direkt zum Ordner:
@@ -82,6 +89,11 @@ Das Repository enthält bereits ein fertiges Veröffentlichungsprofil
 
 Diese **eine Datei** ist die fertige Anwendung (ca. 60–70 MB, da die .NET‑Laufzeit enthalten ist).
 Sie kann z. B. auf einen USB‑Stick kopiert oder per Doppelklick gestartet werden.
+
+Mit dem Profil **„Win-x64-Schlank“** entsteht stattdessen `<Repository>\publish\win-x64-schlank\Laternenwacht.exe`
+(ca. 1,3 MB). Sie startet auf jedem Rechner, auf dem die **.NET Desktop Runtime 10 (x64)** installiert ist –
+mit Visual Studio 2026 ist das bereits der Fall. Fehlt die Laufzeit, zeigt Windows beim Start einen Hinweis
+mit Download‑Link.
 
 ---
 
@@ -108,8 +120,9 @@ Falls du das Profil von Grund auf erstellen möchtest (z. B. zu Übungszwecken):
 
 6. **Speichern** → **Veröffentlichen**.
 
-> **Kleinere EXE gewünscht?** Bereitstellungsmodus **„Frameworkabhängig“** wählen. Die EXE ist dann
-> nur ~1 MB groß, der Zielrechner benötigt aber die **.NET 10 Desktop Runtime**.
+> **Kleinere EXE gewünscht?** Bereitstellungsmodus **„Frameworkabhängig“** wählen (so ist das Profil
+> „Win-x64-Schlank“ eingestellt). Die EXE ist dann nur ~1,3 MB groß, der Zielrechner benötigt aber die
+> **.NET 10 Desktop Runtime**.
 
 ---
 
@@ -120,12 +133,13 @@ In Visual Studio: **Ansicht → Terminal** (oder die *Developer PowerShell*) und
 ```powershell
 dotnet test Laternenwacht.sln -c Release
 dotnet publish frontend/Laternenwacht.App/Laternenwacht.App.csproj -p:PublishProfile=Win-x64-EinzelneExe
+dotnet publish frontend/Laternenwacht.App/Laternenwacht.App.csproj -p:PublishProfile=Win-x64-Schlank
 ```
 
-Ergebnis ebenfalls unter `publish\win-x64\Laternenwacht.exe`.
+Ergebnis unter `publish\win-x64\Laternenwacht.exe` bzw. `publish\win-x64-schlank\Laternenwacht.exe`.
 
 Noch einfacher: `.\Veroeffentlichen.ps1` (bzw. Doppelklick auf `Veroeffentlichen.cmd`) erledigt Tests,
-Veröffentlichung und zeigt Größe und SHA‑256‑Prüfsumme der EXE an.
+Veröffentlichung und zeigt Größe und SHA‑256‑Prüfsumme beider EXE an.
 
 Zusätzlich baut die GitHub‑Action (`.github/workflows/build.yml`) bei jedem Push die EXE und stellt sie
 als Artefakt **„Laternenwacht-win-x64“** im Reiter *Actions* zum Download bereit.
@@ -140,17 +154,18 @@ Ein Versions‑Tag erzeugt automatisch ein GitHub‑Release mit der fertigen EXE
 **In Visual Studio 2026:**
 1. **Git → Git‑Repository verwalten** (bzw. Fenster *Git‑Repository*) öffnen.
 2. Den gewünschten Commit auf `main` auswählen → Rechtsklick → **Neues Tag…**.
-3. Tag‑Name z. B. **`v1.2.0`** eingeben → **Tag erstellen**.
+3. Tag‑Name z. B. **`v1.6.0`** eingeben → **Tag erstellen**.
 4. **Git → Push** und dabei **Tags mit übertragen** (im Push‑Menü „Alle Tags pushen“).
 
 **Oder im Terminal:**
 ```powershell
-git tag v1.2.0
-git push origin v1.2.0
+git tag v1.6.0
+git push origin v1.6.0
 ```
 
-Nach wenigen Minuten erscheint unter **GitHub → Releases** die Seite *Laternenwacht v1.2.0* mit
-`Laternenwacht-v1.2.0-win-x64.exe` und `…exe.sha256`. Die Versionsnummer der EXE wird dabei aus dem
+Nach wenigen Minuten erscheint unter **GitHub → Releases** die Seite *Laternenwacht v1.6.0* mit
+`Laternenwacht-v1.6.0-win-x64.exe` (eigenständig), `Laternenwacht-v1.6.0-win-x64-schlank.exe` und den
+zugehörigen `…exe.sha256`‑Prüfsummen. Die Versionsnummer der EXE wird dabei aus dem
 Tag übernommen.
 
 > Vor einer **öffentlichen** Veröffentlichung die mitgelieferten Internet‑Memes aus

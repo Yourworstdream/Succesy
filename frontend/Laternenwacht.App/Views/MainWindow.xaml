@@ -513,65 +513,78 @@
 
           <!-- Einträge -->
           <Border Grid.Row="3" Margin="0,14,0,0" Style="{StaticResource Glass}" Padding="8,6">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-              <StackPanel>
-                <TextBlock Text="Noch keine Wacht verzeichnet. Beginne deine erste – sie erscheint dann hier."
-                           Style="{StaticResource Quote}" HorizontalAlignment="Center" Margin="0,40">
-                  <TextBlock.Visibility>
-                    <Binding Path="Entries.Count">
-                      <Binding.Converter>
-                        <views:ZeroToVisibleConverter />
-                      </Binding.Converter>
-                    </Binding>
-                  </TextBlock.Visibility>
-                </TextBlock>
-                <ItemsControl ItemsSource="{Binding Entries}">
-                  <ItemsControl.ItemTemplate>
-                    <DataTemplate DataType="{x:Type vm:ChronicleEntry}">
-                      <Border BorderBrush="{StaticResource EdgeBrush}" BorderThickness="0,0,0,1" Padding="16,14">
-                        <Grid>
-                          <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                          </Grid.ColumnDefinitions>
-                          <Ellipse Width="9" Height="9" Fill="{Binding Mood, Converter={StaticResource MoodToBrush}}" VerticalAlignment="Center"
-                                   ToolTip="{Binding MoodText}" />
-                          <StackPanel Grid.Column="1" Margin="14,0,16,0">
-                            <TextBlock FontSize="14">
-                              <Run Text="{Binding DateText, Mode=OneWay}" FontWeight="SemiBold" />
-                              <Run Text="  " />
-                              <Run Text="{Binding OutcomeText, Mode=OneWay}" Foreground="{StaticResource MossBrush}" />
-                              <Run Text="·" Foreground="{StaticResource MossBrush}" />
-                              <Run Text="{Binding MoodText, Mode=OneWay}" Foreground="{StaticResource MossBrush}" />
-                            </TextBlock>
-                            <TextBlock Text="{Binding TopDistractionText}" Style="{StaticResource Caption}" Margin="0,2,0,0" />
+            <Grid>
+              <TextBlock Text="Noch keine Wacht verzeichnet. Beginne deine erste – sie erscheint dann hier."
+                         Style="{StaticResource Quote}" HorizontalAlignment="Center" Margin="0,40">
+                <TextBlock.Visibility>
+                  <Binding Path="Entries.Count">
+                    <Binding.Converter>
+                      <views:ZeroToVisibleConverter />
+                    </Binding.Converter>
+                  </Binding>
+                </TextBlock.Visibility>
+              </TextBlock>
+              <!-- Virtualisiert: Nur sichtbare Einträge werden erzeugt – die Liste bleibt auch nach Jahren voller Wachten leicht -->
+              <ItemsControl ItemsSource="{Binding Entries}" VirtualizingPanel.IsVirtualizing="True"
+                            VirtualizingPanel.VirtualizationMode="Recycling" VirtualizingPanel.ScrollUnit="Pixel">
+                <ItemsControl.Template>
+                  <ControlTemplate TargetType="ItemsControl">
+                    <ScrollViewer Focusable="False" CanContentScroll="True" VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                      <ItemsPresenter />
+                    </ScrollViewer>
+                  </ControlTemplate>
+                </ItemsControl.Template>
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <VirtualizingStackPanel />
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate DataType="{x:Type vm:ChronicleEntry}">
+                    <Border BorderBrush="{StaticResource EdgeBrush}" BorderThickness="0,0,0,1" Padding="16,14">
+                      <Grid>
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="Auto" />
+                          <ColumnDefinition Width="*" />
+                          <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Ellipse Width="9" Height="9" Fill="{Binding Mood, Converter={StaticResource MoodToBrush}}" VerticalAlignment="Center"
+                                 ToolTip="{Binding MoodText}" />
+                        <StackPanel Grid.Column="1" Margin="14,0,16,0">
+                          <TextBlock FontSize="14">
+                            <Run Text="{Binding DateText, Mode=OneWay}" FontWeight="SemiBold" />
+                            <Run Text="  " />
+                            <Run Text="{Binding OutcomeText, Mode=OneWay}" Foreground="{StaticResource MossBrush}" />
+                            <Run Text="·" Foreground="{StaticResource MossBrush}" />
+                            <Run Text="{Binding MoodText, Mode=OneWay}" Foreground="{StaticResource MossBrush}" />
+                          </TextBlock>
+                          <TextBlock Text="{Binding TopDistractionText}" Style="{StaticResource Caption}" Margin="0,2,0,0" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                          <StackPanel Margin="0,0,22,0">
+                            <TextBlock Text="LICHT" Style="{StaticResource Overline}" FontSize="10" />
+                            <TextBlock Text="{Binding FocusedText}" FontSize="14" Typography.NumeralAlignment="Tabular" />
                           </StackPanel>
-                          <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                            <StackPanel Margin="0,0,22,0">
-                              <TextBlock Text="LICHT" Style="{StaticResource Overline}" FontSize="10" />
-                              <TextBlock Text="{Binding FocusedText}" FontSize="14" Typography.NumeralAlignment="Tabular" />
-                            </StackPanel>
-                            <StackPanel Margin="0,0,22,0">
-                              <TextBlock Text="SERIE" Style="{StaticResource Overline}" FontSize="10" />
-                              <TextBlock Text="{Binding LongestStreakText}" FontSize="14" Foreground="{StaticResource GoldBrush}" Typography.NumeralAlignment="Tabular" />
-                            </StackPanel>
-                            <StackPanel Margin="0,0,22,0">
-                              <TextBlock Text="FROST" Style="{StaticResource Overline}" FontSize="10" />
-                              <TextBlock Text="{Binding FrostText}" FontSize="14" Foreground="{StaticResource FrostBrush}" Typography.NumeralAlignment="Tabular" />
-                            </StackPanel>
-                            <StackPanel>
-                              <TextBlock Text="GEPLANT" Style="{StaticResource Overline}" FontSize="10" />
-                              <TextBlock Text="{Binding PlannedText}" FontSize="14" />
-                            </StackPanel>
+                          <StackPanel Margin="0,0,22,0">
+                            <TextBlock Text="SERIE" Style="{StaticResource Overline}" FontSize="10" />
+                            <TextBlock Text="{Binding LongestStreakText}" FontSize="14" Foreground="{StaticResource GoldBrush}" Typography.NumeralAlignment="Tabular" />
                           </StackPanel>
-                        </Grid>
-                      </Border>
-                    </DataTemplate>
-                  </ItemsControl.ItemTemplate>
-                </ItemsControl>
-              </StackPanel>
-            </ScrollViewer>
+                          <StackPanel Margin="0,0,22,0">
+                            <TextBlock Text="FROST" Style="{StaticResource Overline}" FontSize="10" />
+                            <TextBlock Text="{Binding FrostText}" FontSize="14" Foreground="{StaticResource FrostBrush}" Typography.NumeralAlignment="Tabular" />
+                          </StackPanel>
+                          <StackPanel>
+                            <TextBlock Text="GEPLANT" Style="{StaticResource Overline}" FontSize="10" />
+                            <TextBlock Text="{Binding PlannedText}" FontSize="14" />
+                          </StackPanel>
+                        </StackPanel>
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </Grid>
           </Border>
         </Grid>
       </TabItem>

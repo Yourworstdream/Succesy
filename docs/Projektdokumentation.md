@@ -8,7 +8,7 @@
 | Projekt | Laternenwacht – Desktopanwendung zur Messung von Ablenkung während Fokuszeiten |
 | Technologie | C# 14, .NET 10, WPF, xUnit |
 | Repository | `yourworstdream/succesy` |
-| Stand | Oktober 2026, Version 1.2.0 |
+| Stand | Oktober 2026, Version 1.6.0 |
 
 ---
 
@@ -141,7 +141,8 @@ Lizenzkosten entstehen nicht.
 | N5 | **Messgenauigkeit:** Verstellen der Systemuhr beeinflusst die Messung nicht |
 | N6 | **Ergonomie:** Leiste stiehlt keinen Fokus, ist DPI‑fest, per Tastatur/Screenreader bedienbar |
 | N7 | **Wartbarkeit:** Schichtenarchitektur, MVVM, automatisierte Tests für die gesamte Fachlogik |
-| N8 | **Auslieferung:** eine einzelne, eigenständige EXE |
+| N8 | **Auslieferung:** eine einzelne EXE – eigenständig (ohne Installation) oder schlank (nutzt die installierte .NET‑Laufzeit) |
+| N9 | **Ressourcenschonung:** Während einer Wacht (Hauptfenster im Hintergrund) praktisch keine Prozessor‑ und Grafiklast, geringer Arbeitsspeicher; keine Bewegung im Augenwinkel |
 
 ---
 
@@ -465,11 +466,12 @@ Succesy/
 │   ├── Directory.Build.props        importiert die Regeln des Backends
 │   └── Laternenwacht.App/           WPF-Anwendung
 │       ├── Assets/                  Anwendungssymbol
-│       ├── Properties/PublishProfiles/   Veröffentlichungsprofil (einzelne EXE)
+│       ├── Properties/PublishProfiles/   Veröffentlichungsprofile (eigenständig / schlank)
 │       ├── Services/                Erzähltexte (Lore), Rabenbote, Fensterstile
-│       ├── Themes/Realm.xaml        Gestaltungssystem
+│       ├── Themes/Nachtwald.xaml    Gestaltungssystem
 │       ├── ViewModels/              MVVM
-│       └── Views/                   Hauptfenster, Fokusleiste, Laterne, Rabenbote
+│       └── Views/                   Hauptfenster, Fokusleiste, Szene, Rabenbote, Meme,
+│                                    AmbientMotion/RenderCache (Ressourcenschonung)
 ├── docs/                            Diese Dokumentation, Veröffentlichungsanleitung
 └── .github/workflows/build.yml      CI: Build, Test, EXE-Artefakt
 ```
@@ -543,13 +545,79 @@ bleiben dabei unberührt.
 **Fokusleiste ohne Fokusraub** (`WindowStyles.MakeNonActivatingToolWindow`): Erweiterte Fensterstile
 `WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW` werden nach Erzeugung des nativen Fensters gesetzt.
 
+### 6.3 Ressourcenschonung (Leistungsoptimierung, Version 1.6)
+
+Eine Fokushilfe läuft stundenlang nebenher. Sie darf weder den Lüfter anwerfen noch den Akku leeren
+(Anforderung N9). Für Version 1.6 wurde daher systematisch vorgegangen: Zuerst wurde ermittelt,
+**wann** die Anwendung überhaupt Arbeit verrichtet (Kostentreiber). Danach wurde jeder Treiber beseitigt
+oder auf den Moment beschränkt, in dem tatsächlich jemand hinsieht.
+
+**Analyse der Kostentreiber (Version 1.5)**
+
+| Kostentreiber | Warum teuer |
+|---|---|
+| Endlos‑Animationen der Nachtwald‑Szene (26 Schneeflocken mit je 2 Animationen, Atmen, Funkeln) | WPF berechnet laufende Animationen auch für **minimierte oder verdeckte** Fenster weiter, bis zu 60‑mal je Sekunde, die ganze Wacht lang. |
+| Flackernde Flamme in der Fokusleiste | Die Leiste ist ein transparentes (geschichtetes) Fenster. Jede sichtbare Änderung lässt es neu zeichnen, einschließlich zweier großer Schatteneffekte. Das Ergebnis wird anschließend von der Grafikkarte in den Hauptspeicher zurückkopiert. |
+| Schatteneffekte (`DropShadowEffect`) auf Elementen mit sekündlich wechselndem Inhalt | Effekte sind Pixel‑Shader über die ganze Fläche. Jede Änderung im Inneren erzwingt ihre Neuberechnung. |
+| Meme‑Bewegung über `CompositionTarget.Rendering` | Solange ein Handler angemeldet ist, zeichnet WPF ununterbrochen mit voller Bildwiederholrate. |
+| Restzeit‑Balken der Botschaft als `ProgressBar` | Jeder Animationsschritt löst einen Layout‑Durchlauf aus. |
+| Sekündliche Prozessabfrage über `Process.GetProcessById(…).ProcessName` | Erzeugt jede Sekunde ein neues `Process`‑Objekt samt Systemhandle. Je nach .NET‑Version fordert sie dafür sogar eine Momentaufnahme **aller** laufenden Prozesse an. |
+| Sekundentakt im ViewModel | Rund 25 Änderungsmeldungen je Sekunde, auch für unveränderte Werte, plus eine Neuabfrage aller Befehle (`CommandManager.InvalidateRequerySuggested`). |
+| Chronik‑Liste ohne Virtualisierung | Für jeden Eintrag werden sämtliche Elemente erzeugt. Der Aufwand wächst mit jeder Wacht. |
+
+**Maßnahmen**
+
+| Maßnahme | Umsetzung | Wirkung |
+|---|---|---|
+| Bewegung nur, wenn jemand hinsieht | `AmbientMotion` startet Szenen‑Animationen nur, wenn das Element sichtbar und sein Fenster aktiv und nicht minimiert ist. Andernfalls werden sie mit `Storyboard.Pause` angehalten. Die Windows‑Einstellung „Animationen anzeigen“ wird beachtet. | Während einer Wacht (man arbeitet in anderen Programmen) ruht die Szene vollständig. |
+| Weniger, gebündelte Animationen | Der Schnee besteht aus 3 Tiefenebenen mit je *einer* Geometrie statt aus 26 Einzelelementen. Jede Ebene enthält ihre Flocken doppelt, um eine Szenenhöhe versetzt, damit die Endlosschleife nahtlos schließt. | 6 statt 52 Animationsuhren, weniger Objekte. |
+| Gedrosselte Bildraten | Global gelten 30 statt 60 Bilder je Sekunde (`Timeline.DesiredFrameRate`), für den Schnee 24, das Atmen 15 und den Restzeit‑Balken 20. | Halbe bis Viertel‑Last, solange etwas animiert wird. |
+| Ruhige Fokusleiste | Die Flamme flackert nicht mehr dauerhaft (Bewegung im Augenwinkel lenkt zudem ab). Schatten und Kapselkörper liegen in einer zwischengespeicherten Ebene (`RenderCache` → `BitmapCache` in Bildschirmauflösung). | Pro Sekunde wird nur noch der geänderte Text neu gezeichnet. |
+| Lichtschein ohne Effekt | `ProgressRing.Glow` zeichnet zwei breitere, blasse Striche statt eines `DropShadowEffect`. | Kein Pixel‑Shader bei jeder Fortschrittsänderung. |
+| Meme mit eigenem Takt | `DispatcherTimer` mit 30 Hz statt `CompositionTarget.Rendering`. Karte und Schatten werden als Bitmap zwischengespeichert, die Neigung auf ¼° gerundet. | Das Verschieben des Fensters kostet fast nichts. Neu gezeichnet wird nur bei sichtbarer Änderung. |
+| Restzeit‑Balken als Transformation | `ScaleTransform` statt `ProgressBar.Value`. | Kein Layout‑Durchlauf pro Bild. |
+| Sparsame Prozessabfrage | Das Ergebnis wird je Vordergrundfenster zwischengespeichert, denn ein Fenster gehört zeitlebens demselben Prozess. Neue Abfragen laufen über `OpenProcess` (minimales Leserecht) und `QueryFullProcessImageName`; nur in Sonderfällen wird auf `Process` zurückgegriffen. | Im Normalfall keine Systemabfrage im Sekundentakt, sondern nur beim Fensterwechsel. |
+| Nur echte Änderungen melden | Alle Anzeigewerte sind gespeichert und melden sich nur bei Änderung. Befehle werden nur beim Zustandswechsel neu bewertet. | Typisch 10–12 statt rund 25 Meldungen je Sekunde, keine sekündliche Befehlsabfrage. |
+| Virtualisierte Chronik | `VirtualizingStackPanel` mit Recycling. | Der Speicherbedarf hängt nicht mehr von der Anzahl der Wachten ab. |
+| Speicher zurückgeben | `MemoryRelief`: Ist das Hauptfenster 3 s minimiert, folgen ein kompaktierender GC‑Lauf und das Leeren des Arbeitssatzes. | Geringerer Arbeitsspeicher, solange die Anwendung im Hintergrund wacht. |
+| Laufzeiteinstellungen | `ConcurrentGarbageCollection=false` (kein GC‑Hintergrundthread), `TieredPGO=false` (keine Profilierungs‑Instrumentierung), ReadyToRun (vorübersetzt). | Weniger Threads, weniger JIT‑Arbeit beim und nach dem Start. |
+| Schlanke Auslieferung | Profil `Win-x64-Schlank`: 1,3 MB statt 65 MB. Es nutzt die installierte .NET‑10‑Desktop‑Laufzeit. | Weniger Festplattenplatz. Die Laufzeit liegt nur einmal auf dem Rechner und wird von allen .NET‑Programmen gemeinsam genutzt. |
+
+**Abwägungen und Grenzen**
+
+* *Trimming* (Entfernen ungenutzten Codes) unterstützt WPF nicht. Es bleibt deaktiviert.
+* Die **eigenständige** EXE bleibt komprimiert. Unkomprimiert wäre sie 145 MB statt 65 MB groß, und ein
+  Vorteil beim Arbeitsspeicher ließ sich nicht sicher belegen. Die sparsamste Variante ist die schlanke EXE.
+* Das Leeren des Arbeitssatzes senkt den angezeigten Arbeitsspeicher sofort; benötigte Seiten lädt Windows
+  bei Bedarf nach. Deshalb geschieht es nur einmal beim Minimieren, nie periodisch.
+* Bitmap‑Zwischenspeicher wirken nur bei Hardware‑Darstellung. Bei Software‑Darstellung (z. B. Remotedesktop)
+  zeichnet WPF wie zuvor, nur ohne den Vorteil.
+* Der **Datenschutz** bleibt unverändert: Vom Programmpfad wird nur der Dateiname verwendet, nichts davon gespeichert
+  (`ProcessNames.FromImagePath`, mit Unit‑Tests belegt).
+
+**Nachweis.** Die Wirkung lässt sich an zählbaren Größen festmachen (Codeanalyse; Zustand: Wacht läuft,
+Hauptfenster im Hintergrund):
+
+| Kennzahl | Version 1.5 | Version 1.6 |
+|---|---|---|
+| Laufende Animationsuhren | 56 (52 Schnee, 3 Atmen, 1 Flamme) | 0 |
+| Neuzeichnungen der Fokusleiste | bis 60 je Sekunde (Flamme) | 1 je Sekunde (Zahlenwechsel) |
+| Neu berechnete Schatteneffekte in der Leiste | Kapsel‑ und Ringschatten bei jedem Bild | keine (Schatten aus dem Zwischenspeicher, Ringschein ohne Effekt) |
+| Prozessabfragen beim System | 1 je Sekunde (`Process`‑Objekt mit Handle) | 0, solange dasselbe Fenster vorne ist; beim Fensterwechsel eine Abfrage |
+| Änderungsmeldungen im ViewModel | rund 25 je Sekunde + Befehlsabfrage | nur geänderte Werte (typisch 10–12) |
+
+Die Laufzeitwerte werden auf dem Zielsystem gemessen: Im Task‑Manager unter *Details* die Spalten
+„CPU‑Zeit“, „Arbeitsspeicher (privater Arbeitssatz)“ und „GPU“ einblenden, eine 25‑Minuten‑Wacht mit
+Version 1.5 und 1.6 laufen lassen und vergleichen. Genauer geht es mit
+`dotnet-counters monitor -n Laternenwacht` (CPU, GC‑Heap, Arbeitssatz). Siehe auch die Testfälle T24–T28.
+
 ---
 
 ## 7. Qualitätssicherung
 
 ### 7.1 Automatisierte Tests
 
-135 Unit‑Tests (xUnit) für die Fachlogik, u. a.:
+143 Unit‑Tests (xUnit) für die Fachlogik, u. a.:
 
 | Testklasse | Geprüft wird |
 |---|---|
@@ -558,7 +626,7 @@ bleiben dabei unberührt.
 | `FocusWardenTests` | Ereignis „Wacht beendet“ genau einmal, keine Doppelstarts, Einstellungen wirken sofort |
 | `SessionJournalTests` | **Veränderung, Löschung, Vertauschung, Abschneiden, gefälschter Anker, falscher Schlüssel, Müllzeilen**, Absturz‑Reparatur |
 | `JournalBootstrapperTests` | Erststart, Schlüssel nie im Klartext, Archivierung gebrochener Chroniken, defekter Schlüssel |
-| `SettingsTests` | Wertebereiche, Überschneidungen, Normalisierung, **verdächtige Namen** (Pfade, Nullbytes), Round‑Trip, **beschädigte Dateien** |
+| `SettingsTests` | Wertebereiche, Überschneidungen, Normalisierung, **verdächtige Namen** (Pfade, Nullbytes), Round‑Trip, **beschädigte Dateien**, Prozessname aus dem Programmpfad |
 | `HomecomingTests`, `PraiseTests` | Abwesenheitsstufen, Riepiepich‑Gruß, vollständige Spruchsätze je Buch und Schwelle |
 | `KnownDistractionTests` | Hearthstone & Co. ab Werk erkannt, Gefährten haben Vorrang, Katalog abschaltbar, Markieren ohne Duplikate |
 | `ShuffleBagTests` | Jedes Element einmal je Durchgang, nie zweimal hintereinander, Sonderfälle leer/einzeln |
@@ -601,13 +669,19 @@ damit deterministisch und schnell (< 1 s gesamt).
 | T19 | Wacht starten, Hearthstone in den Vordergrund holen | Frost zählt hoch, „Eine Verlockung ruft: Hearthstone“ |
 | T20 | Unbekanntes Spiel im Vordergrund, Rechtsklick auf die Leiste ▸ *„… als Verlockung markieren“* | Ab sofort Frost; Eintrag erscheint in der Liste der Verlockungen |
 | T18 | *Memes hinzufügen …*, eine PNG‑ und eine TXT‑Datei wählen | PNG wird übernommen, TXT übersprungen und gemeldet |
+| T24 | Wacht starten, in einem anderen Programm arbeiten (Hauptfenster bleibt offen, aber im Hintergrund) | Task‑Manager: Laternenwacht bei ≈ 0 % CPU und GPU; Schnee steht still und fällt weiter, sobald das Fenster vorne ist |
+| T25 | Hauptfenster minimieren, 5 s warten | Privater Arbeitssatz sinkt deutlich; Leiste zählt unverändert weiter |
+| T26 | Leiste auf einen Bildschirm mit anderer Skalierung (z. B. 100 % → 150 %) ziehen | Kapselrand, Schatten und Schrift bleiben scharf |
+| T27 | Windows ▸ Barrierefreiheit ▸ *Animationseffekte* aus, App neu starten | Szene steht still, alle Funktionen unverändert |
+| T28 | Schlanke EXE auf einem Rechner ohne .NET‑10‑Desktop‑Laufzeit starten | Windows meldet die fehlende Laufzeit und bietet den Download an; mit Laufzeit startet die App normal |
 
 ---
 
 ## 8. Abnahme und Einführung
 
-Die Auslieferung erfolgt als **einzelne, eigenständige EXE** (keine Installation, keine .NET‑Laufzeit
-auf dem Zielsystem nötig). Die Schritte in Visual Studio 2026 beschreibt
+Die Auslieferung erfolgt als **einzelne EXE** in zwei Varianten: **eigenständig** (~65 MB, keine
+Installation und keine .NET‑Laufzeit auf dem Zielsystem nötig) oder **schlank** (~1,3 MB, nutzt die
+installierte .NET‑10‑Desktop‑Laufzeit und ist die ressourcenschonendste Variante). Die Schritte in Visual Studio 2026 beschreibt
 [`Veroeffentlichung-VS2026.md`](Veroeffentlichung-VS2026.md). Einstellungen und Chronik liegen im
 Benutzerprofil; eine Deinstallation besteht aus dem Löschen der EXE und des Ordners
 `%LOCALAPPDATA%\Laternenwacht`.
@@ -615,8 +689,8 @@ Benutzerprofil; eine Deinstallation besteht aus dem Löschen der EXE und des Ord
 Frontend und Backend werden dabei über Projektverweise zu einer Anwendung verbunden und gemeinsam
 in die EXE gepackt. Für die Auslieferung stehen drei Wege bereit: das Skript `Veroeffentlichen.cmd`
 (Tests + Veröffentlichung per Doppelklick), das Veröffentlichungsprofil in Visual Studio und – für die
-Weitergabe an andere – ein GitHub‑Release, das ein Versions‑Tag (`v1.2.0`) automatisch mit EXE und
-SHA‑256‑Prüfsumme erzeugt.
+Weitergabe an andere – ein GitHub‑Release, das ein Versions‑Tag (`v1.6.0`) automatisch mit beiden EXE‑Varianten
+und ihren SHA‑256‑Prüfsummen erzeugt.
 
 ---
 
@@ -633,6 +707,9 @@ von der Oberfläche entkoppelt und automatisiert getestet.
   als auch testbar – ein früher Architekturentscheid, der sich mehrfach bezahlt machte.
 * Integrität braucht mehr als eine Prüfsumme: Erst Kette **und** Anker decken alle Manipulationsarten ab.
 * Eine konsequente Metaphernwelt ersetzt Erklärtexte – die Bedienung wird intuitiv.
+* Leistung entsteht vor allem durch Weglassen: Die größten Einsparungen kamen nicht von schnellerem Code,
+  sondern davon, Arbeit nur dann zu verrichten, wenn jemand hinsieht. In WPF sind transparente Fenster und
+  Effekte teuer – was ständig sichtbar ist, muss ruhig sein.
 
 ### 9.3 Ausblick
 
