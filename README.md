@@ -13,6 +13,11 @@ Eisblau für Ablenkung, eigene Fensterleiste und eine illustrierte Szene mit fal
 
 ![Fokusleiste, Botschaft und Meme](docs/bilder/3-kapsel-botschaft-meme.png)
 
+> **Neu im Repository: [Finanzkompass](finanzkompass/)** – eine Web-App, die Finanzen übersichtlich
+> darstellt, Ausgaben mit ökonomischen Methoden bewertet (Bedürfnisarten, ABC-Analyse,
+> Opportunitätskosten, 50/30/20), das Geld realistisch aufteilt und Sparpläne erstellt.
+> Start: `finanzkompass/index.html` im Browser öffnen.
+
 ## Funktionen
 
 * **Fokusleiste oben am Bildschirm** – Restzeit, kumulierte Ablenkungszeit (❄ Frost), Anzahl der
@@ -92,6 +97,8 @@ backend/                               BACKEND – eigenständig baubar (Laterne
 frontend/                              FRONTEND – nur Darstellung
   Laternenwacht.App                    WPF: Fokusleiste, Hauptfenster, Rabenbote, Gestaltung
 docs/                      Projektdokumentation & Veröffentlichungsanleitung
+finanzkompass/             FINANZKOMPASS – Web-App für Finanzen, Bewertung und Sparpläne (eigene README)
+fstaud25/                  Vorlage des Klassen-Repositorys FST AUD 25
 ```
 
 ## Dokumentation
