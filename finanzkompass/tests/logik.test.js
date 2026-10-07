@@ -347,3 +347,82 @@ test('Vergleich lässt Versicherungen und Kinderbetreuung außen vor', () => {
   const wohnen = L.vergleichReferenz(L.analysiere(h)).find((v) => v.id === 'wohnen');
   assert.equal(wohnen.anteil, 1);
 });
+
+test('planen: Sparrate wird nie negativ, auch knapp an der Toleranzgrenze', () => {
+  const h = haushalt({
+    einnahmen: [{ betrag: 1000 }],
+    ausgaben: [{ betrag: 940, beduerfnis: 'existenz' }, { betrag: 17, beduerfnis: 'luxus' }],
+    einstellungen: { strategie: 'entspannt' },
+  });
+  const plan = L.planen(h, HEUTE);
+  assert.ok(plan.sparen >= 0);
+  assert.ok(Object.values(plan.simulation.ersterMonat).every((x) => x >= 0));
+  nah(L.summe(plan.toepfe.map((t) => t.betrag)), 1000, 1e-6);
+});
+
+test('planen: Einkommen gleich Pflichtausgaben ist kein Defizit', () => {
+  const plan = L.planen(haushalt({ einnahmen: [{ betrag: 1000 }], ausgaben: [{ betrag: 1000, beduerfnis: 'existenz' }] }), HEUTE);
+  assert.equal(plan.status, 'ok');
+  assert.equal(plan.sparen, 0);
+});
+
+test('Simulation: überfälliges Ziel ist nie pünktlich, Zinsen allein können ein Ziel erreichen', () => {
+  const h = haushalt({
+    einnahmen: [{ betrag: 2000 }],
+    ausgaben: [{ betrag: 500, beduerfnis: 'existenz' }],
+    ruecklagen: { notgroschen: 5000 },
+    ziele: [
+      { id: 'alt', name: 'Urlaub', betrag: 300, termin: '2026-08' },
+      { id: 'zins', name: 'Fast da', betrag: 1000, bereits: 999.9, termin: '2027-10', prioritaet: 3, anlage: 'tagesgeld' },
+    ],
+  });
+  const ziele = Object.fromEntries(L.planen(h, HEUTE).simulation.ziele.map((z) => [z.id, z]));
+  assert.equal(ziele.alt.puenktlich, false);
+  assert.equal(ziele.alt.ueberfaellig, true);
+  const nurZins = haushalt({
+    einnahmen: [{ betrag: 1000 }],
+    ausgaben: [{ betrag: 950, beduerfnis: 'existenz' }],
+    ruecklagen: { notgroschen: 99999 },
+    ziele: [{ name: 'Z', betrag: 1000, bereits: 999, termin: '2027-10', anlage: 'tagesgeld' }],
+  });
+  const p = L.planen(nurZins, HEUTE);
+  assert.equal(p.sparen, 0);
+  assert.notEqual(p.simulation.ziele[0].erreicht, null);
+});
+
+test('normalisiere: IDs wie __proto__ oder toString werden ersetzt', () => {
+  const h = haushalt({
+    ausgaben: [{ id: '__proto__', betrag: 5 }, { id: 'toString', betrag: 5 }, { id: 'constructor', betrag: 5 }, { id: 'ok_1', betrag: 5 }],
+  });
+  const ids = h.ausgaben.map((a) => a.id);
+  assert.ok(!ids.some((id) => id in Object.prototype), ids.join(','));
+  assert.equal(ids[3], 'ok_1');
+});
+
+test('rateFuerZiel meldet unerreichbare Ziele statt einer gekappten Rate', () => {
+  assert.equal(L.rateFuerZiel(2e8, { jahre: 1, rendite: 5 }), null);
+  const rate = L.rateFuerZiel(12000, { jahre: 1, rendite: 0 });
+  nah(rate, 1000, 0.01);
+});
+
+test('Zinsloser Kredit ohne Rate wächst nicht, ist aber als „ohne Tilgung“ markiert', () => {
+  const h = haushalt({
+    einnahmen: [{ betrag: 2000 }],
+    ausgaben: [{ betrag: 500, beduerfnis: 'existenz' }],
+    schulden: [{ name: 'Eltern', rest: 1000, zins: 0, rate: 0 }],
+  });
+  const s = L.planen(h, HEUTE).simulation.schulden[0];
+  assert.equal(s.waechst, false);
+  assert.equal(s.ohneTilgung, true);
+});
+
+test('prozent zeigt kein „-0 %“ und formatiert Bruchteile deutsch', () => {
+  assert.equal(L.prozent(-0.003), '0 %');
+  assert.equal(L.prozent(-0.0004, 1), '0,0 %');
+  assert.equal(L.prozent(0.146, 1), '14,6 %');
+  const k = L.kennzahlen(L.analysiere(haushalt({ einnahmen: [{ betrag: 1000 }], ausgaben: [{ betrag: 100, beduerfnis: 'kultur' }] })), {
+    notgroschenMonate: 2.5,
+  });
+  assert.equal(k.find((x) => x.id === 'reichweite').ziel, '2,5 Monate Pflichtausgaben');
+  assert.match(k.find((x) => x.id === 'reichweite').text, /keine Pflichtausgaben/);
+});

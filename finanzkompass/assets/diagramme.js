@@ -317,8 +317,8 @@ window.Diagramme = (function () {
         tip.zeigen(
           (i + 1) + '. ' + p.name + ' · Klasse ' + p.klasse,
           [
-            { farbe: o.farbeSaeule, wert: p.wertText, name: 'Anteil ' + Math.round(p.anteil * 1000) / 10 + ' %', form: 'kasten' },
-            { farbe: o.farbeLinie, wert: Math.round(p.kumuliert * 1000) / 10 + ' %', name: 'kumuliert', form: 'linie' },
+            { farbe: o.farbeSaeule, wert: p.wertText, name: 'Anteil ' + p.anteilText, form: 'kasten' },
+            { farbe: o.farbeLinie, wert: p.kumuliertText, name: 'kumuliert', form: 'linie' },
           ],
           px !== undefined ? px : m.x,
           py !== undefined ? py : m.y + 20

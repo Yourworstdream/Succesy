@@ -50,7 +50,8 @@ gibt es zwei weitere (Berufseinsteiger, Familie), mit **Mit eigenen Zahlen start
 2. Ein Puffer für Ungeplantes (Standard 5 % des Einkommens) bleibt auf dem Girokonto.
 3. Vom freien Rest wird nach Strategie gespart: entspannt 25 %, ausgewogen 40 % (entspricht bei 50 %
    Pflichtausgaben genau 50/30/20), ehrgeizig 60 %. Wer schon weniger für Wünsche ausgibt, spart den Rest;
-   wer mehr ausgibt, bekommt konkrete Kürzungen (Luxus zuerst halbieren, Kultur höchstens um ein Viertel).
+   wer mehr ausgibt, bekommt konkrete Kürzungen (Luxus zuerst halbieren, Kultur um höchstens ein Viertel;
+   nur wenn das nicht reicht, fällt Luxus ganz weg und Kultur sinkt um bis zur Hälfte).
 4. Die Sparrate fließt nach der **Finanzpyramide**: Notgroschen-Grundstock (ein Monat Pflichtausgaben),
    teure Kredite ab 8 % mit der **Lawinenmethode**, Notgroschen auffüllen parallel zu Sparzielen nach
    Priorität, Kredite über der erwarteten Rendite, dann Vermögensaufbau.

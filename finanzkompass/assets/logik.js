@@ -183,7 +183,9 @@
   function prozent(anteil, stellen) {
     if (anteil === null || !Number.isFinite(anteil)) return '–';
     const s = stellen === undefined ? 0 : stellen;
-    return (anteil * 100).toLocaleString('de-DE', { minimumFractionDigits: s, maximumFractionDigits: s }) + ' %';
+    const faktor = Math.pow(10, s);
+    const gerundet = Math.round(anteil * 100 * faktor) / faktor;
+    return (Object.is(gerundet, -0) ? 0 : gerundet).toLocaleString('de-DE', { minimumFractionDigits: s, maximumFractionDigits: s }) + ' %';
   }
 
   function zahlText(wert) {
@@ -239,7 +241,8 @@
     const q = roh && typeof roh === 'object' ? roh : {};
     const vergeben = new Set();
     const id = (wert, praefix) => {
-      let neu = typeof wert === 'string' && /^[a-z0-9_-]{1,40}$/i.test(wert) && !vergeben.has(wert) ? wert : neueId(praefix);
+      const brauchbar = typeof wert === 'string' && /^[a-z0-9_-]{1,40}$/i.test(wert) && !(wert in Object.prototype);
+      let neu = brauchbar && !vergeben.has(wert) ? wert : neueId(praefix);
       while (vergeben.has(neu)) neu = neueId(praefix);
       vergeben.add(neu);
       return neu;
@@ -405,7 +408,7 @@
         wert: a.reichweite,
         format: 'monate',
         gewicht: 20,
-        ziel: monate + ' Monate Pflichtausgaben',
+        ziel: zahlText(monate) + (monate === 1 ? ' Monat' : ' Monate') + ' Pflichtausgaben',
         wissen: 'w-notgroschen',
         stufe: (v) => (v >= monate ? 'gut' : v >= 1 ? 'mittel' : 'schlecht'),
         texte: {
@@ -487,7 +490,11 @@
         ziel: k.ziel,
         wissen: k.wissen,
         stufe,
-        text: stufe ? k.texte[stufe] : 'Noch nicht berechenbar – trag zuerst Einnahmen und Ausgaben ein.',
+        text: stufe
+          ? k.texte[stufe]
+          : a.einkommen > 0
+            ? 'Nicht berechenbar: Es sind keine Pflichtausgaben oder Kreditraten eingetragen.'
+            : 'Noch nicht berechenbar – trag zuerst Einnahmen und Ausgaben ein.',
       };
     });
   }
@@ -612,7 +619,7 @@
   /** Sparplan mit Startkapital, Rate, jährlicher Ratenerhöhung (Dynamik) und Inflation. */
   function sparplan(eingabe) {
     const start = zahl(eingabe.start, 0, 1e9, 0);
-    const rate = zahl(eingabe.rate, 0, 1e7, 0);
+    const rate = zahl(eingabe.rate, 0, HOECHSTRATE, 0);
     const jahre = Math.round(zahl(eingabe.jahre, 1, 60, 10));
     const rendite = zahl(eingabe.rendite, -10, 20, 5);
     const dynamik = zahl(eingabe.dynamik, 0, 20, 0);
@@ -648,11 +655,14 @@
     };
   }
 
-  /** Umkehrung des Sparplans: Startrate, mit der nach der Laufzeit `ziel` erreicht wird. */
+  const HOECHSTRATE = 1e7;
+
+  /** Umkehrung des Sparplans: Startrate, mit der nach der Laufzeit `ziel` erreicht wird; `null`, wenn keine erlaubte Rate reicht. */
   function rateFuerZiel(ziel, eingabe) {
     if (sparplan(Object.assign({}, eingabe, { rate: 0 })).endkapital >= ziel) return 0;
+    if (sparplan(Object.assign({}, eingabe, { rate: HOECHSTRATE })).endkapital < ziel) return null;
     let unten = 0;
-    let oben = Math.max(ziel, 1);
+    let oben = Math.min(Math.max(ziel, 1), HOECHSTRATE);
     for (let i = 0; i < 80; i++) {
       const mitte = (unten + oben) / 2;
       if (sparplan(Object.assign({}, eingabe, { rate: mitte })).endkapital >= ziel) oben = mitte;
@@ -698,7 +708,7 @@
   /** Kürzungsvorschlag: erst Luxus halbieren, dann Kultur um ein Viertel, dann Luxus ganz. */
   function kuerzungsvorschlag(posten, betrag) {
     let offen = betrag;
-    const vorschlag = {};
+    const vorschlag = Object.create(null);
     const luxus = posten.filter((p) => p.beduerfnis === 'luxus').sort((x, y) => y.monatlich - x.monatlich);
     const kultur = posten.filter((p) => p.beduerfnis === 'kultur').sort((x, y) => y.monatlich - x.monatlich);
     const runde = (liste, anteil) => {
@@ -763,7 +773,7 @@
       return plan;
     }
     const spielraum = N - a.pflicht;
-    if (spielraum <= 0) {
+    if (spielraum < -0.005) {
       plan.status = 'defizit';
       plan.fehlbetrag = -spielraum + a.wuensche;
       plan.kuerzung = a.wuensche;
@@ -773,23 +783,23 @@
       ];
       return plan;
     }
-    const puffer = Math.min((N * e.puffer) / 100, spielraum);
+    const puffer = Math.max(0, Math.min((N * e.puffer) / 100, spielraum));
     const frei = spielraum - puffer;
     plan.frei = frei;
     let sparen = frei * plan.sparanteil;
     let wunschBudget = frei - sparen;
     // Kleine Überschreitungen (bis 5 %, mindestens 10 €) sind keine Kürzung wert.
     const toleranz = Math.max(10, wunschBudget * 0.05);
-    if (a.wuensche <= wunschBudget + toleranz) {
+    if (a.wuensche <= Math.min(frei, wunschBudget + toleranz)) {
       // Wer schon weniger für Wünsche ausgibt, soll nicht mehr ausgeben – der Rest wird gespart.
       wunschBudget = a.wuensche;
-      sparen = frei - a.wuensche;
+      sparen = Math.max(0, frei - a.wuensche);
     } else {
       plan.kuerzung = a.wuensche - wunschBudget;
       plan.kuerzungen = kuerzungsvorschlag(a.posten, plan.kuerzung);
     }
     // Daueraufträge in 5-€-Schritten; der Rundungsrest bleibt als Puffer auf dem Girokonto.
-    const sparenRund = Math.floor(sparen / 5 + 1e-9) * 5;
+    const sparenRund = Math.max(0, Math.floor(sparen / 5 + 1e-9) * 5);
     plan.sparen = sparenRund;
     plan.puffer = puffer + (sparen - sparenRund);
     plan.wunschBudget = wunschBudget;
@@ -841,6 +851,7 @@
         teuer: s.zins >= GRENZE_TEUER,
         lohnend: s.zins > e.rendite,
         waechst: false,
+        ohneTilgung: false,
       }));
     const ziele = h.ziele
       .filter((z) => z.betrag > 0)
@@ -874,7 +885,9 @@
       ng *= 1 + rTagesgeld;
       depot *= 1 + rRendite;
       ziele.forEach((z) => {
-        if (z.erreicht === null) z.stand *= 1 + z.r;
+        if (z.erreicht !== null) return;
+        z.stand *= 1 + z.r;
+        if (z.stand >= z.betrag - 0.005) z.erreicht = t;
       });
 
       let freiAbNaechstemMonat = 0;
@@ -883,7 +896,8 @@
         const zins = s.offen * s.r;
         s.zinsen += zins;
         s.offen += zins;
-        if (s.rate <= zins + 1e-9) s.waechst = true;
+        if (s.zins > 0 && s.rate <= zins + 1e-9) s.waechst = true;
+        if (s.rate <= 0) s.ohneTilgung = true;
         s.offen -= Math.min(s.rate, s.offen);
         if (s.offen <= 0.005) {
           s.offen = 0;
@@ -892,7 +906,7 @@
         }
       });
 
-      let budget = sparrate + frei;
+      let budget = Math.max(0, sparrate + frei);
       const verteilung = {};
       const stufen = new Set();
       const gib = (schluessel, betrag, stufe) => {
@@ -991,7 +1005,8 @@
         zinsPa: z.zinsPa,
         erreicht: z.erreicht,
         erreichtMonat: z.erreicht === null ? null : monatPlus(startMonat, Math.max(0, z.erreicht - 1)),
-        puenktlich: z.erreicht !== null && z.erreicht <= z.frist,
+        puenktlich: z.erreicht === 0 || (z.erreicht !== null && monatsIndex(monatPlus(startMonat, Math.max(0, z.erreicht - 1))) <= monatsIndex(z.termin)),
+        ueberfaellig: monatsIndex(z.termin) < monatsIndex(startMonat) && z.erreicht !== 0,
         ersteRate: z.ersteRate,
         noetig: noetigeRate(z.betrag, h.ziele.find((x) => x.id === z.id).bereits, z.frist, z.zinsPa),
       })),
@@ -1004,6 +1019,7 @@
           teuer: s.teuer,
           lohnend: s.lohnend,
           waechst: s.waechst && s.getilgt === null,
+          ohneTilgung: s.ohneTilgung && s.getilgt === null,
           getilgt: s.getilgt,
           getilgtMonat: s.getilgt === null ? null : monatPlus(startMonat, s.getilgt - 1),
           zinsen: s.zinsen,
@@ -1068,15 +1084,15 @@
   function bewertePosten(h, plan) {
     const a = plan.analyse;
     const e = h.einstellungen;
-    const abc = {};
+    const abc = Object.create(null);
     abcAnalyse(allePosten(h, a)).forEach((p) => {
       abc[p.id] = p.klasse;
     });
-    const vergleich = {};
+    const vergleich = Object.create(null);
     vergleichReferenz(a).forEach((v) => {
       vergleich[v.id] = v;
     });
-    const kuerzung = {};
+    const kuerzung = Object.create(null);
     plan.kuerzungen.posten.forEach((k) => {
       kuerzung[k.id] = k;
     });

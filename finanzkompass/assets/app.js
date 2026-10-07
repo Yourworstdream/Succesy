@@ -199,7 +199,12 @@
   };
 
   function route() {
-    const h = decodeURIComponent(location.hash.slice(1));
+    let h = '';
+    try {
+      h = decodeURIComponent(location.hash.slice(1));
+    } catch (e) {
+      return { ansicht: 'uebersicht' };
+    }
     if (REITER.includes(h)) return { ansicht: h };
     if (/^w-[a-z0-9-]+$/.test(h) && document.getElementById(h)) return { ansicht: 'wissen', anker: h };
     return { ansicht: 'uebersicht' };
@@ -405,7 +410,7 @@
         <div class="kacheln">
           ${kachel('Einnahmen', euroGanz(a.einkommen), 'netto pro Monat')}
           ${kachel('Ausgaben', euroGanz(a.ausgaben), 'inklusive Kreditraten')}
-          ${kachel(a.ueberschuss >= 0 ? 'Übrig' : 'Fehlbetrag', euroGanz(a.ueberschuss), 'Sparquote ' + prozent(a.sparquote), nach.sparquote.stufe ? chip(nach.sparquote.stufe) : '')}
+          ${kachel(a.ueberschuss >= 0 ? 'Übrig' : 'Fehlbetrag', euroGanz(a.ueberschuss), 'Sparquote ' + prozent(a.sparquote, 1), nach.sparquote.stufe ? chip(nach.sparquote.stufe) : '')}
           ${kachel('Notgroschen', a.reichweite === null ? euroGanz(a.notgroschen) : L.zahlText(Math.floor(a.reichweite * 10) / 10) + ' Monate', euroGanz(a.notgroschen) + ' Rücklage', nach.reichweite.stufe ? chip(nach.reichweite.stufe) : '')}
         </div>
       </div>
@@ -611,7 +616,7 @@
           <td class="zahl">${euroGanz(s.rest)}</td>
           <td class="zahl">${L.zahlText(s.zins)} %</td>
           <td class="zahl">${euro(s.rate)}</td>
-          <td class="zahl">${s.rest <= 0 ? 'getilgt' : t.monate === null ? html`${chip('schlecht', 'Rate zu klein')}` : html`${L.dauerText(t.monate)}<small>${euroGanz(t.zinsen)} Zinsen</small>`}</td>
+          <td class="zahl">${s.rest <= 0 ? 'getilgt' : s.rate <= 0 ? html`${chip('neutral', 'keine Rate')}` : t.monate === null ? html`${chip('schlecht', 'Rate zu klein')}` : html`${L.dauerText(t.monate)}<small>${euroGanz(t.zinsen)} Zinsen</small>`}</td>
           <td>${aktionsknoepfe('schuld', s.id, s.name)}</td>
         </tr>`;
       })}</tbody>
@@ -673,7 +678,7 @@
   function wertText(k) {
     if (k.wert === null || !Number.isFinite(k.wert)) return '–';
     if (k.format === 'monate') return L.zahlText(Math.floor(k.wert * 10) / 10) + ' Monate';
-    return prozent(k.wert);
+    return prozent(k.wert, 1);
   }
 
   function kennzahlRaster(kz) {
@@ -751,7 +756,7 @@
     return html`
       <p class="lead">${anzahl.A} von ${posten.length} Posten verursachen ${prozent(summen.A)} deiner Ausgaben. Dort ist der Hebel am größten; bei C-Posten lohnt sich der Aufwand kaum.</p>
       ${diagramm('pareto', {
-        posten: posten.map((p) => ({ name: p.name, anteil: p.anteil, kumuliert: p.kumuliert, klasse: p.klasse, wertText: euroGanz(p.monatlich) })),
+        posten: posten.map((p) => ({ name: p.name, anteil: p.anteil, kumuliert: p.kumuliert, klasse: p.klasse, wertText: euroGanz(p.monatlich), anteilText: prozent(p.anteil, 1), kumuliertText: prozent(p.kumuliert, 1) })),
         farbeSaeule: FARBE.pflicht,
         farbeLinie: FARBE.raten,
         beschreibung: 'Pareto-Diagramm: Anteil jedes Postens und kumulierter Anteil',
@@ -876,6 +881,11 @@
       </div>`;
   }
 
+  /** Auswahlliste plus aktueller Wert, falls dieser (etwa nach einem Import) nicht in der Liste steht. */
+  function mitWert(liste, wert) {
+    return liste.includes(wert) ? liste : liste.concat([wert]).sort((x, y) => x - y);
+  }
+
   function annahmen(e) {
     const strategien = [
       ['entspannt', 'Entspannt', '25 % des freien Geldes sparen'],
@@ -891,16 +901,16 @@
         <div class="wahlkarten">
           ${strategien.map(
             ([id, name, text]) => html`<label class="wahlkarte">
-              <input type="radio" name="strategie" value="${id}" data-einstellung="strategie" ${e.strategie === id ? html`checked` : ''}>
+              <input type="radio" id="a-strategie-${id}" name="strategie" value="${id}" data-einstellung="strategie" ${e.strategie === id ? html`checked` : ''}>
               <span><strong>${name}</strong><small>${text}</small></span>
             </label>`
           )}
         </div>
       </fieldset>
       <label class="feld"><span>Puffer für Ungeplantes</span>
-        <select id="a-puffer" data-einstellung="puffer">${[0, 3, 5, 8, 10].map((p) => html`<option value="${p}" ${e.puffer === p ? html`selected` : ''}>${p} % des Einkommens</option>`)}</select></label>
+        <select id="a-puffer" data-einstellung="puffer">${mitWert([0, 3, 5, 8, 10], e.puffer).map((p) => html`<option value="${p}" ${e.puffer === p ? html`selected` : ''}>${L.zahlText(p)} % des Einkommens</option>`)}</select></label>
       <label class="feld"><span>Notgroschen-Ziel</span>
-        <select id="a-notgroschenMonate" data-einstellung="notgroschenMonate">${[1, 2, 3, 4, 6, 9, 12].map((m) => html`<option value="${m}" ${e.notgroschenMonate === m ? html`selected` : ''}>${m} ${m === 1 ? 'Monat' : 'Monate'} Pflichtausgaben</option>`)}</select></label>
+        <select id="a-notgroschenMonate" data-einstellung="notgroschenMonate">${mitWert([1, 2, 3, 4, 6, 9, 12], e.notgroschenMonate).map((m) => html`<option value="${m}" ${e.notgroschenMonate === m ? html`selected` : ''}>${L.zahlText(m)} ${m === 1 ? 'Monat' : 'Monate'} Pflichtausgaben</option>`)}</select></label>
       ${zahlEingabe('a-rendite', 'Erwartete Rendite langfristig', e.rendite, '% p. a.', 'Breit gestreute Aktien-ETFs: historisch etwa 5–7 %, aber ohne Garantie.')}
       ${zahlEingabe('a-tagesgeld', 'Zins für Tagesgeld', e.tagesgeld, '% p. a.')}
       ${zahlEingabe('a-inflation', 'Inflation', e.inflation, '% p. a.', 'Ziel der Europäischen Zentralbank: 2 %.')}
@@ -916,7 +926,8 @@
         <h2>${chip('schlecht', 'Defizit')} Schon die Pflichtausgaben übersteigen dein Einkommen</h2>
         <p>Pflichtausgaben und Raten: ${euroGanz(a.pflicht)}, Einkommen: ${euroGanz(a.einkommen)}. Sparen ist erst möglich, wenn sich an den großen Posten oder am Einkommen etwas ändert.</p>
         <ul>
-          <li>Größte Pflichtposten: ${gross.map((p) => p.name + ' (' + euroGanz(p.monatlich) + ')').join(', ')}. Geht es günstiger (Minimalprinzip)?</li>
+          ${gross.length ? html`<li>Größte Pflichtposten: ${gross.map((p) => p.name + ' (' + euroGanz(p.monatlich) + ')').join(', ')}. Geht es günstiger (Minimalprinzip)?</li>` : ''}
+          ${a.raten > 0 ? html`<li>Kreditraten: ${euroGanz(a.raten)} im Monat. Sprich mit der Bank über eine längere Laufzeit oder eine Umschuldung, bevor du in Verzug gerätst.</li>` : ''}
           <li>Prüfe Ansprüche: Wohngeld, Berufsausbildungsbeihilfe (BAB), BAföG, Kinderzuschlag.</li>
           <li>Bei Schulden hilft eine kostenlose Schuldnerberatung, zum Beispiel bei Verbraucherzentrale, Caritas oder Diakonie.</li>
         </ul>
@@ -1056,7 +1067,7 @@
         <tfoot><tr><th>Summe</th><td></td><td></td><td class="zahl">−${euro(L.summe(k.posten.map((p) => p.kuerzung)))}</td></tr></tfoot>
       </table></div>
       ${k.ungedeckt > 0.5 ? html`<p class="warnzeile">${chip('mittel')} Es fehlen noch ${euroGanz(k.ungedeckt)}. Wähle eine entspanntere Strategie oder prüfe die großen Pflichtposten.</p>` : ''}
-      <p class="erklaerung">Verzichtbares wird zuerst halbiert, Wichtiges höchstens um ein Viertel gekürzt. Große Umstellungen halten besser, wenn du sie auf zwei, drei Monate verteilst.</p>`;
+      <p class="erklaerung">Verzichtbares wird zuerst halbiert, Wichtiges zunächst um höchstens ein Viertel gekürzt; nur wenn das nicht reicht, fällt Verzichtbares ganz weg und Wichtiges sinkt um bis zur Hälfte. Große Umstellungen halten besser, wenn du sie auf zwei, drei Monate verteilst.</p>`;
   }
 
   function fahrplan(plan) {
@@ -1066,6 +1077,7 @@
     const meilensteine = [];
     sim.schulden.forEach((s) => {
       if (s.getilgtMonat) meilensteine.push({ monat: s.getilgtMonat, text: s.name + ' getilgt', stufe: 'gut', zusatz: s.ohneMonate && s.getilgt < s.ohneMonate ? (s.ohneMonate - s.getilgt) + ' Monate früher, ' + euroGanz(s.ohneZinsen - s.zinsen) + ' Zinsen gespart' : '' });
+      else if (s.ohneTilgung && !s.waechst) meilensteine.push({ monat: null, text: s.name + ': keine Rate vereinbart', stufe: 'neutral', zusatz: 'Ohne Rate wird der Kredit nie kleiner. Vereinbare eine feste Rückzahlung.' });
       else if (s.waechst) meilensteine.push({ monat: null, text: s.name + ': Rate deckt nicht einmal die Zinsen', stufe: 'schlecht', zusatz: 'Die Schuld wächst. Rate erhöhen oder umschulden.' });
     });
     if (sim.notgroschenVollMonat && sim.notgroschenVoll > 0) meilensteine.push({ monat: sim.notgroschenVollMonat, text: 'Notgroschen vollständig (' + euroGanz(sim.notgroschenZiel) + ')', stufe: 'gut', zusatz: '' });
@@ -1202,6 +1214,7 @@
     const zins = L.zinsFuerAnlage(form, e);
     const noetig = L.noetigeRate(z.betrag, z.bereits, frist, zins);
     const erreicht = z.bereits >= z.betrag;
+    const ueberfaellig = L.monatsIndex(z.termin) < L.monatsIndex(L.monatVon(new Date()));
     const prognose = erreicht
       ? html`${chip('gut', 'erreicht')}`
       : !sim
@@ -1214,9 +1227,9 @@
       <p class="zielkarte-stand"><strong>${euroGanz(z.bereits)}</strong> von ${euroGanz(z.betrag)}</p>
       ${meter(z.betrag ? z.bereits / z.betrag : 0, erreicht ? 'gut' : 'akzent', z.name)}
       <dl class="angaben">
-        <div><dt>Termin</dt><dd>${L.monatName(z.termin)} (${L.dauerText(frist)})</dd></div>
-        <div><dt>Nötige Rate</dt><dd>${erreicht ? '–' : euroGanz(noetig) + ' pro Monat'}</dd></div>
-        <div><dt>Im Plan jetzt</dt><dd>${sim ? (sim.ersteRate >= 0.5 ? euroGanz(sim.ersteRate) + ' pro Monat' : 'noch nichts, erst Rücklage und Kredite') : '–'}</dd></div>
+        <div><dt>Termin</dt><dd>${L.monatName(z.termin)} ${ueberfaellig && !erreicht ? chip('mittel', 'überfällig') : html`(${L.dauerText(frist)})`}</dd></div>
+        <div><dt>Nötige Rate</dt><dd>${erreicht ? '–' : ueberfaellig ? euroGanz(z.betrag - z.bereits) + ' fehlen noch' : euroGanz(noetig) + ' pro Monat'}</dd></div>
+        <div><dt>Im Plan jetzt</dt><dd>${erreicht || !sim ? '–' : sim.ersteRate >= 0.5 ? euroGanz(sim.ersteRate) + ' pro Monat' : 'noch nichts, erst Rücklage und Kredite'}</dd></div>
         <div><dt>Voraussichtlich</dt><dd>${prognose}</dd></div>
         <div><dt>Anlage</dt><dd>${anlageName(form)}${z.anlage === 'auto' ? html`<small>gewählt nach Laufzeit, ${L.zahlText(zins)} % angenommen</small>` : html`<small>${L.zahlText(zins)} % angenommen</small>`}</dd></div>
       </dl>
@@ -1256,6 +1269,10 @@
     let rate = r.rate;
     if (r.modus === 'rate') {
       rate = L.rateFuerZiel(r.ziel, eingabe);
+      if (rate === null) {
+        return html`<div class="statusbox statusbox--mittel" role="status"><h2>${chip('mittel', 'Nicht erreichbar')} ${euroGanz(r.ziel)} in ${r.jahre} ${r.jahre === 1 ? 'Jahr' : 'Jahren'}</h2>
+          <p>Selbst mit 10 Millionen € im Monat kommt der Sparplan nicht ans Ziel. Verlängere die Laufzeit oder senke den Zielbetrag.</p></div>`;
+      }
       eingabe.rate = rate;
     }
     const sp = L.sparplan(eingabe);
@@ -1922,9 +1939,12 @@
           return;
         }
       }
-      aendern((h) => {
-        h.einstellungen[name] = wert;
-      });
+      // Erst nach dem Fokuswechsel neu zeichnen: So merkt sich fokusMerken() das nächste Feld (Tab) bzw. das Radio (Pfeiltasten).
+      setTimeout(() =>
+        aendern((h) => {
+          h.einstellungen[name] = wert;
+        })
+      );
     }
   });
 
@@ -1970,7 +1990,15 @@
     }
   });
   document.addEventListener('focusout', tipWeg);
-  window.addEventListener('scroll', () => D.tip.verbergen(), { passive: true });
+  window.addEventListener(
+    'scroll',
+    () => {
+      const a = document.activeElement;
+      if (a && a.closest && (a.closest('[data-diagramm]') || a.closest('[data-tip-wert]'))) return;
+      D.tip.verbergen();
+    },
+    { passive: true }
+  );
 
   window.addEventListener('hashchange', navigieren);
 

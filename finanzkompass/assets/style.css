@@ -1354,6 +1354,10 @@ textarea {
   }
 }
 
+.tabellen-ansicht {
+  min-width: 0;
+}
+
 .tabellen-ansicht summary {
   cursor: pointer;
   color: var(--akzent);
@@ -1605,14 +1609,16 @@ textarea {
 
 .toast {
   position: fixed;
-  left: 50%;
+  left: 16px;
+  right: 16px;
   bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
-  transform: translateX(-50%);
+  margin-inline: auto;
+  width: max-content;
+  max-width: calc(100vw - 32px);
   z-index: 70;
   display: flex;
   align-items: center;
   gap: 0.9rem;
-  max-width: calc(100vw - 32px);
   padding: 0.65rem 0.8rem 0.65rem 1rem;
   border-radius: var(--radius);
   background: var(--kopf);
@@ -2243,6 +2249,27 @@ textarea {
   .speicherstatus {
     display: none;
   }
+}
+
+@media (max-width: 400px) {
+  .kopfleiste-innen {
+    gap: 0.5rem;
+  }
+
+  .marke {
+    min-width: 0;
+  }
+
+  .marke-name {
+    font-size: 1.1rem;
+  }
+
+  .knopf--kopf {
+    padding: 0.3rem 0.6rem;
+  }
+}
+
+@media (max-width: 640px) {
 
   .ansicht-kopf h1 {
     font-size: var(--t-xl);
