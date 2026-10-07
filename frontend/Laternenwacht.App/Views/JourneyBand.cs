@@ -186,10 +186,15 @@ public sealed class JourneyBand : UserControl
         ApplyProgress();
     }
 
-    /// <summary>Verschiebt Spur und Laterne – ohne neu zu zeichnen.</summary>
+    /// <summary>Verschiebt Spur und Laterne – ohne neu zu zeichnen, und nur, wenn sich der Pixel ändert.</summary>
     private void ApplyProgress()
     {
         var x = Math.Round(Inset + (TrackWidth * Progress));
+        if (x == _markerTransform.X && _trailTransform.Matrix.M11 == Math.Max(0, x - Inset))
+        {
+            return;
+        }
+
         _trailTransform.Matrix = new Matrix(Math.Max(0, x - Inset), 0, 0, 1, Inset, 0);
         _tickTransform.X = x;
         _markerTransform.X = x;

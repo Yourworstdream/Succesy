@@ -142,6 +142,35 @@ public class FocusSessionTests
         Assert.Equal(["discord", "steam"], top.Select(t => t.ProcessName));
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(8)]
+    public void Top_distractions_into_buffer_match_the_list_variant(int size)
+    {
+        var session = NewSession();
+        // Gleichstände (je 4 s) prüfen die Reihenfolge nach Name, "zeta" überholt später alle.
+        Tick(session, ActivityState.Distracted, "steam", 4);
+        Tick(session, ActivityState.Distracted, "discord", 4);
+        Tick(session, ActivityState.Distracted, "alpha", 4);
+        Tick(session, ActivityState.Distracted, "zeta", 2);
+        Tick(session, ActivityState.Focused, seconds: 1);
+        Tick(session, ActivityState.Distracted, "browser", 1);
+        Tick(session, ActivityState.Distracted, "zeta", 7);
+        Tick(session, ActivityState.Focused, seconds: 1);
+
+        var buffer = new KeyValuePair<string, TimeSpan>[size];
+        var count = session.TopDistractions(buffer);
+
+        var expected = session.TopDistractions(size);
+        Assert.Equal(expected.Count, count);
+        Assert.Equal(
+            expected.Select(e => (e.ProcessName, e.Duration)),
+            buffer.Take(count).Select(e => (e.Key, e.Value)));
+    }
+
     [Fact]
     public void Focus_streak_grows_and_is_reset_by_distraction_only()
     {

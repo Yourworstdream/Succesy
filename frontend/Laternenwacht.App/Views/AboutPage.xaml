@@ -1,6 +1,8 @@
 <!--
-  Kapitel IV · "Über das Reich" – Idee, Sicherheit und Datenablage.
+  Kapitel IV · "Über das Reich" – Idee, Reise, Sicherheit und Datenablage.
   DataContext: ShellViewModel (vom Hauptfenster geerbt).
+  Gestaltung: Nachtflächen (Glass) mit Kapitelzeile, Cinzel-Überschriften mit goldenem Symbol und EB-Garamond-Text.
+  Alle Sätze sind eigene Formulierungen – keine Zitate aus Büchern, Übersetzungen oder Filmen.
 -->
 <UserControl x:Class="Laternenwacht.App.Views.AboutPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -13,23 +15,51 @@
              d:DataContext="{d:DesignInstance Type=vm:ShellViewModel}"
              d:DesignWidth="860" d:DesignHeight="700">
 
+  <UserControl.Resources>
+    <!-- Goldenes Symbol vor einer Kartenüberschrift -->
+    <Style x:Key="CardGlyph" TargetType="Path" BasedOn="{StaticResource LineIcon}">
+      <Setter Property="Width" Value="20" />
+      <Setter Property="Height" Value="20" />
+      <Setter Property="Stroke" Value="{StaticResource GoldBrush}" />
+      <Setter Property="Margin" Value="0,0,12,0" />
+    </Style>
+    <!-- Feine Goldlinie unter einer Kartenüberschrift -->
+    <Style x:Key="CardRule" TargetType="Rectangle">
+      <Setter Property="Height" Value="1" />
+      <Setter Property="Fill" Value="{StaticResource EdgeBrush}" />
+      <Setter Property="Margin" Value="0,12,0,14" />
+    </Style>
+  </UserControl.Resources>
+
   <ScrollViewer VerticalScrollBarVisibility="Auto">
     <StackPanel MaxWidth="760" HorizontalAlignment="Left">
-      <TextBlock Text="Über die Laternenwacht" Style="{StaticResource PageTitle}" />
+      <TextBlock Text="KAPITEL IV" Style="{StaticResource PageEyebrow}" />
+      <TextBlock Text="Über das Reich" Style="{StaticResource PageTitle}" Margin="0,4,0,0" />
       <TextBlock Text="Ein Licht im Schnee – solange du bei der Sache bist." Style="{StaticResource PageSubtitle}" />
 
       <Border Style="{StaticResource Glass}" Margin="0,24,0,0">
         <StackPanel>
-          <TextBlock FontFamily="{StaticResource SerifTextFont}" FontSize="17" LineHeight="27" TextWrapping="Wrap"
-                     Text="Solange du an deiner Aufgabe bleibst, brennt die Laterne im verschneiten Wald. Lockt dich etwas fort, zählt die Kapsel oben am Bildschirm den Frost – und sobald du zurückkommst, begrüßt dich eine Figur aus den Chroniken von Narnia." />
+          <StackPanel Orientation="Horizontal">
+            <Path Data="{StaticResource LanternGeometry}" Style="{StaticResource CardGlyph}" />
+            <TextBlock Text="Die Reise" Style="{StaticResource CardTitle}" VerticalAlignment="Center" />
+          </StackPanel>
+          <Rectangle Style="{StaticResource CardRule}" />
+          <TextBlock FontFamily="{StaticResource SerifTextFont}" FontSize="17.5" LineHeight="27" TextWrapping="Wrap" Foreground="{StaticResource IvoryBrush}"
+                     Text="Jede Wacht wird als Reise durch „Der König von Narnia“ erzählt: zehn Stationen in der Reihenfolge des Buches, vom Laternenpfahl bis Cair Paravel. Wie weit du kommst, hängt allein an der verstrichenen Zeit – eine Rast hält die Reise an, eine Ablenkung bremst sie nicht." />
           <TextBlock Style="{StaticResource Body}" Margin="0,12,0,0"
-                     Text="Am Ende jeder Wacht zeigt die Jahreszeit, wie gut es lief: Frühling (unter 10 % Frost), Tauwetter (unter 25 %) oder Winter." />
+                     Text="Lockt dich etwas fort, reicht dir die Königin ein Stück Türkischen Honig, und die Fokusleiste oben am Bildschirm zählt den Frost. Kommst du zurück, wirst du ohne Vorwurf empfangen – wie Edmund am Steinernen Tisch." />
+          <TextBlock Style="{StaticResource Body}" Margin="0,12,0,0"
+                     Text="Am Ende malt die Jahreszeit das Bild für die Chronik: Frühling (unter 10 % Frost) bringt die Krönung in Cair Paravel, Tauwetter (unter 25 %) lässt den Schlitten im Matsch stecken, Winter zeigt den Hof der Steinfiguren. Eine abgebrochene Wacht führt zurück durch den Schrank." />
         </StackPanel>
       </Border>
 
       <Border Style="{StaticResource Glass}" Margin="0,16,0,0">
         <StackPanel>
-          <TextBlock Text="Sicherheit &amp; Datenschutz" Style="{StaticResource CardTitle}" Margin="0,0,0,8" />
+          <StackPanel Orientation="Horizontal">
+            <Path Data="{StaticResource ShieldGeometry}" Style="{StaticResource CardGlyph}" />
+            <TextBlock Text="Sicherheit &amp; Datenschutz" Style="{StaticResource CardTitle}" VerticalAlignment="Center" />
+          </StackPanel>
+          <Rectangle Style="{StaticResource CardRule}" Margin="0,12,0,6" />
           <ItemsControl ItemsSource="{x:Static vm:ShellViewModel.SecurityFacts}">
             <ItemsControl.ItemTemplate>
               <DataTemplate>
@@ -46,6 +76,18 @@
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <Border Style="{StaticResource Glass}" Margin="0,16,0,0">
+        <StackPanel>
+          <StackPanel Orientation="Horizontal">
+            <Path Data="{StaticResource CompassGeometry}" Style="{StaticResource CardGlyph}" />
+            <TextBlock Text="Schriften &amp; Bilder" Style="{StaticResource CardTitle}" VerticalAlignment="Center" />
+          </StackPanel>
+          <Rectangle Style="{StaticResource CardRule}" />
+          <TextBlock Style="{StaticResource Body}"
+                     Text="Überschriften in Cinzel und Cinzel Decorative, Text in EB Garamond – alle drei unter der SIL Open Font License 1.1, die Lizenztexte liegen im Quellcode neben den Schriftdateien (Assets/Fonts). Die Szenenbilder sind eigene Zeichnungen für die Laternenwacht." />
         </StackPanel>
       </Border>
 

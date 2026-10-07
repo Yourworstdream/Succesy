@@ -194,6 +194,46 @@ public sealed class FocusSession
             .Select(p => new DistractionEntry(p.Key, p.Value))
             .ToList();
 
+    /// <summary>
+    /// Wie <see cref="TopDistractions(int)"/> (gleiche Reihenfolge: längste zuerst, bei Gleichstand nach Name),
+    /// schreibt aber in einen vorhandenen Puffer und erzeugt keine Objekte – für die Anzeige im Sekundentakt.
+    /// </summary>
+    /// <param name="buffer">Ziel; seine Länge bestimmt, wie viele Einträge höchstens geliefert werden.</param>
+    /// <returns>Anzahl der geschriebenen Einträge.</returns>
+    public int TopDistractions(Span<KeyValuePair<string, TimeSpan>> buffer)
+    {
+        var filled = 0;
+        foreach (var entry in _distractionsByProcess)
+        {
+            // Einfügen in die bereits sortierte Spitze (wenige Plätze, daher genügt Einfügesortierung).
+            var at = filled;
+            while (at > 0 && Ranks(entry, buffer[at - 1]))
+            {
+                at--;
+            }
+
+            if (at >= buffer.Length)
+            {
+                continue;
+            }
+
+            var last = Math.Min(filled, buffer.Length - 1);
+            for (var i = last; i > at; i--)
+            {
+                buffer[i] = buffer[i - 1];
+            }
+
+            buffer[at] = entry;
+            filled = Math.Min(filled + 1, buffer.Length);
+        }
+
+        return filled;
+
+        static bool Ranks(KeyValuePair<string, TimeSpan> candidate, KeyValuePair<string, TimeSpan> other) =>
+            candidate.Value > other.Value
+            || (candidate.Value == other.Value && string.CompareOrdinal(candidate.Key, other.Key) < 0);
+    }
+
     private void Accumulate()
     {
         var now = _time.GetTimestamp();

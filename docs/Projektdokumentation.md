@@ -157,7 +157,7 @@ verborgen (*Dependency Inversion*), wodurch die Fachlogik ohne Windows testbar i
 ```mermaid
 flowchart TB
     subgraph FE["FRONTEND · frontend/Laternenwacht.App (WPF, net10.0-windows)"]
-        V[Views<br/>MainWindow · FocusBarWindow · RavenToastWindow · LanternGlyph]
+        V[Views<br/>MainWindow · WatchPage · ChroniclePage · FocusBarWindow · RavenToastWindow]
         VM[ViewModels<br/>Shell · Bar · Session · Chronicle · Settings]
         L[Services<br/>Lore · NotificationService · WindowStyles]
         V --> VM --> L
@@ -293,7 +293,7 @@ Laternenpfahl. Die Metaphern sind durchgängig und selbsterklärend:
 | Sitzungshistorie | **Chronik** |
 | Integritätsprüfung | **Siegel** |
 | Ergebnisbewertung | **Jahreszeit**: Frühling (< 10 % Frost), Tauwetter (< 25 %), Winter |
-| Hinweis bei vielen Ablenkungen | **Mahnruf** (z. B. bei 20 Verlockungen: *„Herrscher von Cair Paravel, Ihr gefährdet Euer Königreich mit Eurem Müßiggang!“*) |
+| Hinweis bei vielen Ablenkungen | **Mahnruf** (z. B. bei 20 Verlockungen die Königin: *„Zwanzig Stück! Honig gibt es ab jetzt keinen mehr, nur trockenes Brot. Bleibst du trotzdem?“*, darauf Peter: *„Genau so ging es Edmund. Was sie verspricht, hält sie nicht.“*) |
 
 **Gestaltungssystem „Nachtwald“ (ab Version 1.5).** Die Oberfläche hat zwei Iterationen durchlaufen,
 die beide im Nutzertest scheiterten – ein lehrreicher Teil des Projekts:
@@ -468,10 +468,10 @@ Succesy/
 │       ├── Assets/                  Anwendungssymbol
 │       ├── Properties/PublishProfiles/   Veröffentlichungsprofile (eigenständig / schlank)
 │       ├── Services/                Erzähltexte (Lore), Rabenbote, Fensterstile
-│       ├── Themes/Nachtwald.xaml    Gestaltungssystem
+│       ├── Themes/Laternendickicht.xaml  Gestaltungssystem
 │       ├── ViewModels/              MVVM
-│       └── Views/                   Hauptfenster, Fokusleiste, Szene, Rabenbote, Meme,
-│                                    AmbientMotion/RenderCache (Ressourcenschonung)
+│       └── Views/                   Hauptfenster, Seiten, Wegband, Szenenrahmen, Fokusleiste,
+│                                    Rabenbote, Meme, RenderCache (Ressourcenschonung)
 ├── docs/                            Diese Dokumentation, Veröffentlichungsanleitung
 └── .github/workflows/build.yml      CI: Build, Test, EXE-Artefakt
 ```
@@ -569,7 +569,7 @@ oder auf den Moment beschränkt, in dem tatsächlich jemand hinsieht.
 
 | Maßnahme | Umsetzung | Wirkung |
 |---|---|---|
-| Bewegung nur, wenn jemand hinsieht | `AmbientMotion` startet Szenen‑Animationen nur, wenn das Element sichtbar und sein Fenster aktiv und nicht minimiert ist. Andernfalls werden sie mit `Storyboard.Pause` angehalten. Die Windows‑Einstellung „Animationen anzeigen“ wird beachtet. | Während einer Wacht (man arbeitet in anderen Programmen) ruht die Szene vollständig. |
+| Bewegung nur, wenn jemand hinsieht | `AmbientMotion` startet Szenen‑Animationen nur, wenn das Element sichtbar und sein Fenster aktiv und nicht minimiert ist. Andernfalls werden sie mit `Storyboard.Pause` angehalten. Die Windows‑Einstellung „Animationen anzeigen“ wird beachtet. | Während einer Wacht (man arbeitet in anderen Programmen) ruht die Szene vollständig. Seit dem Gestaltungssystem „Laternendickicht“ gibt es keine Endlos‑Animationen mehr: Die Szenen sind ruhende, eingefrorene Bilder, `AmbientMotion` und die animierte Nachtwald‑Szene sind entfallen. |
 | Weniger, gebündelte Animationen | Der Schnee besteht aus 3 Tiefenebenen mit je *einer* Geometrie statt aus 26 Einzelelementen. Jede Ebene enthält ihre Flocken doppelt, um eine Szenenhöhe versetzt, damit die Endlosschleife nahtlos schließt. | 6 statt 52 Animationsuhren, weniger Objekte. |
 | Gedrosselte Bildraten | Global gelten 30 statt 60 Bilder je Sekunde (`Timeline.DesiredFrameRate`), für den Schnee 24, das Atmen 15 und den Restzeit‑Balken 20. | Halbe bis Viertel‑Last, solange etwas animiert wird. |
 | Ruhige Fokusleiste | Die Flamme flackert nicht mehr dauerhaft (Bewegung im Augenwinkel lenkt zudem ab). Schatten und Kapselkörper liegen in einer zwischengespeicherten Ebene (`RenderCache` → `BitmapCache` in Bildschirmauflösung). | Pro Sekunde wird nur noch der geänderte Text neu gezeichnet. |
@@ -617,7 +617,7 @@ Version 1.5 und 1.6 laufen lassen und vergleichen. Genauer geht es mit
 
 ### 7.1 Automatisierte Tests
 
-143 Unit‑Tests (xUnit) für die Fachlogik, u. a.:
+270 Unit‑Tests (xUnit) für die Fachlogik, u. a.:
 
 | Testklasse | Geprüft wird |
 |---|---|
@@ -648,7 +648,7 @@ damit deterministisch und schnell (< 1 s gesamt).
 |---|---|---|
 | T1 | Wacht mit 1 min starten, nur in Visual Studio arbeiten | Leiste gold, Frost 00:00, nach 1 min „Der Frühling ist gekommen!“ |
 | T2 | Während der Wacht Discord in den Vordergrund holen | Rahmen eisblau, Frost zählt hoch, Detail „Eine Verlockung ruft: discord“ |
-| T3 | Buch „Der König von Narnia“ wählen, 20‑mal zwischen Editor und Verlockung wechseln | Rabenbote unten rechts: „Herrscher von Cair Paravel …“ |
+| T3 | Buch „Der König von Narnia“ wählen, 20‑mal zwischen Editor und Verlockung wechseln | Rabenbote unten rechts: die Königin („Zwanzig Stück! …“) mit Peters Antwort |
 | T4 | Auf die Leiste klicken | Vorheriges Fenster behält den Tastaturfokus |
 | T5 | 2 min keine Eingabe | „Die Laterne wacht allein“, Zeit unter „abwesend“ |
 | T6 | Systemuhr während der Wacht um 1 h verstellen | Restzeit unverändert |

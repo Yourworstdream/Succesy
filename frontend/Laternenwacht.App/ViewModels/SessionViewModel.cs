@@ -68,6 +68,27 @@ internal sealed class SessionViewModel : ObservableObject
     private string? _markCandidate;
     private string _proverb = Lore.Proverb(Environment.TickCount);
     private readonly HashSet<string> _shownAdmonitions = [];
+
+    /// <summary>Puffer für die Schachtel der Königin – im Sekundentakt ohne neue Listen oder Einträge gefüllt.</summary>
+    private readonly KeyValuePair<string, TimeSpan>[] _queenBuffer = new KeyValuePair<string, TimeSpan>[QueenBoxSize];
+
+    // Zuletzt formatierte Werte: Texte entstehen nur neu, wenn sich die angezeigte Sekunde bzw. Zahl ändert.
+    private long _remainingSeconds = -1;
+    private long _focusedSeconds = -1;
+    private long _frostSeconds = -1;
+    private long _awaySeconds = -1;
+    private long _streakSeconds = -1;
+    private long _longestSeconds = -1;
+    private long _goalRemainingSeconds = -1;
+    private int _goalMinutes = -1;
+    private int _frostPercent = -1;
+    private TimeSpan _plannedFor = TimeSpan.MinValue;
+    private string _stationEyebrow = Lore.Eyebrow(1);
+
+    // Wovon Statuszeile, Untertitel und Kurzstatus zuletzt abhingen (Wacht, Phase, Zustand, Rückkehr, angezeigte Sekunde,
+    // Programm, Verlockungszeile). Die Texte entstehen nur neu, wenn sich davon etwas ändert.
+    private (FocusSession? Session, SessionPhase? Phase, ActivityState State, bool Returning, long Seconds, string? Process, string Temptation) _storyKey;
+    private bool _hasStoryKey;
     private string? _admonition;
     private long _admonitionUntil;
     private int _admonitionSeed;
@@ -584,22 +605,43 @@ internal sealed class SessionViewModel : ObservableObject
         var running = session is { Phase: SessionPhase.Running };
         var returning = running && session!.CurrentState == ActivityState.Focused && Environment.TickCount64 < _returningUntil;
 
-        (Headline, Detail) = Lore.Describe(session, _warden.LastSnapshot, returning ? _returnedFrost : null);
-        ShortStatus = Lore.Short(session);
-
         if (session is not null)
         {
-            RemainingText = TimeFormat.Clock(session.Remaining);
-            FocusedText = TimeFormat.Clock(session.Focused);
-            FrostText = TimeFormat.Clock(session.Distracted);
-            AwayText = TimeFormat.Clock(session.Away);
-            CurrentStreakText = TimeFormat.Clock(session.CurrentStreak);
-            PlannedText = Lore.PlannedLine(session.Planned);
+            if (ClockChanged(ref _remainingSeconds, session.Remaining))
+            {
+                RemainingText = TimeFormat.Clock(session.Remaining);
+            }
+
+            if (ClockChanged(ref _focusedSeconds, session.Focused))
+            {
+                FocusedText = TimeFormat.Clock(session.Focused);
+            }
+
+            if (ClockChanged(ref _frostSeconds, session.Distracted))
+            {
+                FrostText = TimeFormat.Clock(session.Distracted);
+            }
+
+            if (ClockChanged(ref _awaySeconds, session.Away))
+            {
+                AwayText = TimeFormat.Clock(session.Away);
+            }
+
+            if (ClockChanged(ref _streakSeconds, session.CurrentStreak))
+            {
+                CurrentStreakText = TimeFormat.Clock(session.CurrentStreak);
+            }
+
+            UpdatePlannedText(session.Planned);
             FocusWeight = session.Focused.TotalSeconds;
             FrostWeight = session.Distracted.TotalSeconds;
             AwayWeight = session.Away.TotalSeconds;
             UpdateNextGoal(session.CurrentStreak);
-            LongestStreakText = TimeFormat.Clock(session.LongestStreak);
+            if (ClockChanged(ref _longestSeconds, session.LongestStreak))
+            {
+                LongestStreakText = TimeFormat.Clock(session.LongestStreak);
+            }
+
             DistractionCount = session.DistractionCount;
             Progress = session.Progress;
             FrostRatio = session.FrostRatio;
@@ -611,11 +653,27 @@ internal sealed class SessionViewModel : ObservableObject
         else
         {
             var planned = TimeSpan.FromMinutes(DurationMinutes);
-            RemainingText = TimeFormat.Clock(planned);
-            PlannedText = Lore.PlannedLine(planned);
+            if (ClockChanged(ref _remainingSeconds, planned))
+            {
+                RemainingText = TimeFormat.Clock(planned);
+            }
+
+            UpdatePlannedText(planned);
             PlannedSeconds = planned.TotalSeconds;
             Progress = 0;
             UpdateStation(1);
+        }
+
+        // Nach der Reise, damit die Verlockungszeile nur bei neuem Kapitel oder Programm entsteht. Neu gebildet wird nur,
+        // wenn sich ein Baustein der Texte ändert – während einer Verlockung oder Rast also gar nicht im Sekundentakt.
+        var storyKey = (session, session?.Phase, session?.CurrentState ?? ActivityState.Focused, returning,
+            StorySeconds(session, returning), session?.CurrentProcess, TemptationLine);
+        if (!_hasStoryKey || storyKey != _storyKey)
+        {
+            _hasStoryKey = true;
+            _storyKey = storyKey;
+            (Headline, Detail) = Lore.Describe(session, _warden.LastSnapshot, returning ? _returnedFrost : null, TemptationLine);
+            ShortStatus = Lore.Short(session);
         }
 
         // Abgeleitete Zustände – melden sich nur bei Änderung.
@@ -627,7 +685,13 @@ internal sealed class SessionViewModel : ObservableObject
         IsAway = running && State == ActivityState.Away;
         IsReturning = returning;
         IsLit = !running || State == ActivityState.Focused;
-        FrostPercentText = FrostRatio.ToString("P0", German);
+        var frostPercent = (int)Math.Round(FrostRatio * 100, MidpointRounding.AwayFromZero);
+        if (frostPercent != _frostPercent)
+        {
+            _frostPercent = frostPercent;
+            FrostPercentText = FrostRatio.ToString("P0", German);
+        }
+
         MarkCandidate = IsActive && State != ActivityState.Distracted
             && _warden.LastSnapshot?.ProcessName is { Length: > 0 } process
             && !string.Equals(process, _warden.SelfProcessName, StringComparison.OrdinalIgnoreCase)
@@ -641,6 +705,25 @@ internal sealed class SessionViewModel : ObservableObject
         {
             RelayCommand.Refresh();
         }
+    }
+
+    /// <summary>
+    /// Die Sekunde, die Statuszeile und Kurzstatus anzeigen: im Licht die laufende Serie, bei Abwesenheit die Leerlaufzeit,
+    /// sonst 0 (die Texte enthalten dann keine laufende Zeit).
+    /// </summary>
+    private long StorySeconds(FocusSession? session, bool returning)
+    {
+        if (session is not { Phase: SessionPhase.Running } || returning)
+        {
+            return 0;
+        }
+
+        return session.CurrentState switch
+        {
+            ActivityState.Focused => (long)session.CurrentStreak.TotalSeconds,
+            ActivityState.Away => (long)(_warden.LastSnapshot?.IdleTime ?? TimeSpan.Zero).TotalSeconds,
+            _ => 0,
+        };
     }
 
     /// <summary>Station, nächste Station, Honigmarken, Wintermesser und Schachtel der laufenden (oder beendeten) Wacht.</summary>
@@ -705,7 +788,7 @@ internal sealed class SessionViewModel : ObservableObject
 
             var starts = session.DistractionStarts;
             _isLongTemptation = starts.Count > 0 && measured - starts[^1] >= Lore.LongTemptation;
-            UpdateQueenBox(session.TopDistractions(QueenBoxSize));
+            UpdateQueenBox(_queenBuffer.AsSpan(0, session.TopDistractions(_queenBuffer)));
         }
         else
         {
@@ -728,6 +811,7 @@ internal sealed class SessionViewModel : ObservableObject
         StationName = current.Name;
         StationNarration = current.Narration;
         StationLabel = Lore.StationLabel(current);
+        _stationEyebrow = Lore.Eyebrow(station);
         return true;
     }
 
@@ -750,7 +834,7 @@ internal sealed class SessionViewModel : ObservableObject
             return;
         }
 
-        Eyebrow = Lore.Eyebrow(StationNumber);
+        Eyebrow = _stationEyebrow;
         if (IsDistracted)
         {
             Scene = SceneLibrary.Sledge;
@@ -772,28 +856,41 @@ internal sealed class SessionViewModel : ObservableObject
     }
 
     /// <summary>Aktualisiert die Schachtel der Königin an Ort und Stelle (vorhandene Zeilen werden wiederverwendet).</summary>
-    private void UpdateQueenBox(IReadOnlyList<DistractionEntry> entries)
+    private void UpdateQueenBox(ReadOnlySpan<KeyValuePair<string, TimeSpan>> entries)
     {
-        for (var i = 0; i < entries.Count; i++)
+        for (var i = 0; i < entries.Length; i++)
         {
             if (i < QueenBox.Count)
             {
-                QueenBox[i].Update(entries[i]);
+                QueenBox[i].Update(entries[i].Key, entries[i].Value);
             }
             else
             {
                 var item = new QueenBoxItem();
-                item.Update(entries[i]);
+                item.Update(entries[i].Key, entries[i].Value);
                 QueenBox.Add(item);
             }
         }
 
-        while (QueenBox.Count > entries.Count)
+        while (QueenBox.Count > entries.Length)
         {
             QueenBox.RemoveAt(QueenBox.Count - 1);
         }
 
         HasQueenBoxItems = QueenBox.Count > 0;
+    }
+
+    /// <summary>Schachtel aus dem Chronik-Eintrag der beendeten Wacht (einmalig, nicht im Sekundentakt).</summary>
+    private void UpdateQueenBox(IReadOnlyList<DistractionEntry> entries)
+    {
+        // Alle Sorten des Eintrags (bis zu fünf), nicht nur die drei der laufenden Anzeige.
+        var all = new KeyValuePair<string, TimeSpan>[entries.Count];
+        for (var i = 0; i < all.Length; i++)
+        {
+            all[i] = new KeyValuePair<string, TimeSpan>(entries[i].ProcessName, entries[i].Duration);
+        }
+
+        UpdateQueenBox(all);
     }
 
     /// <summary>Hält das Abschlussbild der eben beendeten Wacht fest (vor dem Eintrag in die Chronik).</summary>
@@ -842,7 +939,10 @@ internal sealed class SessionViewModel : ObservableObject
         StartLabel = string.Create(CultureInfo.InvariantCulture, $"Laterne entzünden · {DurationMinutes} min");
     }
 
-    /// <summary>Berechnet das nächste positive Ziel (Lob-Schwelle) aus der laufenden Fokus-Serie.</summary>
+    /// <summary>
+    /// Berechnet das nächste positive Ziel (Lob-Schwelle) aus der laufenden Fokus-Serie.
+    /// Die Texte entstehen nur neu, wenn sich die Schwelle bzw. die angezeigte Restsekunde ändert.
+    /// </summary>
     private void UpdateNextGoal(TimeSpan streak)
     {
         var previous = TimeSpan.Zero;
@@ -851,8 +951,20 @@ internal sealed class SessionViewModel : ObservableObject
             var target = TimeSpan.FromMinutes(minutes);
             if (streak < target)
             {
-                NextGoalText = $"{minutes} Minuten am Stück im Licht";
-                NextGoalRemainingText = "noch " + Lore.SpanUp(target - streak);
+                if (minutes != _goalMinutes)
+                {
+                    _goalMinutes = minutes;
+                    _goalRemainingSeconds = -1;
+                    NextGoalText = string.Create(CultureInfo.InvariantCulture, $"{minutes} Minuten am Stück im Licht");
+                }
+
+                var remainingSeconds = (long)Math.Ceiling((target - streak).TotalSeconds);
+                if (remainingSeconds != _goalRemainingSeconds)
+                {
+                    _goalRemainingSeconds = remainingSeconds;
+                    NextGoalRemainingText = "noch " + Lore.SpanUp(target - streak);
+                }
+
                 NextGoalProgress = (streak - previous) / (target - previous);
                 return;
             }
@@ -860,9 +972,45 @@ internal sealed class SessionViewModel : ObservableObject
             previous = target;
         }
 
-        NextGoalText = "Alle Ziele erreicht – eine Legende!";
-        NextGoalRemainingText = TimeFormat.Clock(streak);
+        if (_goalMinutes != 0)
+        {
+            _goalMinutes = 0;
+            _goalRemainingSeconds = -1;
+            NextGoalText = "Alle Ziele erreicht – eine Legende!";
+        }
+
+        if (ClockChanged(ref _goalRemainingSeconds, streak))
+        {
+            NextGoalRemainingText = TimeFormat.Clock(streak);
+        }
+
         NextGoalProgress = 1;
+    }
+
+    /// <summary>"von 25:00 Minuten" – nur neu, wenn sich die geplante Dauer ändert.</summary>
+    private void UpdatePlannedText(TimeSpan planned)
+    {
+        if (planned != _plannedFor)
+        {
+            _plannedFor = planned;
+            PlannedText = Lore.PlannedLine(planned);
+        }
+    }
+
+    /// <summary>
+    /// <c>true</c>, wenn sich die ganze Sekunde gegenüber dem zuletzt formatierten Wert geändert hat
+    /// (gleiche Rundung wie <see cref="TimeFormat.Clock"/>); merkt sich dann die neue Sekunde.
+    /// </summary>
+    private static bool ClockChanged(ref long lastSeconds, TimeSpan value)
+    {
+        var seconds = value <= TimeSpan.Zero ? 0 : (long)value.TotalSeconds;
+        if (seconds == lastSeconds)
+        {
+            return false;
+        }
+
+        lastSeconds = seconds;
+        return true;
     }
 
     private void UpdateAdmonition(FocusSession session)
@@ -887,6 +1035,7 @@ internal sealed class QueenBoxItem : ObservableObject
 {
     private string _name = string.Empty;
     private string _durationText = string.Empty;
+    private long _durationSeconds = -1;
 
     /// <summary>Programmname, z. B. "Hearthstone".</summary>
     public string Name { get => _name; private set => SetProperty(ref _name, value); }
@@ -894,10 +1043,16 @@ internal sealed class QueenBoxItem : ObservableObject
     /// <summary>Dauer, z. B. "1:41".</summary>
     public string DurationText { get => _durationText; private set => SetProperty(ref _durationText, value); }
 
-    public void Update(DistractionEntry entry)
+    /// <summary>Übernimmt Programm und Dauer; der Dauertext entsteht nur neu, wenn sich die angezeigte Sekunde ändert.</summary>
+    public void Update(string processName, TimeSpan duration)
     {
-        Name = entry.ProcessName;
-        DurationText = Lore.Span(entry.Duration);
+        Name = processName;
+        var seconds = duration <= TimeSpan.Zero ? 0 : (long)duration.TotalSeconds;
+        if (seconds != _durationSeconds)
+        {
+            _durationSeconds = seconds;
+            DurationText = Lore.Span(duration);
+        }
     }
 }
 

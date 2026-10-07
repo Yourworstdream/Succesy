@@ -1,6 +1,8 @@
 <!--
-  Kapitel III · "Gefährten und Verlockungen" – Einstellungen.
+  Kapitel III · "Gefährten & Verlockungen" – Einstellungen.
   DataContext: SettingsViewModel (vom Hauptfenster gesetzt: Settings).
+  Gestaltung: Nachtflächen (Glass) mit Kapitelzeile, Cinzel-Überschriften mit goldenem Symbol und EB-Garamond-Text.
+  Gefährten = Arbeitsprogramme, Verlockungen = Ablenkungen (so sprechen auch die Texte der Wacht).
 -->
 <UserControl x:Class="Laternenwacht.App.Views.SettingsPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -16,11 +18,26 @@
   <UserControl.Resources>
     <views:TextToVisibilityConverter x:Key="TextToVisibility" />
     <views:ErrorToBrushConverter x:Key="ErrorToBrush" />
+
+    <!-- Goldenes Symbol vor einer Kartenüberschrift -->
+    <Style x:Key="CardGlyph" TargetType="Path" BasedOn="{StaticResource LineIcon}">
+      <Setter Property="Width" Value="20" />
+      <Setter Property="Height" Value="20" />
+      <Setter Property="Stroke" Value="{StaticResource GoldBrush}" />
+      <Setter Property="Margin" Value="0,0,12,0" />
+    </Style>
+    <!-- Feine Goldlinie unter einer Kartenüberschrift -->
+    <Style x:Key="CardRule" TargetType="Rectangle">
+      <Setter Property="Height" Value="1" />
+      <Setter Property="Fill" Value="{StaticResource EdgeBrush}" />
+      <Setter Property="Margin" Value="0,12,0,0" />
+    </Style>
   </UserControl.Resources>
 
   <DockPanel>
-    <StackPanel DockPanel.Dock="Top" Margin="0,0,0,20">
-      <TextBlock Text="Einstellungen" Style="{StaticResource PageTitle}" />
+    <StackPanel DockPanel.Dock="Top" Margin="0,0,0,22">
+      <TextBlock Text="KAPITEL III" Style="{StaticResource PageEyebrow}" />
+      <TextBlock Text="Gefährten &amp; Verlockungen" Style="{StaticResource PageTitle}" Margin="0,4,0,0" />
       <TextBlock Text="Was zählt als Fokus, was als Ablenkung – und wie die Laternenwacht dich begleitet." Style="{StaticResource PageSubtitle}" />
     </StackPanel>
 
@@ -55,8 +72,12 @@
         <!-- Erkennung -->
         <Border Style="{StaticResource Glass}">
           <StackPanel>
-            <TextBlock Text="Erkennung" Style="{StaticResource CardTitle}" />
-            <TextBlock Style="{StaticResource Body}" Margin="0,4,0,14"
+            <StackPanel Orientation="Horizontal">
+              <Path Data="{StaticResource ShieldGeometry}" Style="{StaticResource CardGlyph}" />
+              <TextBlock Text="Erkennung" Style="{StaticResource CardTitle}" VerticalAlignment="Center" />
+            </StackPanel>
+            <Rectangle Style="{StaticResource CardRule}" />
+            <TextBlock Style="{StaticResource Body}" Margin="0,12,0,14"
                        Text="Programmnamen, einer pro Zeile (z. B. devenv oder discord.exe). Erfasst wird nur, welches Programm im Vordergrund ist – nie Fenstertitel, Inhalte oder Tastatureingaben." />
             <RadioButton GroupName="Mode" IsChecked="{Binding UseBlockList}">
               <StackPanel>
@@ -78,12 +99,12 @@
                 <ColumnDefinition Width="*" />
               </Grid.ColumnDefinitions>
               <StackPanel>
-                <TextBlock Text="ARBEITSPROGRAMME" Style="{StaticResource Overline}" Margin="0,0,0,8" />
+                <TextBlock Text="GEFÄHRTEN · ARBEITSPROGRAMME" Style="{StaticResource Overline}" Foreground="{StaticResource GoldBrush}" Margin="0,0,0,8" />
                 <TextBox Text="{Binding AllowedText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="150"
                          VerticalScrollBarVisibility="Auto" TextWrapping="NoWrap" MaxLength="12000" AutomationProperties.Name="Arbeitsprogramme" />
               </StackPanel>
               <StackPanel Grid.Column="2">
-                <TextBlock Text="ABLENKUNGEN" Style="{StaticResource Overline}" Margin="0,0,0,8" />
+                <TextBlock Text="VERLOCKUNGEN · ABLENKUNGEN" Style="{StaticResource Overline}" Foreground="{StaticResource FrostBrush}" Margin="0,0,0,8" />
                 <TextBox Text="{Binding DistractingText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="150"
                          VerticalScrollBarVisibility="Auto" TextWrapping="NoWrap" MaxLength="12000" AutomationProperties.Name="Ablenkungen" />
               </StackPanel>
@@ -101,8 +122,12 @@
         <!-- Wacht -->
         <Border Style="{StaticResource Glass}" Margin="0,16,0,0">
           <StackPanel>
-            <TextBlock Text="Wacht" Style="{StaticResource CardTitle}" />
-            <WrapPanel Margin="0,14,0,0">
+            <StackPanel Orientation="Horizontal">
+              <Path Data="{StaticResource LanternGeometry}" Style="{StaticResource CardGlyph}" />
+              <TextBlock Text="Wacht" Style="{StaticResource CardTitle}" VerticalAlignment="Center" />
+            </StackPanel>
+            <Rectangle Style="{StaticResource CardRule}" />
+            <WrapPanel Margin="0,16,0,0">
               <StackPanel Margin="0,0,24,0" Width="220">
                 <TextBlock Text="STANDARDDAUER (MIN)" Style="{StaticResource Overline}" Margin="0,0,0,8" />
                 <TextBox Text="{Binding DurationText, UpdateSourceTrigger=PropertyChanged}" MaxLength="3" />
@@ -121,9 +146,13 @@
         <!-- Botschaften -->
         <Border Style="{StaticResource Glass}" Margin="0,16,0,0">
           <StackPanel>
-            <TextBlock Text="Botschaften" Style="{StaticResource CardTitle}" />
-            <TextBlock Style="{StaticResource Body}" Margin="0,4,0,14"
-                       Text="Lob für lange Fokus-Serien, ein Gruß bei der Rückkehr und – auf Wunsch – Mahnrufe. Die Figuren stammen aus dem gewählten Buch. Änderungen gelten sofort." />
+            <StackPanel Orientation="Horizontal">
+              <Path Data="{StaticResource BookGeometry}" Style="{StaticResource CardGlyph}" />
+              <TextBlock Text="Botschaften" Style="{StaticResource CardTitle}" VerticalAlignment="Center" />
+            </StackPanel>
+            <Rectangle Style="{StaticResource CardRule}" />
+            <TextBlock Style="{StaticResource Body}" Margin="0,12,0,14"
+                       Text="Lob für lange Fokus-Serien, ein Gruß bei der Rückkehr und – auf Wunsch – Mahnrufe. Die Reise erzählt immer Band II; der gewählte Band bestimmt, wer dir unterwegs Rabenboten schickt. Änderungen gelten sofort." />
             <TextBlock Text="BUCH" Style="{StaticResource Overline}" Margin="0,0,0,8" />
             <ComboBox ItemsSource="{Binding BookOptions}" SelectedItem="{Binding SelectedBookOption}"
                       DisplayMemberPath="Label" MaxWidth="440" MinWidth="360" HorizontalAlignment="Left"
@@ -137,7 +166,7 @@
             <CheckBox IsChecked="{Binding ShowNotifications}">
               <StackPanel>
                 <TextBlock Text="Mahnrufe bei vielen Ablenkungen" />
-                <TextBlock Text="Mit Ton – abschalten, wenn du nur Positives sehen möchtest." Style="{StaticResource Caption}" FontSize="13" />
+                <TextBlock Text="Mit Ton – abschalten, wenn du nur Positives sehen möchtest. In Band II lockt die Königin, und Narnia antwortet ihr." Style="{StaticResource Caption}" FontSize="13" TextWrapping="Wrap" />
               </StackPanel>
             </CheckBox>
           </StackPanel>
@@ -146,8 +175,12 @@
         <!-- Memes -->
         <Border Style="{StaticResource Glass}" Margin="0,16,0,0">
           <StackPanel>
-            <TextBlock Text="Memes" Style="{StaticResource CardTitle}" />
-            <TextBlock Style="{StaticResource Body}" Margin="0,4,0,10"
+            <StackPanel Orientation="Horizontal">
+              <Path Data="{StaticResource FolderGeometry}" Style="{StaticResource CardGlyph}" />
+              <TextBlock Text="Memes" Style="{StaticResource CardTitle}" VerticalAlignment="Center" />
+            </StackPanel>
+            <Rectangle Style="{StaticResource CardRule}" />
+            <TextBlock Style="{StaticResource Body}" Margin="0,12,0,10"
                        Text="Bei jeder neuen Ablenkung treibt ein Meme über den Bildschirm. Ein Klick lässt es versinken. Erlaubt: JPG, PNG, BMP, GIF bis 10 MB." />
             <CheckBox IsChecked="{Binding ShowMemes}" Content="Memes bei Ablenkung zeigen" />
             <StackPanel Orientation="Horizontal" Margin="0,10,0,0">

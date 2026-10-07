@@ -85,14 +85,15 @@
           <Ellipse x:Name="MedallionRing" Width="46" Height="46" StrokeThickness="0.8" Opacity="0.6"
                    Stroke="{StaticResource InkGoldBrush}" />
 
-          <Grid x:Name="RavenFigure">
+          <!-- Canvas statt Grid: Der Rabe ist im 60er-Raster gezeichnet und würde im 56er-Feld sonst beschnitten -->
+          <Canvas x:Name="RavenFigure">
             <Path Data="{StaticResource RavenGeometry}" Fill="{StaticResource RavenInkBrush}" Stretch="None"
                   RenderTransform="{StaticResource RavenPlacement}" />
             <Path x:Name="RavenWing" Data="{StaticResource RavenWingGeometry}" Stroke="{StaticResource RavenWingBrush}"
                   StrokeThickness="1.6" Stretch="None" RenderTransform="{StaticResource RavenPlacement}" />
             <Path x:Name="RavenEye" Data="{StaticResource RavenEyeGeometry}" Fill="{StaticResource RavenGoldBrush}"
                   Stretch="None" RenderTransform="{StaticResource RavenPlacement}" />
-          </Grid>
+          </Canvas>
 
           <Grid x:Name="QueenFigure" Visibility="Collapsed">
             <Path Data="{StaticResource QueenStaffGeometry}" Stroke="{StaticResource StaffGoldBrush}" StrokeThickness="2.2"

@@ -146,7 +146,15 @@ public sealed class JourneyThread : UserControl
         ApplyProgress();
     }
 
-    private void ApplyProgress() => _lanternTransform.X = Math.Round(Inset + (TrackWidth * Progress));
+    private void ApplyProgress()
+    {
+        // Nur bei einem neuen Pixel setzen (die Leiste meldet den Fortschritt jede Sekunde).
+        var x = Math.Round(Inset + (TrackWidth * Progress));
+        if (x != _lanternTransform.X)
+        {
+            _lanternTransform.X = x;
+        }
+    }
 
     /// <summary>Linie und zehn Punkte: erreicht = gefüllt, aktuell = größer mit Schein, offen = Ring.</summary>
     private void DrawThread()

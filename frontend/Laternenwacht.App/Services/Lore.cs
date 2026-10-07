@@ -72,7 +72,12 @@ internal static class Lore
     /// <param name="session">Die gezeigte Wacht oder <c>null</c>, wenn der Schrank offen steht.</param>
     /// <param name="snapshot">Letzte Messung (für die Leerlaufzeit bei Abwesenheit).</param>
     /// <param name="returnedFrost">Dauer der eben beendeten Verlockung, solange die Rückkehr gefeiert wird; sonst <c>null</c>.</param>
-    public static (string Headline, string Detail) Describe(FocusSession? session, ActivitySnapshot? snapshot, TimeSpan? returnedFrost = null)
+    /// <param name="temptationLine">
+    /// Bereits berechnete Verlockungszeile (<see cref="Journey.TemptationLine"/>), damit sie im Sekundentakt nicht jedes Mal
+    /// neu entsteht; ohne sie wird sie hier gebildet.
+    /// </param>
+    public static (string Headline, string Detail) Describe(
+        FocusSession? session, ActivitySnapshot? snapshot, TimeSpan? returnedFrost = null, string? temptationLine = null)
     {
         if (session is null)
         {
@@ -85,8 +90,8 @@ internal static class Lore
             SessionPhase.Aborted or SessionPhase.Completed => (EndingTitle(session), EndingSubtitle(session.Measured, session.Distracted, session.DistractionCount)),
             _ => session.CurrentState switch
             {
-                ActivityState.Distracted => (TemptationStatus,
-                    Journey.TemptationLine(Journey.ChapterFor(Journey.StationNumber(session.Measured, session.Planned)), session.CurrentProcess)),
+                ActivityState.Distracted => (TemptationStatus, temptationLine
+                    ?? Journey.TemptationLine(Journey.ChapterFor(Journey.StationNumber(session.Measured, session.Planned)), session.CurrentProcess)),
                 ActivityState.Away => (AwayStatus,
                     $"Keine Spur im Schnee seit {Span(snapshot?.IdleTime ?? TimeSpan.Zero)}. Das zählt nicht als Frost – die Laterne wartet auf dich."),
                 _ when returnedFrost is { } frost => (ReturnStatus,
@@ -119,13 +124,6 @@ internal static class Lore
                     : "Im Licht",
             },
         };
-    }
-
-    /// <summary>Titel und Erzählung des Abschlussbildes einer vollendeten Wacht in dieser Jahreszeit.</summary>
-    public static (string Headline, string Detail) Completed(RealmMood mood)
-    {
-        var text = Journey.Describe(Journey.EndingFor(SessionPhase.Completed, mood));
-        return (text.Title, text.Narration);
     }
 
     public static string MoodName(RealmMood mood) => mood switch

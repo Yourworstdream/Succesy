@@ -47,7 +47,7 @@ backend/
 │       ├── DpapiSecretProtector   Schlüsselschutz per DPAPI (CurrentUser)
 │       ├── AppPaths, AppLog       %LOCALAPPDATA%\Laternenwacht, Fehlerprotokoll
 │       └── Native/NativeMethods   P/Invoke-Deklarationen
-└── tests/Laternenwacht.Core.Tests/      xUnit, 265 Tests, deterministische Uhr
+└── tests/Laternenwacht.Core.Tests/      xUnit, 270 Tests, deterministische Uhr
 ```
 
 ## 3. Bauen und testen
@@ -84,6 +84,7 @@ Parameter mit Standardwert) sind erlaubt.
 | `MemeCatalog` | `Scan(string directory)`, `AllowedExtensions`, `MaxFileSizeBytes`, `MaxFiles` |
 | `FocusSession` | `Phase`, `CurrentState`, `CurrentProcess`, `Focused`, `Distracted`, `Away`, `DistractionCount`, `Remaining`, `Progress`, `FrostRatio`, `IsFinished`, `Measured`, `Planned` |
 | `FocusSession.DistractionStarts` | `IReadOnlyList<TimeSpan>`: `Measured` zu Beginn jeder Ablenkungs-Episode (genau `DistractionCount` Einträge; Rast und Abwesenheit erzeugen keinen). Speicher nur bei Episodenbeginn; **nicht** im `SessionRecord` |
+| `FocusSession.TopDistractions` | `TopDistractions(int)` liefert eine neue Liste; `TopDistractions(Span<KeyValuePair<string, TimeSpan>>)` füllt einen vorhandenen Puffer in gleicher Reihenfolge ohne Allokation (für die Anzeige im Sekundentakt) |
 | `Journey` | `StationCount` (10), `Stations`, `Fraction(measured, planned)`, `StationNumber(measured, planned)` (= 1 + ⌊9 · Anteil⌋, Station 10 erst bei 100 %; exakt in Ticks), `StationAt`, `PositionOf(n)` (= (n−1)/9), `UntilNextStation` (0 an Station 10), `ChapterFor(n)` (1–2 Schlitten, 3–4 Biberdamm, ab 5 Schloss), `TemptationLine(chapter, processName)`, `SpringFrostAllowance(planned)` / `ThawFrostAllowance(planned)` (Frost bis Tauwetter bzw. Winter), `EndingFor(outcome, mood)`, `Describe(ending)`, `ChronicleTitle(record)`; zusätzlich `EndingFor(record)`, `MoodOf(record)`, `Describe(record)` (Abbruch-Erzählung mit erreichter Station) |
 | `JourneyStation` | `Number`, `Name`, `Narration` |
 | `TemptationChapter` | `Sledge`, `BeaverDam`, `Castle` |
