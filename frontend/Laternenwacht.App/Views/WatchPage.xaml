@@ -281,7 +281,7 @@
             <!-- ===== Unterwegs: Restzeit oben, Status und Stationszeile unten ===== -->
             <Grid Visibility="{Binding IsActive, Converter={StaticResource BoolToVisibility}}">
               <StackPanel VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,54,0,0">
-                <TextBlock Text="VERBLEIBEND" FontFamily="{StaticResource CinzelFont}" FontSize="11" HorizontalAlignment="Center">
+                <TextBlock x:Name="RemainingLabel" Text="VERBLEIBEND" FontFamily="{StaticResource CinzelFont}" FontSize="11" HorizontalAlignment="Center">
                   <TextBlock.Style>
                     <Style TargetType="TextBlock">
                       <Setter Property="Foreground" Value="{StaticResource SceneIvoryBrush}" />
@@ -295,7 +295,7 @@
                 </TextBlock>
                 <TextBlock Text="{Binding RemainingText}" FontFamily="{StaticResource CinzelFont}" FontSize="86"
                            LineHeight="92" LineStackingStrategy="BlockLineHeight" Typography.NumeralAlignment="Tabular"
-                           HorizontalAlignment="Center" AutomationProperties.Name="Verbleibende Zeit">
+                           HorizontalAlignment="Center" AutomationProperties.LabeledBy="{Binding ElementName=RemainingLabel}">
                   <TextBlock.Style>
                     <Style TargetType="TextBlock">
                       <Setter Property="Foreground" Value="#FBF3DE" />
@@ -583,46 +583,49 @@
 
             <!-- Bücherregal: aus welchem Band die Rabenboten kommen (wird sofort gespeichert) -->
             <TextBlock Text="SPRÜCHE AUS DEM BAND" Style="{StaticResource InkOverline}" Margin="0,24,0,0" />
+            <!-- Bei schmalem Fenster schrumpft das Regal (Viewbox, nur verkleinern), statt Band VII und „Alle“ abzuschneiden -->
             <Border Height="112" Margin="0,10,0,0" Padding="10,0" BorderBrush="#5A3A20" BorderThickness="0,0,0,7">
-              <Grid>
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="*" />
-                  <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" ClipToBounds="False">
-                  <StackPanel.Resources>
-                    <Style TargetType="RadioButton" BasedOn="{StaticResource BookSpine}">
-                      <Setter Property="GroupName" Value="SayingsBook" />
-                      <Setter Property="Margin" Value="0,0,6,0" />
-                    </Style>
-                  </StackPanel.Resources>
-                  <RadioButton Content="I" Height="84" Tag="#6B2E2A" ToolTip="Band I · „Das Wunder von Narnia“"
-                               AutomationProperties.Name="Band I: Das Wunder von Narnia"
-                               IsChecked="{Binding DataContext.Settings.SelectedBook, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BookIs}, ConverterParameter={x:Static model:ChronicleBook.MagiciansNephew}}" />
-                  <RadioButton Content="II" Height="92" Tag="#2E4A3A" ToolTip="Band II · „Der König von Narnia“"
-                               AutomationProperties.Name="Band II: Der König von Narnia"
-                               IsChecked="{Binding DataContext.Settings.SelectedBook, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BookIs}, ConverterParameter={x:Static model:ChronicleBook.LionWitchWardrobe}}" />
-                  <RadioButton Content="III" Height="80" Tag="#7A5528" ToolTip="Band III · „Der Ritt nach Narnia“"
-                               AutomationProperties.Name="Band III: Der Ritt nach Narnia"
-                               IsChecked="{Binding DataContext.Settings.SelectedBook, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BookIs}, ConverterParameter={x:Static model:ChronicleBook.HorseAndHisBoy}}" />
-                  <RadioButton Content="IV" Height="88" Tag="#2F3F5E" ToolTip="Band IV · „Prinz Kaspian von Narnia“"
-                               AutomationProperties.Name="Band IV: Prinz Kaspian von Narnia"
-                               IsChecked="{Binding DataContext.Settings.SelectedBook, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BookIs}, ConverterParameter={x:Static model:ChronicleBook.PrinceCaspian}}" />
-                  <RadioButton Content="V" Height="94" Tag="#2F5A68" ToolTip="Band V · „Die Reise auf der Morgenröte“"
-                               AutomationProperties.Name="Band V: Die Reise auf der Morgenröte"
-                               IsChecked="{Binding DataContext.Settings.SelectedBook, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BookIs}, ConverterParameter={x:Static model:ChronicleBook.DawnTreader}}" />
-                  <RadioButton Content="VI" Height="82" Tag="#555A62" ToolTip="Band VI · „Der silberne Sessel“"
-                               AutomationProperties.Name="Band VI: Der silberne Sessel"
-                               IsChecked="{Binding DataContext.Settings.SelectedBook, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BookIs}, ConverterParameter={x:Static model:ChronicleBook.SilverChair}}" />
-                  <RadioButton Content="VII" Height="90" Tag="#3E2A44" ToolTip="Band VII · „Der letzte Kampf“"
-                               AutomationProperties.Name="Band VII: Der letzte Kampf"
-                               IsChecked="{Binding DataContext.Settings.SelectedBook, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BookIs}, ConverterParameter={x:Static model:ChronicleBook.LastBattle}}" />
-                </StackPanel>
-                <RadioButton Grid.Column="1" Style="{StaticResource AllBooksToggle}" GroupName="SayingsBook" Content="Alle"
-                             VerticalAlignment="Bottom" Margin="8,0,0,0" ToolTip="Alle sieben Chroniken, gemischt"
-                             AutomationProperties.Name="Alle sieben Chroniken, gemischt"
-                             IsChecked="{Binding DataContext.Settings.SelectedBook, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BookIs}, ConverterParameter={x:Static model:ChronicleBook.All}}" />
-              </Grid>
+              <Viewbox Stretch="Uniform" StretchDirection="DownOnly" HorizontalAlignment="Left" VerticalAlignment="Bottom">
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" ClipToBounds="False">
+                    <StackPanel.Resources>
+                      <Style TargetType="RadioButton" BasedOn="{StaticResource BookSpine}">
+                        <Setter Property="GroupName" Value="SayingsBook" />
+                        <Setter Property="Margin" Value="0,0,6,0" />
+                      </Style>
+                    </StackPanel.Resources>
+                    <RadioButton Content="I" Height="84" Tag="#6B2E2A" ToolTip="Band I · „Das Wunder von Narnia“"
+                                 AutomationProperties.Name="Band I: Das Wunder von Narnia"
+                                 IsChecked="{Binding DataContext.Settings.SelectedBook, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BookIs}, ConverterParameter={x:Static model:ChronicleBook.MagiciansNephew}}" />
+                    <RadioButton Content="II" Height="92" Tag="#2E4A3A" ToolTip="Band II · „Der König von Narnia“"
+                                 AutomationProperties.Name="Band II: Der König von Narnia"
+                                 IsChecked="{Binding DataContext.Settings.SelectedBook, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BookIs}, ConverterParameter={x:Static model:ChronicleBook.LionWitchWardrobe}}" />
+                    <RadioButton Content="III" Height="80" Tag="#7A5528" ToolTip="Band III · „Der Ritt nach Narnia“"
+                                 AutomationProperties.Name="Band III: Der Ritt nach Narnia"
+                                 IsChecked="{Binding DataContext.Settings.SelectedBook, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BookIs}, ConverterParameter={x:Static model:ChronicleBook.HorseAndHisBoy}}" />
+                    <RadioButton Content="IV" Height="88" Tag="#2F3F5E" ToolTip="Band IV · „Prinz Kaspian von Narnia“"
+                                 AutomationProperties.Name="Band IV: Prinz Kaspian von Narnia"
+                                 IsChecked="{Binding DataContext.Settings.SelectedBook, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BookIs}, ConverterParameter={x:Static model:ChronicleBook.PrinceCaspian}}" />
+                    <RadioButton Content="V" Height="94" Tag="#2F5A68" ToolTip="Band V · „Die Reise auf der Morgenröte“"
+                                 AutomationProperties.Name="Band V: Die Reise auf der Morgenröte"
+                                 IsChecked="{Binding DataContext.Settings.SelectedBook, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BookIs}, ConverterParameter={x:Static model:ChronicleBook.DawnTreader}}" />
+                    <RadioButton Content="VI" Height="82" Tag="#555A62" ToolTip="Band VI · „Der silberne Sessel“"
+                                 AutomationProperties.Name="Band VI: Der silberne Sessel"
+                                 IsChecked="{Binding DataContext.Settings.SelectedBook, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BookIs}, ConverterParameter={x:Static model:ChronicleBook.SilverChair}}" />
+                    <RadioButton Content="VII" Height="90" Tag="#3E2A44" ToolTip="Band VII · „Der letzte Kampf“"
+                                 AutomationProperties.Name="Band VII: Der letzte Kampf"
+                                 IsChecked="{Binding DataContext.Settings.SelectedBook, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BookIs}, ConverterParameter={x:Static model:ChronicleBook.LastBattle}}" />
+                  </StackPanel>
+                  <RadioButton Grid.Column="1" Style="{StaticResource AllBooksToggle}" GroupName="SayingsBook" Content="Alle"
+                               VerticalAlignment="Bottom" Margin="8,0,0,0" ToolTip="Alle sieben Chroniken, gemischt"
+                               AutomationProperties.Name="Alle sieben Chroniken, gemischt"
+                               IsChecked="{Binding DataContext.Settings.SelectedBook, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BookIs}, ConverterParameter={x:Static model:ChronicleBook.All}}" />
+                </Grid>
+              </Viewbox>
             </Border>
             <Border Height="3" Background="#3A2414" Margin="0,0,0,0" />
             <TextBlock Text="{Binding DataContext.Settings.SelectedBook, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BookTitle}}"
@@ -659,7 +662,7 @@
             <views:OrnamentDivider Margin="0,14,0,6" />
 
             <views:JourneyBand Station="{Binding StationNumber}" Progress="{Binding Progress}" HoneyMarks="{Binding HoneyMarks}"
-                               IsFrost="{Binding IsDistracted}" IsResting="{Binding IsPaused}"
+                               IsFrost="{Binding IsDistracted}" IsResting="{Binding IsPaused}" ShowReturnHook="{Binding IsReturning}"
                                AutomationProperties.Name="{Binding JourneyDescription}" />
             <Grid Margin="0,6,0,0">
               <Grid.ColumnDefinitions>

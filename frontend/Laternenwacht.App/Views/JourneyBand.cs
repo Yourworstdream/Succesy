@@ -13,7 +13,7 @@ namespace Laternenwacht.App.Views;
 /// <para>Medaillon k sitzt bei (k−1)/9 der Breite. Erreichte Stationen sind goldgefüllt, die aktuelle ist größer und
 /// leuchtet, offene haben einen gestrichelten Ring. Die Laterne steht bei <see cref="Progress"/>.</para>
 /// <para>Sparsam: Das Band besteht aus sechs Zeichenebenen (<see cref="DrawingLayers"/>). Neu gezeichnet wird eine Ebene
-/// nur, wenn sich ihre Eigenschaft ändert (Station, Honig, Frost/Rast/Krone) oder die Größe. Der Fortschritt verschiebt
+/// nur, wenn sich ihre Eigenschaft ändert (Station, Honig/Umkehrhaken, Frost/Rast/Krone) oder die Größe. Der Fortschritt verschiebt
 /// lediglich die vorhandenen Transformationen der Spur und der Laterne – auf ganze Pixel gerundet, sodass sich im
 /// Sekundentakt meist gar nichts ändert.</para>
 /// <para>Höhe 68 px; die Breite gibt das Layout vor. Laterne, Krone und Schlitten dürfen oben etwas überstehen.</para>
@@ -52,6 +52,9 @@ public sealed class JourneyBand : UserControl
     public static readonly DependencyProperty ShowCrownProperty = DependencyProperty.Register(
         nameof(ShowCrown), typeof(bool), typeof(JourneyBand), new PropertyMetadata(false, OnMarkerChanged));
 
+    public static readonly DependencyProperty ShowReturnHookProperty = DependencyProperty.Register(
+        nameof(ShowReturnHook), typeof(bool), typeof(JourneyBand), new PropertyMetadata(false, OnHoneyMarksChanged));
+
     // ===== Farben aus dem Entwurf (Tinte auf Pergament) =====
     private static readonly Brush Ink = DrawingLayers.Brush(0xFF, 0x2A, 0x1E, 0x14);
     private static readonly Brush InkFaint = DrawingLayers.Brush(0x66, 0x2A, 0x1E, 0x14);
@@ -82,6 +85,7 @@ public sealed class JourneyBand : UserControl
     private static readonly Pen TickIce = DrawingLayers.Pen(Ice, 1);
     private static readonly Pen DetourPen = DrawingLayers.Pen(Ice, 1.5, new DashStyle([2, 2], 0), PenLineCap.Round);
     private static readonly Pen SledgePen = DrawingLayers.Pen(IceInk, 1.8, cap: PenLineCap.Round);
+    private static readonly Pen ReturnHookPen = DrawingLayers.Pen(DrawingLayers.Brush(0xFF, 0xB0, 0x7A, 0x1E), 1.4, cap: PenLineCap.Round);
 
     private static readonly Brush GoldGlow = Glow(Color.FromRgb(0xE7, 0xB7, 0x5F), 0xA0);
     private static readonly Brush IceGlow = Glow(Color.FromRgb(0x4F, 0x92, 0xB5), 0xA0);
@@ -93,6 +97,9 @@ public sealed class JourneyBand : UserControl
     private static readonly Geometry LanternBase = DrawingLayers.Geometry("M 1,10 H 9 L 7.6,12 H 2.4 Z");
     private static readonly Geometry LanternFoot = DrawingLayers.Geometry("M 5,12 V 13.7");
     private static readonly Geometry Crown = DrawingLayers.Geometry("M 1,7.2 L 0.6,2 L 3.6,4.3 L 6,0.6 L 8.4,4.3 L 11.4,2 L 11,7.2 Z");
+
+    // Umkehrhaken 12×11 neben dem letzten Honigwürfel (Rückkehr wie am Steinernen Tisch)
+    private static readonly Geometry ReturnHook = DrawingLayers.Geometry("M 10.5,9.5 C 10.5,5 8,2.5 4.5,2.5 H 1.5 M 3.8,0.6 L 1.5,2.5 L 3.8,4.4");
 
     private static Geometry?[]? s_glyphs;
 
@@ -152,6 +159,13 @@ public sealed class JourneyBand : UserControl
     {
         get => (bool)GetValue(ShowCrownProperty);
         set => SetValue(ShowCrownProperty, value);
+    }
+
+    /// <summary>Goldener Umkehrhaken am letzten Honigwürfel – kurz nach der Rückkehr in den Fokus.</summary>
+    public bool ShowReturnHook
+    {
+        get => (bool)GetValue(ShowReturnHookProperty);
+        set => SetValue(ShowReturnHookProperty, value);
     }
 
     private double TrackWidth => Math.Max(0, _surface.ActualWidth - (2 * Inset));
@@ -268,7 +282,10 @@ public sealed class JourneyBand : UserControl
         }
     }
 
-    /// <summary>Je Verlockung ein Stück Türkischer Honig über der Linie, dort wo sie begann.</summary>
+    /// <summary>
+    /// Je Verlockung ein Stück Türkischer Honig über der Linie, dort wo sie begann; nach der Rückkehr trägt der
+    /// letzte Würfel den Umkehrhaken.
+    /// </summary>
     private void DrawHoney()
     {
         using var dc = _surface[HoneyLayer].RenderOpen();
@@ -278,6 +295,7 @@ public sealed class JourneyBand : UserControl
             return;
         }
 
+        double? lastLeft = null;
         foreach (var mark in marks)
         {
             if (double.IsNaN(mark))
@@ -289,6 +307,14 @@ public sealed class JourneyBand : UserControl
             dc.DrawRoundedRectangle(HoneyFill, HoneyPen, new Rect(left + 1, 5, 7, 7), 1.2, 1.2);
             dc.DrawEllipse(HoneyDot, null, new Point(left + 3.3, 7.5), 0.75, 0.75);
             dc.DrawEllipse(HoneyDot, null, new Point(left + 5.8, 9.7), 0.75, 0.75);
+            lastLeft = left;
+        }
+
+        if (ShowReturnHook && lastLeft is { } hookLeft)
+        {
+            dc.PushTransform(new TranslateTransform(hookLeft + 9.5, 1));
+            dc.DrawGeometry(null, ReturnHookPen, ReturnHook);
+            dc.Pop();
         }
     }
 

@@ -14,10 +14,10 @@ public sealed record JourneyStation(int Number, string Name, string Narration);
 /// </summary>
 public enum TemptationChapter
 {
-    /// <summary>Der Schlitten der Königin: Edmund bekommt Türkischen Honig (Stationen 1–2).</summary>
+    /// <summary>Der Schlitten der Königin: Edmund bekommt Türkischen Honig (Stationen 1–3).</summary>
     Sledge,
 
-    /// <summary>Der nächtliche Weg vom Biberdamm zur Königin (Stationen 3–4).</summary>
+    /// <summary>Der nächtliche Weg vom Biberdamm zur Königin (Station 4).</summary>
     BeaverDam,
 
     /// <summary>Im Schloss der Königin gibt es nur noch trockenes Brot (ab Station 5).</summary>
@@ -145,11 +145,14 @@ public static class Journey
         return TimeSpan.FromTicks((long)(nextStart - travelled));
     }
 
-    /// <summary>Aus welchem Versuchungskapitel Edmunds an dieser Station erzählt wird.</summary>
+    /// <summary>
+    /// Aus welchem Versuchungskapitel Edmunds an dieser Station erzählt wird: bis Station 3 der Schlitten,
+    /// an Station 4 (erst dort erreichen die Kinder den Biberdamm) der nächtliche Gang hinaus, ab Station 5 das Schloss.
+    /// </summary>
     public static TemptationChapter ChapterFor(int stationNumber) => stationNumber switch
     {
-        <= 2 => TemptationChapter.Sledge,
-        <= 4 => TemptationChapter.BeaverDam,
+        <= 3 => TemptationChapter.Sledge,
+        4 => TemptationChapter.BeaverDam,
         _ => TemptationChapter.Castle,
     };
 

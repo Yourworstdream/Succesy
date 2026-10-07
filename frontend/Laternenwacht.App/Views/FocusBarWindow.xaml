@@ -475,7 +475,8 @@
 
         <!-- Wegfaden: zehn Stationen, Laterne beim Fortschritt, je Verlockung ein Honigstück -->
         <views:JourneyThread Grid.Column="2" Width="150" Height="20" Margin="14,0,0,0" VerticalAlignment="Center" Background="Transparent"
-                             Station="{Binding StationNumber}" Progress="{Binding Progress}" HoneyMarks="{Binding HoneyMarks}">
+                             Station="{Binding StationNumber}" Progress="{Binding Progress}" HoneyMarks="{Binding HoneyMarks}"
+                             IsResting="{Binding IsPaused}">
           <AutomationProperties.Name>
             <MultiBinding StringFormat="Station {0} von 10: {1}">
               <Binding Path="StationNumber" />

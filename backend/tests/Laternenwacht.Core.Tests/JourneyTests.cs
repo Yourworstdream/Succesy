@@ -208,7 +208,7 @@ public class JourneyTests
     [Theory]
     [InlineData(1, TemptationChapter.Sledge)]
     [InlineData(2, TemptationChapter.Sledge)]
-    [InlineData(3, TemptationChapter.BeaverDam)]
+    [InlineData(3, TemptationChapter.Sledge)]
     [InlineData(4, TemptationChapter.BeaverDam)]
     [InlineData(5, TemptationChapter.Castle)]
     [InlineData(7, TemptationChapter.Castle)]

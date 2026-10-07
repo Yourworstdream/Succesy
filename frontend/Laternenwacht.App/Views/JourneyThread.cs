@@ -7,12 +7,13 @@ namespace Laternenwacht.App.Views;
 /// <summary>
 /// Der Reisefaden der dunklen Fokusleiste: eine feine Linie mit zehn Punkten (die Stationen),
 /// winzigen Honigstücken und einer kleinen Laterne bei <see cref="Progress"/>. Die Farbe kommt aus
-/// <see cref="Accent"/> (Laternengold im Licht, Eisblau bei Ablenkung).
+/// <see cref="Accent"/> (Laternengold im Licht, Eisblau bei Ablenkung). In der Rast (<see cref="IsResting"/>)
+/// steht statt der Laterne ein kleines Feuer – die Reise ruht.
 /// </summary>
 /// <remarks>
 /// Höhe 20 px, Breite vom Layout (im Entwurf 150 px). Drei Zeichenebenen (<see cref="DrawingLayers"/>): Linie und Punkte
 /// werden nur bei Station, Farbe oder Größe neu gezeichnet, der Honig nur bei neuer Liste; die Laterne wird beim Fortschritt
-/// lediglich verschoben (auf ganze Pixel gerundet).
+/// lediglich verschoben (auf ganze Pixel gerundet) und nur bei Farbe oder Rast neu gezeichnet.
 /// </remarks>
 public sealed class JourneyThread : UserControl
 {
@@ -40,12 +41,21 @@ public sealed class JourneyThread : UserControl
         nameof(Accent), typeof(Brush), typeof(JourneyThread),
         new PropertyMetadata(DrawingLayers.Brush(0xFF, 0xE7, 0xB7, 0x5F), OnAccentChanged));
 
+    public static readonly DependencyProperty IsRestingProperty = DependencyProperty.Register(
+        nameof(IsResting), typeof(bool), typeof(JourneyThread), new PropertyMetadata(false, OnRestingChanged));
+
     private static readonly Brush OpenRing = DrawingLayers.Brush(0x66, 0xF1, 0xE6, 0xCC);
     private static readonly Pen OpenRingPen = DrawingLayers.Pen(OpenRing, 1);
     private static readonly Brush HoneyFill = DrawingLayers.Brush(0xFF, 0xF4, 0xEB, 0xDD);
     private static readonly Pen HoneyPen = DrawingLayers.Pen(DrawingLayers.Brush(0xFF, 0xC0, 0x50, 0x3F), 0.8);
     private static readonly Brush DefaultAccent = DrawingLayers.Brush(0xFF, 0xE7, 0xB7, 0x5F);
     private static readonly Brush DefaultWindow = DrawingLayers.Brush(0xFF, 0xFF, 0xF0, 0xC4);
+    private static readonly Brush RestFire = DrawingLayers.Brush(0xFF, 0xE0, 0x8A, 0x4A);
+    private static readonly Brush RestHalo = DrawingLayers.Brush(0x66, 0xE0, 0x8A, 0x4A);
+
+    // Rastfeuer im Raster 6×8 (wie im Entwurf)
+    private static readonly Geometry Fire = DrawingLayers.Geometry(
+        "M 3,0.3 C 4,1.9 5.6,2.9 5.6,4.9 C 5.6,6.6 4.4,7.7 3,7.7 C 1.6,7.7 0.4,6.6 0.4,4.9 C 0.4,3.7 1.2,3 1.6,2.2 C 1.9,3 2.3,3.4 2.7,3.6 C 2.6,2.6 2.7,1.4 3,0.3 Z");
 
     // Laterne im Raster 10×14, gezeichnet im Maßstab 0,7 (7×10 px)
     private static readonly Geometry LanternRoof = DrawingLayers.Geometry("M 1,4.2 L 5,1.5 L 9,4.2 Z");
@@ -89,6 +99,13 @@ public sealed class JourneyThread : UserControl
         set => SetValue(HoneyMarksProperty, value);
     }
 
+    /// <summary>Rast: Statt der Laterne glimmt ein Feuer, die Reise steht still.</summary>
+    public bool IsResting
+    {
+        get => (bool)GetValue(IsRestingProperty);
+        set => SetValue(IsRestingProperty, value);
+    }
+
     /// <summary>Farbe von Linie, Punkten und Laterne (Volltonpinsel empfohlen; daraus werden Schein und Fenster abgeleitet).</summary>
     public Brush Accent
     {
@@ -109,6 +126,8 @@ public sealed class JourneyThread : UserControl
     private static void OnProgressChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((JourneyThread)d).ApplyProgress();
 
     private static void OnHoneyMarksChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((JourneyThread)d).DrawHoney();
+
+    private static void OnRestingChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((JourneyThread)d).DrawLantern();
 
     private static void OnAccentChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
@@ -209,10 +228,19 @@ public sealed class JourneyThread : UserControl
         }
     }
 
-    /// <summary>Kleine Laterne (7×10 px) um x = 0, mit weichem Schein.</summary>
+    /// <summary>Kleine Laterne (7×10 px) um x = 0, mit weichem Schein – in der Rast ein Feuer (6×8 px).</summary>
     private void DrawLantern()
     {
         using var dc = _surface[LanternLayer].RenderOpen();
+        if (IsResting)
+        {
+            dc.DrawEllipse(RestHalo, null, new Point(0, 5), 5, 6);
+            dc.PushTransform(new TranslateTransform(-3, 1));
+            dc.DrawGeometry(RestFire, null, Fire);
+            dc.Pop();
+            return;
+        }
+
         dc.DrawEllipse(_halo, null, new Point(0, 5), 5.5, 6.5);
         dc.PushTransform(new MatrixTransform(0.7, 0, 0, 0.7, -3.5, 0));
         dc.DrawGeometry(_accent, null, LanternRoof);

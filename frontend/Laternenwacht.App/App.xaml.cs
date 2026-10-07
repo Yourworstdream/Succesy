@@ -168,16 +168,21 @@ public partial class App : Application
             }
         };
 
+        // Die gewählte Dauer der Bereit-Karte nur überschreiben, wenn sich die Standarddauer wirklich geändert hat –
+        // sonst setzte schon ein Klick auf einen Buchrücken (Schnellschalter) die eben gewählte Dauer zurück.
+        var lastDefaultDuration = settings.DefaultDuration;
         settingsViewModel.SettingsSaved += (_, saved) =>
         {
             warden.ApplySettings(saved);
             _session.SayingsBook = saved.SayingsBook;
             _bar.Topmost = saved.BarAlwaysOnTop;
             _bar.ApplyPosition(saved.BarLeft, saved.BarTop);
-            if (!_session.IsActive)
+            if (!_session.IsActive && saved.DefaultDuration != lastDefaultDuration)
             {
                 _session.DurationMinutes = (int)saved.DefaultDuration.TotalMinutes;
             }
+
+            lastDefaultDuration = saved.DefaultDuration;
         };
 
         _main.Closing += (_, args) =>

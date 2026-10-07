@@ -1150,18 +1150,25 @@
       <Setter.Value>
         <ControlTemplate TargetType="views:SceneFrame">
           <Grid>
-            <!-- Schatten, dunkle Fuge und äußerer Ring: einmal gezeichnet, dann zwischengespeichert -->
-            <Grid views:RenderCache.IsEnabled="True" IsHitTestVisible="False">
+            <!--
+              Der äußere Ring ragt 5,5 px über das Element hinaus. Darum liegen die Ring-Pfade in einem Canvas: Es misst
+              seine Kinder ohne Grenze und ordnet sie in ihrer Wunschgröße an, also beschneidet das Layout sie nicht
+              (in einem Grid würde jeder Pfad auf die Elementfläche gekürzt und der Ring verschwände).
+            -->
+            <!-- Schatten und dunkle Fuge: unveränderlich, einmal gezeichnet, dann zwischengespeichert -->
+            <Canvas views:RenderCache.IsEnabled="True" IsHitTestVisible="False">
               <Path Data="{TemplateBinding OuterRingGeometry}" Fill="#081116">
                 <Path.Effect>
                   <DropShadowEffect BlurRadius="70" ShadowDepth="30" Direction="270" Color="Black" Opacity="0.55" />
                 </Path.Effect>
               </Path>
+            </Canvas>
+            <!-- Goldlinie und Eisring blenden mit FrostLevel über; außerhalb des Zwischenspeichers, damit der Schatten nicht neu gerastert wird -->
+            <Canvas IsHitTestVisible="False">
               <Path x:Name="PART_GoldRing" Data="{TemplateBinding OuterRingGeometry}" Stroke="#73B8904A" StrokeThickness="1" />
-            </Grid>
-            <!-- Eisring bei Ablenkung (Deckkraft = FrostLevel) -->
-            <Path x:Name="PART_IceRing" Data="{TemplateBinding OuterRingGeometry}" Stroke="#809FD0EA" StrokeThickness="1"
-                  Opacity="{TemplateBinding FrostLevel}" IsHitTestVisible="False" />
+              <Path x:Name="PART_IceRing" Data="{TemplateBinding OuterRingGeometry}" Stroke="#809FD0EA" StrokeThickness="1"
+                    Opacity="{TemplateBinding FrostLevel}" />
+            </Canvas>
 
             <Grid Clip="{TemplateBinding ShapeGeometry}" Background="#0A141A">
               <Image Source="{TemplateBinding Source}" Stretch="UniformToFill" HorizontalAlignment="Center" VerticalAlignment="Center"

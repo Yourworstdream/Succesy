@@ -14,7 +14,9 @@ namespace Laternenwacht.App.Views;
 /// <remarks>
 /// Die Vorlage steht im Thema (Laternendickicht.xaml, Stil für <c>views:SceneFrame</c>). Form, Rahmen und äußerer Ring
 /// werden nur bei Größenänderung bzw. beim Umschalten von <see cref="IsArched"/> neu berechnet und eingefroren;
-/// der Schatten liegt in einer zwischengespeicherten Ebene (<see cref="RenderCache"/>). Gibt es Inhalt, dunkelt ein
+/// der Schatten liegt allein in einer zwischengespeicherten Ebene (<see cref="RenderCache"/>), Gold- und Eisring daneben,
+/// damit das Überblenden mit <see cref="FrostLevel"/> den Schatten nicht neu rastert. Die Ringe stehen in einem Canvas,
+/// weil sie über das Element hinausragen und ein Grid sie sonst abschneiden würde. Gibt es Inhalt, dunkelt ein
 /// Verlauf das untere Bilddrittel für die Lesbarkeit ab. Bilder kommen aus der <see cref="SceneLibrary"/>.
 /// </remarks>
 public class SceneFrame : ContentControl

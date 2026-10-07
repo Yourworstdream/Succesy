@@ -5,16 +5,33 @@
 **Laternenwacht** ist ein Fokuswächter für Windows. Während einer Fokuszeit („Wacht“) hängt am
 **oberen Bildschirmrand** ein schmales Banner, das dir live zeigt, **wie lange du dich bereits
 ablenkst** – als *Frost*, der über das Licht der Laterne kriecht. Die Texte und Figuren stammen aus
-der Welt der Chroniken von Narnia (C. S. Lewis). Gestaltet als **„Nachtwald“**: ein Laternenlicht im
-verschneiten Wald bei Nacht – Tannen‑Schwarzgrün, Glasflächen, Champagner‑Kerzenlicht für Fokus und Lob,
-Eisblau für Ablenkung, eigene Fensterleiste und eine illustrierte Szene mit fallendem Schnee.
+der Welt der Chroniken von Narnia (C. S. Lewis): Jede Wacht ist eine Reise durch *„Der König von
+Narnia“* – vom Laternenpfahl bis nach Cair Paravel. Gestaltet als **„Laternendickicht“**: Pergament und
+Tinte auf nächtlichem Grund, Laternengold für Fokus, Eisblau nur für Ablenkung, rote Wachssiegel,
+goldgerahmte Szenenbilder und die Schriften Cinzel und EB Garamond.
 
 ![Laternenwacht – Fokus](docs/bilder/1-fokus-laufend.png)
 
 ![Fokusleiste, Botschaft und Meme](docs/bilder/3-kapsel-botschaft-meme.png)
 
+<sub>Hinweis: Die beiden Bildschirmfotos zeigen noch die Vorgängergestaltung „Nachtwald“. Sie werden ersetzt,
+sobald Aufnahmen der Laternendickicht‑Oberfläche unter Windows vorliegen.</sub>
+
 ## Funktionen
 
+* **Die Reise** – jede Wacht folgt *„Der König von Narnia“* in der Reihenfolge des Buches, in zehn
+  Stationen: Laternenpfahl, Schlitten der Königin, leere Höhle, Biberdamm, Hof der Königin, Tauwetter,
+  Steinerner Tisch, Morgen am Tisch, Schlacht, Cair Paravel. Die Station hängt nur an gemessener ÷
+  geplanter Zeit (Station = 1 + ⌊9 · Anteil⌋, Cair Paravel erst bei 100 %); eine **Rast** hält die Reise an.
+  Ein Wegband mit zehn Medaillons und der Laterne zeigt, wie weit du gekommen bist.
+* **Türkischer Honig** – jede neue Ablenkung ist ein Stück aus der Schachtel der Königin und bleibt als
+  Würfel an der Stelle des Wegbands liegen, an der sie begann. Die Verlockungszeile erzählt aus Edmunds
+  Kapiteln (Schlitten, nächtlicher Gang vom Biberdamm, trockenes Brot im Schloss). Wer zurückkommt, wird
+  empfangen wie Edmund am Steinernen Tisch – ohne Vorwurf.
+* **Wintermesser** – zeigt, wie viel Frost diese Wacht noch als Frühling oder Tauwetter verträgt.
+* **Vier Abschlussbilder** – vollendet im Frühling: die Krönung in Cair Paravel; im Tauwetter: der
+  Schlitten der Königin bleibt im Matsch stecken; im Winter: der Hof der Steinfiguren mit dem ersten
+  goldenen Licht am Tor; abgebrochen: zurück durch den Schrank.
 * **Fokusleiste oben am Bildschirm** – Restzeit, kumulierte Ablenkungszeit (❄ Frost), Anzahl der
   Verlockungen, Fortschritt; stiehlt beim Anklicken keinen Fokus.
 * **Verschiebbar** – Leiste mit der Maus an jede Stelle ziehen; die Position wird gespeichert.
@@ -30,7 +47,7 @@ Eisblau für Ablenkung, eigene Fensterleiste und eine illustrierte Szene mit fal
   Wenn es nach mir ginge, wären wir ohne dich losgesegelt.“ — Riepiepich*), Würdigung makelloser
   Wachten und neuer Bestleistungen. Lob kommt leise mit grünem Siegel; Mahnrufe lassen sich getrennt
   abschalten.
-* **Schwimmende Memes** – bei jeder neuen Ablenkung treibt ein Meme schaukelnd quer über den
+* **Schwimmende Memes** – bei jeder neuen Ablenkung treibt ein Meme aus der Honigschachtel schaukelnd quer über den
   Bildschirm („Treibgut im Fluss der Ablenkung“); ein Klick lässt es versinken. Eigene Bilder per
   Rechtsklick ▸ *Memes hinzufügen …* oder im Reiter *Gefährten & Verlockungen*.
 * **Mahnrufe per Push‑Benachrichtigung** – ein „Rabenbote“ fliegt unten rechts ein. Bei
@@ -40,11 +57,13 @@ Eisblau für Ablenkung, eigene Fensterleiste und eine illustrierte Szene mit fal
   Jedes der sieben Bücher hat eigene Sprüche (77 insgesamt).
 * **Jahreszeiten** als Ergebnis: Frühling (< 10 % Frost), Tauwetter (< 25 %), Winter.
 * **Versiegelte Chronik** – jede Wacht wird mit HMAC‑SHA256 versiegelt und verkettet;
-  Manipulation, Löschung oder Vertauschung wird erkannt und angezeigt.
+  Manipulation, Löschung oder Vertauschung wird erkannt und angezeigt. Jeder Eintrag trägt den Titel
+  seines Bildes (z. B. *„Die Schachtel blieb zu“* oder *„Zurück durch den Schrank · Station 6“*),
+  dazu Reise, Frost, Honig und Jahreszeit.
 * **Sicherheit & Datenschutz** – keine Fenstertitel, keine Tastatureingaben, kein Netzwerk,
   keine Adminrechte, Schlüssel per DPAPI an das Windows‑Konto gebunden.
-* **Ressourcenschonend** – während der Wacht praktisch keine Prozessor‑ und Grafiklast: Animationen ruhen,
-  sobald das Hauptfenster im Hintergrund ist, die Leiste bewegt sich nicht dauerhaft, Schatten sind
+* **Ressourcenschonend** – während der Wacht praktisch keine Prozessor‑ und Grafiklast: Szenen sind ruhende
+  Bilder, keine Endlos‑Animationen; die Leiste bewegt sich nicht dauerhaft, Schatten sind
   zwischengespeichert, minimiert gibt die App Arbeitsspeicher zurück. Details: Projektdokumentation, Abschnitt 6.3.
 
 ## Schnellstart
@@ -79,6 +98,10 @@ dotnet publish frontend/Laternenwacht.App/Laternenwacht.App.csproj -p:PublishPro
 |---|---|
 | Wacht | Fokussitzung |
 | Frost | Zeit, in der du abgelenkt warst |
+| Station | Wegpunkt der Reise (1–10), bestimmt allein durch gemessene ÷ geplante Zeit |
+| Türkischer Honig | Ein Stück je neuer Ablenkung – die Verlockung der Königin |
+| Wintermesser | Anzeige, wie viel Frost bis Tauwetter bzw. Winter noch bleibt |
+| Rast | Pause; die Reise steht still |
 | Gefährten | Programme, die der Arbeit dienen |
 | Verlockungen | Programme, die ablenken |
 | Chronik | Versiegelte Historie deiner Wachten |

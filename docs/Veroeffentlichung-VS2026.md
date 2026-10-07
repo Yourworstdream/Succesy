@@ -15,8 +15,8 @@ veröffentlicht beide EXE‑Varianten und öffnet den Explorer mit der fertigen 
 
 | Variante | Datei | Größe | Wann wählen? |
 |---|---|---|---|
-| **Eigenständig** (Profil `Win-x64-EinzelneExe`) | `publish\win-x64\Laternenwacht.exe` | ~65 MB | Weitergabe an Rechner, auf denen nichts installiert werden soll |
-| **Schlank** (Profil `Win-x64-Schlank`) | `publish\win-x64-schlank\Laternenwacht.exe` | ~1,3 MB | Eigener Rechner (Visual Studio 2026 bringt die Laufzeit mit) – **sparsamste Variante** für Festplatte und Arbeitsspeicher |
+| **Eigenständig** (Profil `Win-x64-EinzelneExe`) | `publish\win-x64\Laternenwacht.exe` | ~67 MB | Weitergabe an Rechner, auf denen nichts installiert werden soll |
+| **Schlank** (Profil `Win-x64-Schlank`) | `publish\win-x64-schlank\Laternenwacht.exe` | ~4 MB | Eigener Rechner (Visual Studio 2026 bringt die Laufzeit mit) – **sparsamste Variante** für Festplatte und Arbeitsspeicher |
 
 Nur eine Variante: `.\Veroeffentlichen.ps1 -Variante Schlank` bzw. `-Variante Eigenstaendig`. Voraussetzung ist nur Visual Studio 2026 mit der Workload
 „.NET‑Desktopentwicklung“ (Abschnitt 1). Der ausführliche Weg über Visual Studio folgt unten.
@@ -91,7 +91,7 @@ Diese **eine Datei** ist die fertige Anwendung (ca. 60–70 MB, da die .NET‑La
 Sie kann z. B. auf einen USB‑Stick kopiert oder per Doppelklick gestartet werden.
 
 Mit dem Profil **„Win-x64-Schlank“** entsteht stattdessen `<Repository>\publish\win-x64-schlank\Laternenwacht.exe`
-(ca. 1,3 MB). Sie startet auf jedem Rechner, auf dem die **.NET Desktop Runtime 10 (x64)** installiert ist –
+(ca. 4 MB, davon rund 2,7 MB eingebettete Schriften und Szenenbilder). Sie startet auf jedem Rechner, auf dem die **.NET Desktop Runtime 10 (x64)** installiert ist –
 mit Visual Studio 2026 ist das bereits der Fall. Fehlt die Laufzeit, zeigt Windows beim Start einen Hinweis
 mit Download‑Link.
 
@@ -121,7 +121,7 @@ Falls du das Profil von Grund auf erstellen möchtest (z. B. zu Übungszwecken):
 6. **Speichern** → **Veröffentlichen**.
 
 > **Kleinere EXE gewünscht?** Bereitstellungsmodus **„Frameworkabhängig“** wählen (so ist das Profil
-> „Win-x64-Schlank“ eingestellt). Die EXE ist dann nur ~1,3 MB groß, der Zielrechner benötigt aber die
+> „Win-x64-Schlank“ eingestellt). Die EXE ist dann nur ~4 MB groß, der Zielrechner benötigt aber die
 > **.NET 10 Desktop Runtime**.
 
 ---
