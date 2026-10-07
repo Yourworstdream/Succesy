@@ -159,6 +159,95 @@ public class FocusSessionTests
     }
 
     [Fact]
+    public void Distraction_starts_are_recorded_once_per_episode()
+    {
+        var session = NewSession();
+        Tick(session, ActivityState.Focused, seconds: 10);
+        Tick(session, ActivityState.Distracted, "discord", 5);   // Episode beginnt bei 11 s, hält an
+        Tick(session, ActivityState.Distracted, "steam", 3);     // Programmwechsel in der Ablenkung: keine neue Episode
+        Tick(session, ActivityState.Focused, seconds: 20);
+        Tick(session, ActivityState.Distracted, "steam", 2);     // zweite Episode bei 39 s
+
+        Assert.Equal([TimeSpan.FromSeconds(11), TimeSpan.FromSeconds(39)], session.DistractionStarts);
+        Assert.Equal(session.DistractionCount, session.DistractionStarts.Count);
+    }
+
+    [Fact]
+    public void Starting_distracted_records_an_episode_at_zero()
+    {
+        var session = NewSession(initial: ActivityState.Distracted);
+
+        Assert.Equal([TimeSpan.Zero], session.DistractionStarts);
+    }
+
+    [Fact]
+    public void Focused_session_has_no_distraction_starts() =>
+        Assert.Empty(NewSession().DistractionStarts);
+
+    [Fact]
+    public void Pause_does_not_start_a_new_episode()
+    {
+        var session = NewSession();
+        Tick(session, ActivityState.Distracted, "discord", 3);
+
+        session.Pause();
+        _time.Advance(TimeSpan.FromMinutes(2));
+        session.Update(ActivityState.Distracted, "steam");     // während der Rast ignoriert
+        session.Update(ActivityState.Focused, "devenv");
+        session.Update(ActivityState.Distracted, "steam");
+        session.Resume();
+        Tick(session, ActivityState.Distracted, "discord", 3);
+
+        Assert.Equal([TimeSpan.FromSeconds(1)], session.DistractionStarts);
+        Assert.Equal(1, session.DistractionCount);
+    }
+
+    [Fact]
+    public void Being_away_does_not_record_a_distraction_start()
+    {
+        var session = NewSession();
+        Tick(session, ActivityState.Away, seconds: 5);
+        Tick(session, ActivityState.Focused, seconds: 5);
+        _time.Advance(TimeSpan.FromMinutes(3));                 // Standby: zählt als Abwesenheit
+        session.Update(ActivityState.Focused, "devenv");
+
+        Assert.Empty(session.DistractionStarts);
+        Assert.Equal(0, session.DistractionCount);
+    }
+
+    [Fact]
+    public void Distraction_starts_follow_measured_time_including_away()
+    {
+        var session = NewSession();
+        Tick(session, ActivityState.Away, seconds: 30);
+        Tick(session, ActivityState.Distracted, "steam", 1);
+
+        Assert.Equal([TimeSpan.FromSeconds(31)], session.DistractionStarts);
+    }
+
+    [Fact]
+    public void Distraction_starts_cannot_be_modified_from_outside()
+    {
+        var session = NewSession(initial: ActivityState.Distracted);
+
+        Assert.False(session.DistractionStarts is ICollection<TimeSpan> { IsReadOnly: false });
+    }
+
+    [Fact]
+    public void Update_that_completes_the_session_records_no_new_episode()
+    {
+        var session = NewSession(minutes: 1);
+        Tick(session, ActivityState.Focused, seconds: 59);
+
+        _time.Advance(TimeSpan.FromSeconds(2));
+        session.Update(ActivityState.Distracted, "steam");
+
+        Assert.Equal(SessionPhase.Completed, session.Phase);
+        Assert.Empty(session.DistractionStarts);
+        Assert.Equal(0, session.DistractionCount);
+    }
+
+    [Fact]
     public void Longest_streak_is_kept_in_the_record()
     {
         var session = NewSession();

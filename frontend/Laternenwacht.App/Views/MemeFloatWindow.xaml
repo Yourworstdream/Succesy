@@ -1,7 +1,9 @@
 <!--
-  Ein Meme treibt schaukelnd über den Bildschirm – wie ein Polaroid auf dem Wasser.
-  Ein Klick lässt es versinken.
-  Ressourcen: Karte und Schatten werden einmal in eine Bitmap gezeichnet; das Schaukeln dreht nur noch
+  Treibgut: Bei jeder neuen Ablenkung treibt die Schachtel der Königin schaukelnd über den Bildschirm.
+  Rotes Lackholz mit Goldlinie und Goldranken in den Ecken, eine goldene Schleife oben links; im Deckel liegt das Meme,
+  darunter der Schachtelboden mit fünf gepuderten Stücken Türkischem Honig und ein Etikett
+  "Türkischer Honig Nr. n · Programm". Ein Klick – oder die Rückkehr zur Arbeit – lässt sie im Schnee versinken.
+  Ressourcen: Schachtel und Schatten werden einmal in eine Bitmap gezeichnet; das Schaukeln dreht nur noch
   diese Bitmap, statt Bild und Schatten in jedem Schritt neu zu berechnen.
 -->
 <Window x:Class="Laternenwacht.App.Views.MemeFloatWindow"
@@ -13,33 +15,215 @@
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         ResizeMode="NoResize" ShowInTaskbar="False" ShowActivated="False" Topmost="True"
         UseLayoutRounding="True" Cursor="Hand" Opacity="0"
-        ToolTip="Klicken, um das Meme versinken zu lassen"
+        ToolTip="Klicken, um die Schachtel versinken zu lassen"
         AutomationProperties.Name="Meme bei Ablenkung">
-  <!-- Rand lässt Platz für Schaukeln und Schatten -->
-  <Grid Margin="30">
+
+  <Window.Resources>
+    <!-- Lackrot der Schachtel, oben heller -->
+    <LinearGradientBrush x:Key="BoxLacquerBrush" StartPoint="0,0" EndPoint="0,1">
+      <GradientStop Color="#9E2B1F" Offset="0" />
+      <GradientStop Color="#6E1A12" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="BoxEdgeBrush" Color="#4A100A" />
+    <SolidColorBrush x:Key="BoxHighlightBrush" Color="#40FFD2BE" />
+    <SolidColorBrush x:Key="BoxFloorBrush" Color="#6E1A12" />
+    <SolidColorBrush x:Key="BoxFloorEdgeBrush" Color="#73E7B75F" />
+    <SolidColorBrush x:Key="PictureMatBrush" Color="#2A1C0C" />
+    <SolidColorBrush x:Key="RibbonGoldBrush" Color="#E7B75F" />
+    <SolidColorBrush x:Key="RibbonShadeBrush" Color="#8A5A12" />
+    <SolidColorBrush x:Key="RibbonKnotBrush" Color="#D49A3E" />
+    <SolidColorBrush x:Key="CubeShadowBrush" Color="#E8D8B1" />
+    <SolidColorBrush x:Key="CubeSugarBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="LabelPaperBrush" Color="#EBDDB4" />
+    <SolidColorBrush x:Key="LabelEdgeBrush" Color="#8A6424" />
+
+    <!-- Goldranke für die Ecken (18×18, Ecke unten links; gespiegelt für die anderen Ecken) -->
+    <Geometry x:Key="TendrilGeometry">M 2,16 C 2,8 5,4 9,3 C 12,2.4 14,3.6 14,5.6 C 14,7.2 12.4,8 11.2,7.2 M 2,10 C 3.4,8.8 5,8.6 6,9.6 M 6,2.4 C 7,4 7,5.6 6.2,6.6</Geometry>
+    <Geometry x:Key="TendrilBudGeometry">M 3,16 A 1,1 0 1 1 1,16 A 1,1 0 1 1 3,16 Z</Geometry>
+
+    <!-- Schleife (44×34): zwei Flügel, zwei Bänder, Knoten -->
+    <Geometry x:Key="BowWingsGeometry">M 22,17 C 16,6 4,4 4,11 C 4,17 14,18 22,17 Z M 22,17 C 28,6 40,4 40,11 C 40,17 30,18 22,17 Z</Geometry>
+    <Geometry x:Key="BowTailsGeometry">M 20,18 L 13,32 M 24,18 L 31,31</Geometry>
+    <Geometry x:Key="BowFoldsGeometry">M 10,10 C 12,8.4 16,9 19,13 M 34,10 C 32,8.4 28,9 25,13</Geometry>
+    <Geometry x:Key="BowKnotGeometry">M 25.6,17 A 3.6,3.6 0 1 1 18.4,17 A 3.6,3.6 0 1 1 25.6,17 Z</Geometry>
+
+    <!-- Gepudertes Stück Türkischer Honig (16×16) -->
+    <Geometry x:Key="CubeShadowGeometry">M 3.9,3 L 12.1,3 A 2.4,2.4 0 0 1 14.5,5.4 L 14.5,12.1 A 2.4,2.4 0 0 1 12.1,14.5 L 3.9,14.5 A 2.4,2.4 0 0 1 1.5,12.1 L 1.5,5.4 A 2.4,2.4 0 0 1 3.9,3 Z</Geometry>
+    <Geometry x:Key="CubeTopGeometry">M 3.9,1.5 L 12.1,1.5 A 2.4,2.4 0 0 1 14.5,3.9 L 14.5,10.1 A 2.4,2.4 0 0 1 12.1,12.5 L 3.9,12.5 A 2.4,2.4 0 0 1 1.5,10.1 L 1.5,3.9 A 2.4,2.4 0 0 1 3.9,1.5 Z</Geometry>
+    <Geometry x:Key="CubeSugarGeometry">M 5.9,5 A 0.9,0.9 0 1 1 4.1,5 A 0.9,0.9 0 1 1 5.9,5 Z M 10.3,4.2 A 0.7,0.7 0 1 1 8.9,4.2 A 0.7,0.7 0 1 1 10.3,4.2 Z M 8.2,8.6 A 0.8,0.8 0 1 1 6.6,8.6 A 0.8,0.8 0 1 1 8.2,8.6 Z</Geometry>
+    <Geometry x:Key="CubeCrumbGeometry">M 12,9 A 0.6,0.6 0 1 1 10.8,9 A 0.6,0.6 0 1 1 12,9 Z</Geometry>
+
+    <Style x:Key="Tendril" TargetType="Path">
+      <Setter Property="Data" Value="{StaticResource TendrilGeometry}" />
+      <Setter Property="Width" Value="18" />
+      <Setter Property="Height" Value="18" />
+      <Setter Property="Stretch" Value="None" />
+      <Setter Property="Stroke" Value="{StaticResource RibbonGoldBrush}" />
+      <Setter Property="StrokeThickness" Value="1.1" />
+      <Setter Property="StrokeStartLineCap" Value="Round" />
+      <Setter Property="StrokeEndLineCap" Value="Round" />
+      <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+      <Setter Property="IsHitTestVisible" Value="False" />
+    </Style>
+    <Style x:Key="TendrilBud" TargetType="Path">
+      <Setter Property="Data" Value="{StaticResource TendrilBudGeometry}" />
+      <Setter Property="Width" Value="18" />
+      <Setter Property="Height" Value="18" />
+      <Setter Property="Stretch" Value="None" />
+      <Setter Property="Fill" Value="{StaticResource RibbonGoldBrush}" />
+      <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+      <Setter Property="IsHitTestVisible" Value="False" />
+    </Style>
+
+    <!-- Ein Honigstück (16×16); die leichte Drehung setzt jedes Stück selbst -->
+    <ControlTemplate x:Key="CubeTemplate" TargetType="Control">
+      <Canvas Width="16" Height="16">
+        <Path Data="{StaticResource CubeShadowGeometry}" Fill="{StaticResource CubeShadowBrush}" />
+        <Path Data="{StaticResource CubeTopGeometry}" Fill="{StaticResource HoneyBrush}" />
+        <Path Data="{StaticResource CubeSugarGeometry}" Fill="{StaticResource CubeSugarBrush}" />
+        <Path Data="{StaticResource CubeCrumbGeometry}" Fill="{StaticResource CubeShadowBrush}" />
+      </Canvas>
+    </ControlTemplate>
+    <Style x:Key="Cube" TargetType="Control">
+      <Setter Property="Template" Value="{StaticResource CubeTemplate}" />
+      <Setter Property="Margin" Value="5,0" />
+      <Setter Property="Focusable" Value="False" />
+      <Setter Property="IsTabStop" Value="False" />
+      <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+    </Style>
+  </Window.Resources>
+
+  <!-- Rand lässt Platz für Schaukeln, Schleife und Schatten -->
+  <Grid Margin="34,34,34,44">
     <Grid views:RenderCache.IsEnabled="True" RenderTransformOrigin="0.5,0.5">
       <Grid.RenderTransform>
         <RotateTransform x:Name="Tilt" />
       </Grid.RenderTransform>
-      <Border x:Name="Card" Background="{StaticResource MemePaperBrush}" CornerRadius="16" Padding="8,8,8,10">
-        <Border.Effect>
-          <DropShadowEffect BlurRadius="28" ShadowDepth="8" Direction="270" Opacity="0.35" Color="Black" />
-        </Border.Effect>
-        <StackPanel>
-          <!-- Abgerundetes Bild: Bildpinsel statt Image, damit die Ecken wirklich rund sind -->
-          <Border x:Name="ImageFrame" Width="260" Height="200" CornerRadius="10">
-            <Border.Background>
-              <ImageBrush x:Name="Picture" Stretch="UniformToFill" />
-            </Border.Background>
+
+      <StackPanel Width="300">
+        <!-- Die Schachtel: Lackrot, dunkle Kante, Goldlinie 5 px innen, Goldranken in den Ecken -->
+        <Grid>
+          <Border CornerRadius="6" Background="{StaticResource BoxLacquerBrush}" BorderBrush="{StaticResource BoxEdgeBrush}"
+                  BorderThickness="1">
+            <Border.Effect>
+              <DropShadowEffect BlurRadius="40" ShadowDepth="20" Direction="270" Opacity="0.45" Color="#1E242C" />
+            </Border.Effect>
           </Border>
-          <StackPanel Orientation="Horizontal" Margin="4,9,4,0">
-            <Ellipse Width="8" Height="8" Fill="{StaticResource FrostDeepBrush}" VerticalAlignment="Center" />
-            <TextBlock x:Name="CaptionText" Margin="7,0,0,0" FontSize="12.5" FontWeight="SemiBold"
-                       Foreground="{StaticResource MemeInkBrush}" TextTrimming="CharacterEllipsis" MaxWidth="236"
-                       VerticalAlignment="Center" />
+          <Border Margin="1,1,1,0" Height="1" VerticalAlignment="Top" CornerRadius="5,5,0,0"
+                  Background="{StaticResource BoxHighlightBrush}" />
+          <Border Margin="5" CornerRadius="3" BorderThickness="1" BorderBrush="{StaticResource RibbonGoldBrush}" />
+
+          <Path Style="{StaticResource Tendril}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="1,1,0,0" />
+          <Path Style="{StaticResource TendrilBud}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="1,1,0,0" />
+          <Path Style="{StaticResource Tendril}" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,1,1,0">
+            <Path.RenderTransform>
+              <ScaleTransform ScaleX="-1" />
+            </Path.RenderTransform>
+          </Path>
+          <Path Style="{StaticResource TendrilBud}" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,1,1,0">
+            <Path.RenderTransform>
+              <ScaleTransform ScaleX="-1" />
+            </Path.RenderTransform>
+          </Path>
+          <Path Style="{StaticResource Tendril}" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="1,0,0,1">
+            <Path.RenderTransform>
+              <ScaleTransform ScaleY="-1" />
+            </Path.RenderTransform>
+          </Path>
+          <Path Style="{StaticResource TendrilBud}" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="1,0,0,1">
+            <Path.RenderTransform>
+              <ScaleTransform ScaleY="-1" />
+            </Path.RenderTransform>
+          </Path>
+          <Path Style="{StaticResource Tendril}" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,1,1">
+            <Path.RenderTransform>
+              <ScaleTransform ScaleX="-1" ScaleY="-1" />
+            </Path.RenderTransform>
+          </Path>
+          <Path Style="{StaticResource TendrilBud}" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,1,1">
+            <Path.RenderTransform>
+              <ScaleTransform ScaleX="-1" ScaleY="-1" />
+            </Path.RenderTransform>
+          </Path>
+
+          <StackPanel Margin="14">
+            <!-- Das Meme auf dunklem Passepartout mit feiner Goldkante -->
+            <Border Background="{StaticResource PictureMatBrush}" BorderBrush="{StaticResource EyebrowBrush}"
+                    BorderThickness="1" Padding="4">
+              <Border x:Name="ImageFrame" Height="186">
+                <Border.Background>
+                  <ImageBrush x:Name="Picture" Stretch="UniformToFill" />
+                </Border.Background>
+              </Border>
+            </Border>
+
+            <!-- Schachtelboden mit fünf gepuderten Stücken -->
+            <Border Height="26" Margin="0,8,0,0" CornerRadius="2" Background="{StaticResource BoxFloorBrush}"
+                    BorderBrush="{StaticResource BoxFloorEdgeBrush}" BorderThickness="1">
+              <Grid>
+                <!-- Innenschatten oben: der Boden liegt tiefer als der Deckelrand -->
+                <Border Height="6" VerticalAlignment="Top">
+                  <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                      <GradientStop Color="#73000000" Offset="0" />
+                      <GradientStop Color="#00000000" Offset="1" />
+                    </LinearGradientBrush>
+                  </Border.Background>
+                </Border>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                  <Control Style="{StaticResource Cube}">
+                    <Control.RenderTransform>
+                      <RotateTransform Angle="-8" />
+                    </Control.RenderTransform>
+                  </Control>
+                  <Control Style="{StaticResource Cube}">
+                    <Control.RenderTransform>
+                      <RotateTransform Angle="5" />
+                    </Control.RenderTransform>
+                  </Control>
+                  <Control Style="{StaticResource Cube}">
+                    <Control.RenderTransform>
+                      <RotateTransform Angle="-3" />
+                    </Control.RenderTransform>
+                  </Control>
+                  <Control Style="{StaticResource Cube}">
+                    <Control.RenderTransform>
+                      <RotateTransform Angle="9" />
+                    </Control.RenderTransform>
+                  </Control>
+                  <Control Style="{StaticResource Cube}">
+                    <Control.RenderTransform>
+                      <RotateTransform Angle="-6" />
+                    </Control.RenderTransform>
+                  </Control>
+                </StackPanel>
+              </Grid>
+            </Border>
           </StackPanel>
-        </StackPanel>
-      </Border>
+
+          <!-- Goldene Schleife oben links, ragt über den Rand -->
+          <Canvas Width="44" Height="34" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-14,-14,0,0">
+            <Path Data="{StaticResource BowWingsGeometry}" Fill="{StaticResource RibbonGoldBrush}"
+                  Stroke="{StaticResource RibbonShadeBrush}" StrokeThickness="1" />
+            <Path Data="{StaticResource BowTailsGeometry}" Stroke="{StaticResource EyebrowBrush}" StrokeThickness="3"
+                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+            <Path Data="{StaticResource BowKnotGeometry}" Fill="{StaticResource RibbonKnotBrush}"
+                  Stroke="{StaticResource RibbonShadeBrush}" StrokeThickness="1" />
+            <Path Data="{StaticResource BowFoldsGeometry}" Stroke="{StaticResource RibbonShadeBrush}" StrokeThickness="0.8"
+                  Opacity="0.7" />
+          </Canvas>
+        </Grid>
+
+        <!-- Etikett: "Türkischer Honig Nr. n · Programm" -->
+        <Border Margin="0,-10,0,0" HorizontalAlignment="Center" Padding="16,6" CornerRadius="3" MaxWidth="280"
+                Background="{StaticResource LabelPaperBrush}" BorderBrush="{StaticResource LabelEdgeBrush}" BorderThickness="1">
+          <Border.Effect>
+            <DropShadowEffect BlurRadius="10" ShadowDepth="4" Direction="270" Opacity="0.25" Color="Black" />
+          </Border.Effect>
+          <TextBlock x:Name="CaptionText" FontFamily="{StaticResource CinzelFont}" FontSize="12" FontWeight="SemiBold"
+                     Foreground="{StaticResource InkBrush}" TextTrimming="CharacterEllipsis" />
+        </Border>
+      </StackPanel>
     </Grid>
   </Grid>
 </Window>

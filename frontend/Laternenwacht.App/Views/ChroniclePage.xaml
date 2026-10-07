@@ -1,0 +1,182 @@
+<!--
+  Kapitel II · "Chronik" – versiegelte Historie der Wachten.
+  DataContext: ChronicleViewModel (vom Hauptfenster gesetzt: Chronicle).
+-->
+<UserControl x:Class="Laternenwacht.App.Views.ChroniclePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:views="clr-namespace:Laternenwacht.App.Views"
+             xmlns:vm="clr-namespace:Laternenwacht.App.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=vm:ChronicleViewModel}"
+             d:DesignWidth="860" d:DesignHeight="700">
+
+  <UserControl.Resources>
+    <views:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility" />
+    <views:MoodToBrushConverter x:Key="MoodToBrush" />
+  </UserControl.Resources>
+
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <StackPanel>
+      <TextBlock Text="Chronik" Style="{StaticResource PageTitle}" />
+      <TextBlock Text="Jede Wacht wird versiegelt und mit ihrer Vorgängerin verkettet." Style="{StaticResource PageSubtitle}" />
+    </StackPanel>
+
+    <!-- Siegel -->
+    <Border Grid.Row="1" Margin="0,22,0,0" Style="{StaticResource SmallGlass}">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Border Width="42" Height="42" CornerRadius="21" BorderThickness="1.5" VerticalAlignment="Top">
+          <Border.Style>
+            <Style TargetType="Border">
+              <Setter Property="BorderBrush" Value="{StaticResource GoldBrush}" />
+              <Setter Property="Background" Value="{StaticResource GoldTintBrush}" />
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding IsSealIntact}" Value="False">
+                  <Setter Property="BorderBrush" Value="{StaticResource ErrorBrush}" />
+                  <Setter Property="Background" Value="{StaticResource ErrorTintBrush}" />
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </Border.Style>
+          <Grid>
+            <Path Data="{StaticResource CheckGeometry}" Stroke="{StaticResource GoldBrush}" StrokeThickness="2.4" Stretch="Uniform"
+                  Width="16" Height="12" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                  Visibility="{Binding IsSealIntact, Converter={StaticResource BoolToVisibility}}" />
+            <Path Data="{StaticResource CrossGeometry}" Stroke="{StaticResource ErrorBrush}" StrokeThickness="2.2" Stretch="Uniform"
+                  Width="12" Height="12" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                  Visibility="{Binding IsSealIntact, Converter={StaticResource InverseBoolToVisibility}}" />
+          </Grid>
+        </Border>
+        <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
+          <TextBlock Text="{Binding SealHeadline}" FontFamily="{StaticResource SerifFont}" FontSize="18" />
+          <TextBlock Text="{Binding SealMessage}" Style="{StaticResource Body}" Margin="0,2,0,0" />
+          <TextBlock Text="{Binding ArchiveHint}" Style="{StaticResource Body}" Foreground="{StaticResource ErrorBrush}" Margin="0,6,0,0"
+                     Visibility="{Binding HasArchiveHint, Converter={StaticResource BoolToVisibility}}" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- Kennzahlen -->
+    <UniformGrid Grid.Row="2" Columns="5" Margin="-6,14,-6,0">
+      <Border Style="{StaticResource SmallGlass}" Margin="6,0">
+        <StackPanel>
+          <TextBlock Text="VOLLENDET" Style="{StaticResource Overline}" />
+          <TextBlock Text="{Binding CompletedCount}" Style="{StaticResource Metric}" FontSize="26" />
+        </StackPanel>
+      </Border>
+      <Border Style="{StaticResource SmallGlass}" Margin="6,0">
+        <StackPanel>
+          <TextBlock Text="IM LICHT" Style="{StaticResource Overline}" />
+          <TextBlock Text="{Binding TotalFocusedText}" Style="{StaticResource Metric}" FontSize="26" />
+        </StackPanel>
+      </Border>
+      <Border Style="{StaticResource SmallGlass}" Margin="6,0">
+        <StackPanel>
+          <TextBlock Text="IM FROST" Style="{StaticResource Overline}" />
+          <TextBlock Text="{Binding TotalFrostText}" Style="{StaticResource Metric}" FontSize="26" Foreground="{StaticResource FrostBrush}" />
+        </StackPanel>
+      </Border>
+      <Border Style="{StaticResource SmallGlass}" Margin="6,0">
+        <StackPanel>
+          <TextBlock Text="FRÜHLINGSQUOTE" Style="{StaticResource Overline}" />
+          <TextBlock Text="{Binding SpringShareText}" Style="{StaticResource Metric}" FontSize="26" />
+        </StackPanel>
+      </Border>
+      <Border Style="{StaticResource SmallGlass}" Margin="6,0" ToolTip="Deine Bestleistung: längste ununterbrochene Fokusphase">
+        <StackPanel>
+          <TextBlock Text="REKORD-SERIE" Style="{StaticResource Overline}" />
+          <TextBlock Text="{Binding BestStreakText}" Style="{StaticResource Metric}" FontSize="26" Foreground="{StaticResource GoldBrush}" />
+        </StackPanel>
+      </Border>
+    </UniformGrid>
+
+    <!-- Einträge -->
+    <Border Grid.Row="3" Margin="0,14,0,0" Style="{StaticResource Glass}" Padding="8,6">
+      <Grid>
+        <TextBlock Text="Noch keine Wacht verzeichnet. Beginne deine erste – sie erscheint dann hier."
+                   Style="{StaticResource Quote}" HorizontalAlignment="Center" Margin="0,40">
+          <TextBlock.Visibility>
+            <Binding Path="Entries.Count">
+              <Binding.Converter>
+                <views:ZeroToVisibleConverter />
+              </Binding.Converter>
+            </Binding>
+          </TextBlock.Visibility>
+        </TextBlock>
+        <!-- Virtualisiert: Nur sichtbare Einträge werden erzeugt – die Liste bleibt auch nach Jahren voller Wachten leicht -->
+        <ItemsControl ItemsSource="{Binding Entries}" VirtualizingPanel.IsVirtualizing="True"
+                      VirtualizingPanel.VirtualizationMode="Recycling" VirtualizingPanel.ScrollUnit="Pixel">
+          <ItemsControl.Template>
+            <ControlTemplate TargetType="ItemsControl">
+              <ScrollViewer Focusable="False" CanContentScroll="True" VerticalScrollBarVisibility="Auto"
+                            HorizontalScrollBarVisibility="Disabled">
+                <ItemsPresenter />
+              </ScrollViewer>
+            </ControlTemplate>
+          </ItemsControl.Template>
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <VirtualizingStackPanel />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="{x:Type vm:ChronicleEntry}">
+              <Border BorderBrush="{StaticResource EdgeBrush}" BorderThickness="0,0,0,1" Padding="16,14">
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <Ellipse Width="9" Height="9" Fill="{Binding Mood, Converter={StaticResource MoodToBrush}}" VerticalAlignment="Center"
+                           ToolTip="{Binding MoodText}" />
+                  <StackPanel Grid.Column="1" Margin="14,0,16,0">
+                    <TextBlock FontSize="14">
+                      <Run Text="{Binding DateText, Mode=OneWay}" FontWeight="SemiBold" />
+                      <Run Text="  " />
+                      <Run Text="{Binding OutcomeText, Mode=OneWay}" Foreground="{StaticResource MossBrush}" />
+                      <Run Text="·" Foreground="{StaticResource MossBrush}" />
+                      <Run Text="{Binding MoodText, Mode=OneWay}" Foreground="{StaticResource MossBrush}" />
+                    </TextBlock>
+                    <TextBlock Text="{Binding TopDistractionText}" Style="{StaticResource Caption}" Margin="0,2,0,0" />
+                  </StackPanel>
+                  <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <StackPanel Margin="0,0,22,0">
+                      <TextBlock Text="LICHT" Style="{StaticResource Overline}" FontSize="10" />
+                      <TextBlock Text="{Binding FocusedText}" FontSize="14" Typography.NumeralAlignment="Tabular" />
+                    </StackPanel>
+                    <StackPanel Margin="0,0,22,0">
+                      <TextBlock Text="SERIE" Style="{StaticResource Overline}" FontSize="10" />
+                      <TextBlock Text="{Binding LongestStreakText}" FontSize="14" Foreground="{StaticResource GoldBrush}" Typography.NumeralAlignment="Tabular" />
+                    </StackPanel>
+                    <StackPanel Margin="0,0,22,0">
+                      <TextBlock Text="FROST" Style="{StaticResource Overline}" FontSize="10" />
+                      <TextBlock Text="{Binding FrostText}" FontSize="14" Foreground="{StaticResource FrostBrush}" Typography.NumeralAlignment="Tabular" />
+                    </StackPanel>
+                    <StackPanel>
+                      <TextBlock Text="GEPLANT" Style="{StaticResource Overline}" FontSize="10" />
+                      <TextBlock Text="{Binding PlannedText}" FontSize="14" />
+                    </StackPanel>
+                  </StackPanel>
+                </Grid>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </Grid>
+    </Border>
+  </Grid>
+</UserControl>

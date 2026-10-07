@@ -58,8 +58,10 @@ zwei EXE‑Varianten bereit (Frontend + Backend jeweils in einer Datei):
 
 | Variante | Datei | Größe | Hinweis |
 |---|---|---|---|
-| Eigenständig | `publish\win-x64\Laternenwacht.exe` | ~65 MB | läuft auf jedem Windows ohne Installation |
-| Schlank | `publish\win-x64-schlank\Laternenwacht.exe` | ~1,3 MB | sparsamste Variante; braucht die „.NET Desktop Runtime 10“ (x64) |
+| Eigenständig | `publish\win-x64\Laternenwacht.exe` | ~67 MB | läuft auf jedem Windows ohne Installation |
+| Schlank | `publish\win-x64-schlank\Laternenwacht.exe` | ~4 MB | sparsamste Variante; braucht die „.NET Desktop Runtime 10“ (x64) |
+
+Rund 2,7 MB davon sind eingebettete Schriften und Szenenbilder (siehe *Schriften & Bilder*).
 
 Ausführlich inkl. GitHub‑Release: → [docs/Veroeffentlichung-VS2026.md](docs/Veroeffentlichung-VS2026.md)
 
@@ -107,6 +109,21 @@ docs/                      Projektdokumentation & Veröffentlichungsanleitung
 * Erlaubt: JPG, PNG, BMP, GIF (erstes Bild), je bis 10 MB, höchstens 200 eigene Memes.
 * Hinweis: Die mitgelieferten Memes stammen aus dem Internet und sind nur für den privaten Gebrauch
   gedacht. Vor einer öffentlichen Weitergabe der EXE bitte entfernen oder durch eigene Bilder ersetzen.
+
+## Schriften & Bilder
+
+* **Schriften:** *Cinzel*, *Cinzel Decorative* und *EB Garamond* liegen als statische TTF‑Dateien in
+  `frontend/Laternenwacht.App/Assets/Fonts/` und werden in die EXE eingebettet – es muss nichts
+  installiert werden. Sie stehen unter der **SIL Open Font License 1.1**; die Lizenztexte
+  (`OFL-Cinzel.txt`, `OFL-EBGaramond.txt`) liegen daneben und gehören bei einer Weitergabe dazu.
+* **Szenenbilder:** Die sechs Bilder der Reise (Laternenpfahl, Schrank, Schlitten, Tauwetter,
+  Cair Paravel, Steinhof) sind **eigene Zeichnungen** – keine Motive aus Büchern oder Filmen. Sie liegen
+  als JPEG (960 × 1200) in `frontend/Laternenwacht.App/Assets/Szenen/`.
+* **Quellen:** Die bearbeitbaren Vorlagen liegen als SVG in [`docs/szenen/`](docs/szenen) (viewBox
+  480 × 600). Nach einer Änderung das SVG in doppelter Größe (960 × 1200, JPEG‑Qualität ~90) neu
+  rendern und die JPEG‑Datei in `Assets/Szenen/` ersetzen – die Dateinamen bleiben gleich
+  (`szene-laterne` → `laterne.jpg`, `szene-schrank` → `schrank.jpg`, `szene-schlitten` → `schlitten.jpg`,
+  `szene-tauwetter` → `tauwetter.jpg`, `szene-cair` → `cair-paravel.jpg`, `szene-hof` → `steinhof.jpg`).
 
 ## Backend allein weitergeben
 

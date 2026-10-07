@@ -13,6 +13,12 @@ Wachten werden in einer **manipulationserkennenden Chronik** gespeichert (HMAC�
 Bei vielen Ablenkungen liefert das Backend humorvolle **Mahnrufe** aus den sieben Büchern der
 Chroniken von Narnia.
 
+Jede Wacht wird als **Reise** durch „Der König von Narnia“ erzählt (`Journey`): zehn Stationen in der
+Reihenfolge des Buches, vom Laternenpfahl bis Cair Paravel. Die Station hängt **allein** an gemessener /
+geplanter Zeit – Ablenkung bremst die Reise nie, sie färbt nur die Geschichte: Jede neue Ablenkungs-Episode
+ist ein Stück Türkischer Honig aus der Schachtel der Königin (`FocusSession.DistractionStarts`), und am Ende
+malt die Jahreszeit das Abschlussbild für die Chronik. Das Chronik-Format ändert sich dadurch nicht.
+
 Das **Frontend** (WPF, nicht Teil dieser Übergabe) zeigt nur an: Fokusleiste am oberen
 Bildschirmrand, Hauptfenster, Benachrichtigungen. Es enthält **keine** Fachlogik.
 
@@ -29,7 +35,8 @@ backend/
 │   │   ├── Abstractions/   IActivityProbe, ISecretProtector
 │   │   ├── Model/          SessionRecord, ActivityState, SessionPhase, ChronicleBook, …
 │   │   ├── Tracking/       FocusWarden (Fassade), FocusSession (Zustandsautomat),
-│   │   │                   ActivityClassifier, Admonitions (Sprüche), ShuffleBag, RealmMood, TimeFormat
+│   │   │                   ActivityClassifier, Admonitions (Sprüche), ShuffleBag, RealmMood, TimeFormat,
+│   │   │                   Journey (die Reise durch „Der König von Narnia“: Stationen, Verlockungen, Abschlussbild)
 │   │   ├── Integrity/      SessionJournal (Hash-Kette + Anker), JournalBootstrapper,
 │   │   │                   ProtectedKeyStore, AtomicFile, CoreJsonContext
 │   │   ├── Media/          MemeCatalog (eigene Meme-Bilder sicher einlesen)
@@ -40,7 +47,7 @@ backend/
 │       ├── DpapiSecretProtector   Schlüsselschutz per DPAPI (CurrentUser)
 │       ├── AppPaths, AppLog       %LOCALAPPDATA%\Laternenwacht, Fehlerprotokoll
 │       └── Native/NativeMethods   P/Invoke-Deklarationen
-└── tests/Laternenwacht.Core.Tests/      xUnit, 143 Tests, deterministische Uhr
+└── tests/Laternenwacht.Core.Tests/      xUnit, 265 Tests, deterministische Uhr
 ```
 
 ## 3. Bauen und testen
@@ -75,13 +82,18 @@ Parameter mit Standardwert) sind erlaubt.
 | `SettingsEditing` | `MarkAsDistraction(FocusSettings, string)` → neue Einstellungen oder `null` |
 | `ShuffleBag<T>` | Konstruktor `(IEnumerable<T>, Random? = null)`, `TryNext(out T)`, `Count` – nie zweimal dasselbe Element hintereinander |
 | `MemeCatalog` | `Scan(string directory)`, `AllowedExtensions`, `MaxFileSizeBytes`, `MaxFiles` |
-| `FocusSession` | `Phase`, `CurrentState`, `CurrentProcess`, `Focused`, `Distracted`, `Away`, `DistractionCount`, `Remaining`, `Progress`, `FrostRatio`, `IsFinished` |
+| `FocusSession` | `Phase`, `CurrentState`, `CurrentProcess`, `Focused`, `Distracted`, `Away`, `DistractionCount`, `Remaining`, `Progress`, `FrostRatio`, `IsFinished`, `Measured`, `Planned` |
+| `FocusSession.DistractionStarts` | `IReadOnlyList<TimeSpan>`: `Measured` zu Beginn jeder Ablenkungs-Episode (genau `DistractionCount` Einträge; Rast und Abwesenheit erzeugen keinen). Speicher nur bei Episodenbeginn; **nicht** im `SessionRecord` |
+| `Journey` | `StationCount` (10), `Stations`, `Fraction(measured, planned)`, `StationNumber(measured, planned)` (= 1 + ⌊9 · Anteil⌋, Station 10 erst bei 100 %; exakt in Ticks), `StationAt`, `PositionOf(n)` (= (n−1)/9), `UntilNextStation` (0 an Station 10), `ChapterFor(n)` (1–2 Schlitten, 3–4 Biberdamm, ab 5 Schloss), `TemptationLine(chapter, processName)`, `SpringFrostAllowance(planned)` / `ThawFrostAllowance(planned)` (Frost bis Tauwetter bzw. Winter), `EndingFor(outcome, mood)`, `Describe(ending)`, `ChronicleTitle(record)`; zusätzlich `EndingFor(record)`, `MoodOf(record)`, `Describe(record)` (Abbruch-Erzählung mit erreichter Station) |
+| `JourneyStation` | `Number`, `Name`, `Narration` |
+| `TemptationChapter` | `Sledge`, `BeaverDam`, `Castle` |
+| `JourneyEnding` / `JourneyEndingText` | `Coronation` (vollendet + Frühling), `Thaw` (vollendet + Tauwetter), `StoneCourtyard` (vollendet + Winter), `Wardrobe` (alles andere); `Label`, `Title`, `Narration` |
 | `SessionRecord` | `StartedAtUtc`, `Planned`, `Focused`, `Distracted`, `Measured`, `DistractionCount`, `Outcome`, `TopDistractions` |
 | `ActivitySnapshot` | `ProcessName`, `IdleTime` |
 | `ActivityState`, `SessionPhase`, `ClassificationMode`, `RealmMood`, `SealStatus`, `ChronicleBook` | Enum-Werte (Namen werden als Text in JSON gespeichert – **nicht umbenennen**) |
 | `RealmMoods` | `FromFrost(double)` |
 | `TimeFormat` | `Clock(TimeSpan)` |
-| `Admonitions` / `Admonition` | `Next(int, TimeSpan, ISet<string>, ChronicleBook, int seed)`; `Admonition.Text`, `.Book` |
+| `Admonitions` / `Admonition` | `Next(int, TimeSpan, ISet<string>, ChronicleBook, int seed)`; `Admonition.Text`, `.Book`, `.Reply` (`Encouragement?`: nur „Der König von Narnia“ bei den 7 Anzahl-Schwellen – dann spricht in `Text` die Königin, Unterschrift `Admonitions.QueenSignature`, und `Reply` ist die Antwort aus Narnia; sonst `null`) |
 | `ChronicleBooks` | `Title(ChronicleBook)`, `Volume(ChronicleBook)`, `Volumes` |
 | `FocusSettings` | alle Eigenschaften, `Default`, `HasCustomBarPosition`; Änderungen nur per `with` |
 | `SettingsValidator` | `Validate(FocusSettings)` → Liste deutscher Fehlermeldungen |
@@ -131,7 +143,8 @@ Parameter mit Standardwert) sind erlaubt.
 16. **Ressourcen schonen:** `FocusWarden.Pulse` läuft jede Sekunde, die ganze Wacht lang. Dort keine teuren
     Systemabfragen (z. B. keine Prozessliste, kein `Process`-Objekt pro Takt), keine Dateizugriffe, möglichst
     keine Speicheranforderungen. `Win32ActivityProbe` fragt den Prozessnamen nur beim Fensterwechsel neu ab.
-17. Sprüche (`Admonitions`) sind **eigene Formulierungen** – keine wörtlichen Zitate aus den Büchern.
+17. Sprüche (`Admonitions`, `Homecomings`, `Praises`, `Journey`) sind **eigene Formulierungen** – keine wörtlichen
+    Zitate aus den Büchern, Übersetzungen oder Filmen (`OwnWordingTests` hält bekannte buchnahe Wendungen fern).
     Jedes Buch braucht genau einen Spruch je Schwelle (aktuell 7 Anzahl- + 4 Frost-Schwellen = 11).
 
 ## 6. Bekannte Grenzen (bewusst so)

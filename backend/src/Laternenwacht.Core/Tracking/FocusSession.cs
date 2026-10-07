@@ -20,6 +20,7 @@ public sealed class FocusSession
 
     private readonly TimeProvider _time;
     private readonly Dictionary<string, TimeSpan> _distractionsByProcess = new(StringComparer.Ordinal);
+    private readonly List<TimeSpan> _distractionStarts = [];
     private long _lastTimestamp;
 
     public FocusSession(TimeSpan planned, TimeProvider time, ActivityState initialState, string? initialProcess)
@@ -35,9 +36,11 @@ public sealed class FocusSession
         Phase = SessionPhase.Running;
         CurrentState = initialState;
         CurrentProcess = initialProcess;
+        DistractionStarts = _distractionStarts.AsReadOnly();
         if (initialState == ActivityState.Distracted)
         {
             DistractionCount = 1;
+            _distractionStarts.Add(TimeSpan.Zero);
         }
     }
 
@@ -63,6 +66,13 @@ public sealed class FocusSession
 
     /// <summary>Anzahl der Wechsel in den Zustand "abgelenkt".</summary>
     public int DistractionCount { get; private set; }
+
+    /// <summary>
+    /// Gemessene Zeit (<see cref="Measured"/>) zu Beginn jeder Ablenkungs-Episode, in zeitlicher Reihenfolge –
+    /// je Episode genau ein Eintrag (also stets <see cref="DistractionCount"/> Einträge). Grundlage der
+    /// Honigwürfel auf dem Wegband. Nur im Speicher; nicht Teil des Chronik-Eintrags.
+    /// </summary>
+    public IReadOnlyList<TimeSpan> DistractionStarts { get; }
 
     /// <summary>
     /// Laufende Fokus-Serie: Fokuszeit seit der letzten Ablenkung. Abwesenheit (Leerlauf, Standby)
@@ -101,6 +111,7 @@ public sealed class FocusSession
         if (state == ActivityState.Distracted && CurrentState != ActivityState.Distracted)
         {
             DistractionCount++;
+            _distractionStarts.Add(Measured);   // Speicher nur, wenn eine Episode beginnt
             CurrentStreak = TimeSpan.Zero;
         }
 

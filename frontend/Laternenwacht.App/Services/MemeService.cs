@@ -9,7 +9,7 @@ using Laternenwacht.Platform.Windows;
 namespace Laternenwacht.App.Services;
 
 /// <summary>
-/// Lässt bei jeder neuen Ablenkung ein Meme über den Bildschirm treiben.
+/// Lässt bei jeder neuen Ablenkung ein Meme in der Schachtel der Königin über den Bildschirm treiben.
 /// Quellen: eingebettete Memes (Assets\Memes) und der eigene Meme-Ordner des Benutzers.
 /// Es treibt höchstens ein Meme gleichzeitig; dasselbe Meme kommt nie zweimal hintereinander.
 /// </summary>
@@ -62,9 +62,10 @@ internal sealed class MemeService
                 continue;
             }
 
+            // Jede neue Verlockung ist ein Stück aus der Schachtel der Königin.
             var caption = distraction.ProcessName is { Length: > 0 } p
-                ? $"Verlockung Nr. {distraction.Episode} · {p}"
-                : $"Verlockung Nr. {distraction.Episode}";
+                ? $"Türkischer Honig Nr. {distraction.Episode} · {p}"
+                : $"Türkischer Honig Nr. {distraction.Episode}";
             var window = new MemeFloatWindow(image, caption, SwimDuration);
             window.Closed += (_, _) => _current = null;
             _current = window;

@@ -123,24 +123,25 @@ public partial class App : Application
 
         var notifications = new NotificationService();
 
-        // Positives würdigen: Rückkehr zur Arbeit und lange Fokus-Serien.
+        // Positives würdigen: Rückkehr zur Arbeit (wie Edmund am Steinernen Tisch – ohne Vorwurf) und lange Fokus-Serien.
         warden.ReturnedToWork += (_, back) =>
         {
-            memes.SinkCurrent();
+            memes.SinkCurrent();   // die Schachtel der Königin versinkt im Schnee
             if (settingsViewModel.ShowPraise)
             {
-                notifications.ShowEncouragement("Willkommen zurück im Licht",
-                    Homecomings.For(settingsViewModel.SelectedBook, back.Absence, Random.Shared.Next()));
+                notifications.ShowWelcome(
+                    Homecomings.For(settingsViewModel.SelectedBook, back.Absence, Random.Shared.Next()), back.Absence);
             }
         };
         warden.FocusStreakReached += (_, streak) =>
         {
             if (settingsViewModel.ShowPraise)
             {
-                notifications.ShowEncouragement($"{streak.Minutes} Minuten am Stück im Licht",
+                notifications.ShowStreakPraise(streak.Minutes,
                     Praises.ForStreak(settingsViewModel.SelectedBook, streak.Index, Random.Shared.Next()));
             }
         };
+        // Mahnrufe: Bei „Der König von Narnia“ spricht die Königin, und eine Stimme aus Narnia antwortet (Admonition.Reply).
         _session.AdmonitionRaised += (_, admonition) =>
         {
             if (settingsViewModel.ShowNotifications)
@@ -157,12 +158,13 @@ public partial class App : Application
         _session.ShowChamberRequested += (_, _) => _main.BringToFront();
         _session.SessionEnded += (_, record) =>
         {
+            // Eine Bestmarke zählt nur gegen frühere Einträge mit gemessener Serie – sonst würde die erste Wacht
+            // nach dem Update (alte Einträge haben LongestFocusStreak = 0) fälschlich gefeiert.
             var previousBest = chronicle.BestStreak;
-            var hadHistory = chronicle.Entries.Count > 0;
             OnSessionEnded(record, chronicle);
             if (settingsViewModel.ShowPraise)
             {
-                PraiseFinishedSession(notifications, record, previousBest, hadHistory);
+                PraiseFinishedSession(notifications, record, previousBest);
             }
         };
 
@@ -248,8 +250,11 @@ public partial class App : Application
         _bar.Reposition();
     }
 
-    /// <summary>Würdigt am Ende einer Wacht, was gut lief – auch bei einer abgebrochenen.</summary>
-    private static void PraiseFinishedSession(NotificationService notifications, SessionRecord record, TimeSpan previousBest, bool hadHistory)
+    /// <summary>
+    /// Würdigt am Ende einer Wacht, was gut lief – auch bei einer abgebrochenen. Die Kopfzeile ist bei einer
+    /// vollendeten Wacht der Titel ihres Abschlussbildes (z. B. „Krönung in Cair Paravel“).
+    /// </summary>
+    private static void PraiseFinishedSession(NotificationService notifications, SessionRecord record, TimeSpan previousBest)
     {
         if (record.Focused < TimeSpan.FromMinutes(1))
         {
@@ -259,18 +264,19 @@ public partial class App : Application
         var parts = new List<string>();
         if (record.Outcome == SessionPhase.Completed && record.DistractionCount == 0)
         {
-            parts.Add("Makellose Wacht – kein einziges Mal verlockt!");
+            parts.Add("Die Schachtel blieb zu – kein einziges Stück Türkischer Honig in dieser Wacht.");
         }
 
-        if (hadHistory && record.LongestFocusStreak > previousBest)
+        if (previousBest > TimeSpan.Zero && record.LongestFocusStreak > previousBest)
         {
-            parts.Add($"Neue Bestleistung: {TimeFormat.Clock(record.LongestFocusStreak)} am Stück im Licht!");
+            parts.Add($"Neue Bestmarke: {TimeFormat.Clock(record.LongestFocusStreak)} am Stück im Licht. " +
+                "So lange hast du die Laterne noch nie gehalten.");
         }
 
         parts.Add($"{TimeFormat.Clock(record.Focused)} im Licht – gut gemacht.");
 
         var header = record.Outcome == SessionPhase.Completed
-            ? Lore.Completed(RealmMoods.FromFrost(record.Measured <= TimeSpan.Zero ? 0 : record.Distracted / record.Measured)).Headline
+            ? Journey.Describe(record).Title
             : "Auch eine kurze Wacht zählt";
         notifications.ShowPraise(header, string.Join(" ", parts), "Laternenwacht");
     }

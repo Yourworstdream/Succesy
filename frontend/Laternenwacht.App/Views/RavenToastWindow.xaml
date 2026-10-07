@@ -1,7 +1,10 @@
 <!--
-  Botschaft (Push-Benachrichtigung) unten rechts: Lob, Willkommensgruß oder Mahnruf.
-  Ein runder Avatar mit dem Anfangsbuchstaben des Sprechers, darunter Zitat und Quelle.
-  Ressourcen: Karte und Avatar samt Schatten sind zwischengespeichert; der Restzeit-Balken wird nur
+  Der Rabenbote (Push-Benachrichtigung) unten rechts: ein Brief auf Pergament mit Medaillon und Wachssiegel.
+    Lob / Willkommen  goldenes Raben-Medaillon, grünes Siegel mit Blatt; Kopfzeile in Goldtinte.
+    Mahnruf der Königin  Kronen-Medaillon (Eis mit Stab), rotes Siegel; ihre Zeile kursiv in Eistinte mit Unterschrift,
+                         darunter eine Zierlinie mit Laterne und die Antwort aus Narnia – die Königin hat nie das letzte Wort.
+    Mahnruf (Frost)   eisblaues Raben-Medaillon, rotes Siegel, nur eine Stimme.
+  Ressourcen: Karte, Medaillon und Siegel samt Schatten sind zwischengespeichert; der Restzeit-Balken wird nur
   gestaucht (Transformation statt Layout) und mit gedrosselter Bildrate animiert.
 -->
 <Window x:Class="Laternenwacht.App.Views.RavenToastWindow"
@@ -9,58 +12,133 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="clr-namespace:Laternenwacht.App.Views"
         Title="Laternenwacht – Botschaft"
-        Width="420" SizeToContent="Height"
+        Width="478" SizeToContent="Height"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         ResizeMode="NoResize" ShowInTaskbar="False" ShowActivated="False" Topmost="True"
         UseLayoutRounding="True" Cursor="Hand"
         AutomationProperties.Name="Botschaft der Laternenwacht">
-  <Grid x:Name="Root" Margin="20" Opacity="0">
+
+  <Window.Resources>
+    <!-- Pergament des Briefes: heller Kern oben links, zum Rand hin goldbraun -->
+    <RadialGradientBrush x:Key="LetterBrush" Center="0.4,0.3" GradientOrigin="0.4,0.3" RadiusX="0.8" RadiusY="0.9">
+      <GradientStop Color="#F7F0DD" Offset="0" />
+      <GradientStop Color="#E8D8B1" Offset="1" />
+    </RadialGradientBrush>
+    <SolidColorBrush x:Key="HeaderInkBrush" Color="#6E4A0E" />
+    <SolidColorBrush x:Key="SignatureBrush" Color="#4E6D7F" />
+    <SolidColorBrush x:Key="DividerBrush" Color="#B3C9A056" />
+    <SolidColorBrush x:Key="DividerLanternBrush" Color="#B07A1E" />
+    <SolidColorBrush x:Key="LifetimeTrackBrush" Color="#336B5434" />
+
+    <!-- Medaillons -->
+    <SolidColorBrush x:Key="RavenGoldBrush" Color="#E9C77E" />
+    <SolidColorBrush x:Key="RavenInkBrush" Color="#14100C" />
+    <SolidColorBrush x:Key="RavenWingBrush" Color="#4A3A28" />
+    <SolidColorBrush x:Key="IceMedallionBrush" Color="#CFE3EC" />
+    <SolidColorBrush x:Key="IceWingBrush" Color="#3A4A55" />
+    <SolidColorBrush x:Key="StaffGoldBrush" Color="#C9A056" />
+
+    <!-- Siegel: Zeichen hell auf grünem bzw. rotem Wachs -->
+    <SolidColorBrush x:Key="SpringGlyphBrush" Color="#D5E4B8" />
+    <SolidColorBrush x:Key="WaxGlyphBrush" Color="#F3C9BE" />
+
+    <!-- Rabe im 60er-Raster, eingepasst ins 56er-Medaillon (verschoben um 9, verkleinert auf 64 %) -->
+    <MatrixTransform x:Key="RavenPlacement" Matrix="0.64,0,0,0.64,9,9" />
+    <Geometry x:Key="RavenWingGeometry">M 20,31 C 27,35 34,37 43,34</Geometry>
+    <Geometry x:Key="RavenEyeGeometry">M 44.6,19 A 1.6,1.6 0 1 1 41.4,19 A 1.6,1.6 0 1 1 44.6,19 Z</Geometry>
+
+    <!-- Krone der Königin mit sieben schlanken Zacken, dahinter ihr Stab (Raster 56×56) -->
+    <Geometry x:Key="QueenStaffGeometry">M 14,45 L 43,11</Geometry>
+    <Geometry x:Key="QueenStaffTipGeometry">M 43,11 L 44.6,7.6 M 43,11 L 46.4,9.4 M 43,11 L 42,7.4 M 43,11 L 46.6,12</Geometry>
+    <Geometry x:Key="QueenCrownGeometry">M 13,37 L 13,31 L 15.1,22 L 17.3,30 L 19.4,21 L 21.6,30 L 23.7,20 L 25.9,30 L 28,18 L 30.1,30 L 32.3,20 L 34.4,30 L 36.6,21 L 38.7,30 L 40.9,22 L 43,31 L 43,37 Z</Geometry>
+    <Geometry x:Key="QueenCrownBandGeometry">M 14.5,34.5 L 41.5,34.5</Geometry>
+  </Window.Resources>
+
+  <Grid x:Name="Root" Margin="24,24,24,40" Opacity="0" ToolTip="Klicken zum Schließen">
     <Grid.RenderTransform>
       <TranslateTransform x:Name="Slide" X="60" />
     </Grid.RenderTransform>
 
-    <!-- Karte mit Schatten: einmal gezeichnet, danach nur noch verschoben und überblendet -->
+    <!-- Brief mit Schatten und Siegel: einmal gezeichnet, danach nur noch verschoben und überblendet -->
     <Grid views:RenderCache.IsEnabled="True" IsHitTestVisible="False">
-      <Border Background="{StaticResource CapsuleBrush}" BorderBrush="{StaticResource Edge2Brush}" BorderThickness="1" CornerRadius="20">
+      <Border Background="{StaticResource LetterBrush}" BorderBrush="{StaticResource ParchmentEdgeBrush}" BorderThickness="1" CornerRadius="10">
         <Border.Effect>
-          <DropShadowEffect BlurRadius="34" ShadowDepth="10" Direction="270" Opacity="0.4" Color="Black" />
+          <DropShadowEffect BlurRadius="40" ShadowDepth="16" Direction="270" Opacity="0.42" Color="#1E242C" />
         </Border.Effect>
       </Border>
+      <views:WaxSeal x:Name="Seal" Diameter="44" Width="44" Height="44" HorizontalAlignment="Right" VerticalAlignment="Top"
+                     Margin="0,-16,-14,0" SealBrush="{StaticResource SpringSealBrush}" Glyph="{StaticResource LeafGeometry}"
+                     GlyphBrush="{StaticResource SpringGlyphBrush}" />
     </Grid>
 
-    <Border Background="Transparent" Padding="17,17,19,15">
+    <Border Background="Transparent" Padding="22,22,24,18">
       <Grid>
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="Auto" />
           <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <!-- Avatar: Anfangsbuchstabe des Sprechers in einem leuchtenden Ring -->
-        <Grid views:RenderCache.IsEnabled="True" VerticalAlignment="Top">
-          <Border x:Name="Avatar" Width="42" Height="42" CornerRadius="21" BorderBrush="{StaticResource GoldBrush}" BorderThickness="1.5"
-                  Background="{StaticResource GoldTintBrush}">
-            <Border.Effect>
-              <DropShadowEffect x:Name="AvatarGlow" BlurRadius="16" ShadowDepth="0" Color="{StaticResource GoldColor}" Opacity="0.35" />
-            </Border.Effect>
-            <TextBlock x:Name="AvatarText" FontFamily="{StaticResource SerifFont}" FontSize="19"
-                       Foreground="{StaticResource GoldBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,2" />
-          </Border>
+        <!-- Medaillon: goldener Rabe, eisblauer Rabe oder die Krone der Königin -->
+        <Grid Width="56" Height="56" VerticalAlignment="Top" views:RenderCache.IsEnabled="True" IsHitTestVisible="False">
+          <Ellipse x:Name="MedallionDisc" Width="54" Height="54" StrokeThickness="1.5"
+                   Fill="{StaticResource RavenGoldBrush}" Stroke="{StaticResource InkGoldBrush}" />
+          <Ellipse x:Name="MedallionRing" Width="46" Height="46" StrokeThickness="0.8" Opacity="0.6"
+                   Stroke="{StaticResource InkGoldBrush}" />
+
+          <Grid x:Name="RavenFigure">
+            <Path Data="{StaticResource RavenGeometry}" Fill="{StaticResource RavenInkBrush}" Stretch="None"
+                  RenderTransform="{StaticResource RavenPlacement}" />
+            <Path x:Name="RavenWing" Data="{StaticResource RavenWingGeometry}" Stroke="{StaticResource RavenWingBrush}"
+                  StrokeThickness="1.6" Stretch="None" RenderTransform="{StaticResource RavenPlacement}" />
+            <Path x:Name="RavenEye" Data="{StaticResource RavenEyeGeometry}" Fill="{StaticResource RavenGoldBrush}"
+                  Stretch="None" RenderTransform="{StaticResource RavenPlacement}" />
+          </Grid>
+
+          <Grid x:Name="QueenFigure" Visibility="Collapsed">
+            <Path Data="{StaticResource QueenStaffGeometry}" Stroke="{StaticResource StaffGoldBrush}" StrokeThickness="2.2"
+                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stretch="None" />
+            <Path Data="{StaticResource QueenStaffTipGeometry}" Stroke="{StaticResource InkFrostBrush}" StrokeThickness="1"
+                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stretch="None" />
+            <Path Data="{StaticResource QueenCrownGeometry}" Fill="{StaticResource RavenInkBrush}" Stretch="None" />
+            <Path Data="{StaticResource QueenCrownBandGeometry}" Stroke="{StaticResource IceMedallionBrush}" StrokeThickness="0.8"
+                  Opacity="0.55" Stretch="None" />
+          </Grid>
         </Grid>
 
-        <StackPanel Grid.Column="1" Margin="14,0,0,0">
-          <Grid>
-            <TextBlock x:Name="HeaderText" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource GoldBrush}" />
-            <Path Data="{StaticResource CrossGeometry}" Stroke="{StaticResource MossBrush}" StrokeThickness="1.8"
-                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stretch="Uniform" Width="9" Height="9"
-                  HorizontalAlignment="Right" VerticalAlignment="Center" ToolTip="Schließen" />
-          </Grid>
-          <TextBlock x:Name="MessageText" Margin="0,5,0,0" FontFamily="{StaticResource SerifTextFont}" FontSize="16" LineHeight="23"
-                     Foreground="{StaticResource IvoryBrush}" TextWrapping="Wrap"
+        <StackPanel Grid.Column="1" Margin="16,0,0,0">
+          <TextBlock x:Name="HeaderText" FontFamily="{StaticResource CinzelFont}" FontSize="11" FontWeight="SemiBold"
+                     Foreground="{StaticResource HeaderInkBrush}" TextWrapping="Wrap" Margin="0,2,0,0" />
+          <TextBlock x:Name="SublineText" FontFamily="{StaticResource GaramondFont}" FontStyle="Italic" FontSize="14"
+                     Foreground="{StaticResource InkMutedBrush}" TextWrapping="Wrap" Margin="0,6,0,0" Visibility="Collapsed" />
+          <TextBlock x:Name="MessageText" FontFamily="{StaticResource GaramondFont}" FontSize="19.5" LineHeight="26"
+                     Foreground="{StaticResource InkBrush}" TextWrapping="Wrap" Margin="0,6,0,0"
                      AutomationProperties.LiveSetting="Assertive" />
-          <TextBlock x:Name="SourceText" Margin="0,8,0,0" FontSize="12" Foreground="{StaticResource MossBrush}" TextWrapping="Wrap" />
+          <TextBlock x:Name="SourceText" FontFamily="{StaticResource GaramondFont}" FontStyle="Italic" FontSize="15"
+                     Foreground="{StaticResource InkMutedBrush}" TextWrapping="Wrap" Margin="0,6,0,0" />
+
+          <!-- Antwort aus Narnia: Zierlinie mit Laterne, dann die Stimme, die der Königin antwortet -->
+          <StackPanel x:Name="ReplyPanel" Visibility="Collapsed">
+            <Grid Margin="0,10,0,4">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <Border Height="1" Background="{StaticResource DividerBrush}" VerticalAlignment="Center" />
+              <Path Grid.Column="1" Data="{StaticResource Station1Geometry}" Width="12" Height="12" Stretch="Uniform" Margin="8,0"
+                    Stroke="{StaticResource DividerLanternBrush}" StrokeThickness="1.7" StrokeStartLineCap="Round"
+                    StrokeEndLineCap="Round" StrokeLineJoin="Round" VerticalAlignment="Center" />
+              <Border Grid.Column="2" Height="1" Background="{StaticResource DividerBrush}" VerticalAlignment="Center" />
+            </Grid>
+            <TextBlock x:Name="ReplyText" FontFamily="{StaticResource GaramondFont}" FontSize="18.5" LineHeight="25"
+                       Foreground="{StaticResource InkBrush}" TextWrapping="Wrap" Margin="0,4,0,0" />
+            <TextBlock x:Name="ReplySourceText" FontFamily="{StaticResource GaramondFont}" FontStyle="Italic" FontSize="15"
+                       Foreground="{StaticResource InkMutedBrush}" TextWrapping="Wrap" Margin="0,6,0,0" />
+          </StackPanel>
+
           <!-- Restzeit der Botschaft -->
-          <Border Margin="0,12,0,0" Height="3" CornerRadius="1.5" Background="#14FFFFFF">
-            <Border x:Name="Lifetime" CornerRadius="1.5" Background="{StaticResource GoldBarBrush}" RenderTransformOrigin="0,0.5">
+          <Border Margin="0,12,0,0" Height="3" CornerRadius="1.5" Background="{StaticResource LifetimeTrackBrush}">
+            <Border x:Name="Lifetime" CornerRadius="1.5" Background="{StaticResource GoldDeepBrush}" RenderTransformOrigin="0,0.5">
               <Border.RenderTransform>
                 <ScaleTransform x:Name="LifetimeScale" />
               </Border.RenderTransform>
