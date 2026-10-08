@@ -14,6 +14,8 @@ goldgerahmte Szenenbilder und die Schriften Cinzel und EB Garamond.
 
 ![Fokusleiste, Botschaft und Meme](docs/bilder/3-kapsel-botschaft-meme.png)
 
+> **Die Finanz-App ist umgezogen:** Sie heißt jetzt **Finanzmeister** und hat ein eigenes Repository:
+> [Yourworstdream/Finanzmeister](https://github.com/Yourworstdream/Finanzmeister).
 <sub>Hinweis: Die beiden Bildschirmfotos zeigen noch die Vorgängergestaltung „Nachtwald“. Sie werden ersetzt,
 sobald Aufnahmen der Laternendickicht‑Oberfläche unter Windows vorliegen.</sub>
 > **Neu im Repository: [Finanzkompass](finanzkompass/)** – eine Web-App, die Finanzen übersichtlich
@@ -122,7 +124,6 @@ backend/                               BACKEND – eigenständig baubar (Laterne
 frontend/                              FRONTEND – nur Darstellung
   Laternenwacht.App                    WPF: Fokusleiste, Hauptfenster, Rabenbote, Gestaltung
 docs/                      Projektdokumentation & Veröffentlichungsanleitung
-finanzkompass/             FINANZKOMPASS – Web-App für Finanzen, Bewertung und Sparpläne (eigene README)
 fstaud25/                  Vorlage des Klassen-Repositorys FST AUD 25
 ```
 
