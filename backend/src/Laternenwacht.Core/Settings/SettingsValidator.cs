@@ -30,6 +30,11 @@ public static class SettingsValidator
             errors.Add("Unbekanntes Buch der Chroniken.");
         }
 
+        if (!Enum.IsDefined(settings.BarSize))
+        {
+            errors.Add("Unbekannte Größe der Fokusleiste.");
+        }
+
         if (!IsValidCoordinate(settings.BarLeft) || !IsValidCoordinate(settings.BarTop)
             || (settings.BarLeft is null) != (settings.BarTop is null))
         {

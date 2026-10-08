@@ -147,6 +147,79 @@ public sealed class SettingsTests : IDisposable
         Assert.True(loaded.ShowPraise);
         Assert.True(loaded.UseKnownDistractions);
         Assert.Equal(FocusSettings.Default.IdleThreshold, loaded.IdleThreshold);
+        Assert.Equal(BarSize.Large, loaded.BarSize);
+        Assert.True(loaded.BarReservesSpace);
+        Assert.True(loaded.BarAlwaysOnTop);
+    }
+
+    [Fact]
+    public void Bar_defaults_keep_the_original_bar()
+    {
+        var defaults = FocusSettings.Default;
+
+        Assert.Equal(BarSize.Large, defaults.BarSize);
+        Assert.True(defaults.BarReservesSpace);
+        Assert.True(defaults.BarAlwaysOnTop);
+    }
+
+    [Theory]
+    [InlineData(BarSize.UltraThin)]
+    [InlineData(BarSize.Small)]
+    [InlineData(BarSize.Medium)]
+    [InlineData(BarSize.Large)]
+    public void Every_bar_size_is_valid_and_roundtrips_as_text(BarSize size)
+    {
+        var store = new SettingsStore(_dir.File("einstellungen.json"));
+        var settings = FocusSettings.Default with { BarSize = size, BarReservesSpace = false, BarAlwaysOnTop = false };
+
+        Assert.Empty(SettingsValidator.Validate(settings));
+        store.Save(settings);
+        var loaded = store.Load();
+
+        Assert.Null(store.LastLoadWarning);
+        Assert.Equal(size, loaded.BarSize);
+        Assert.False(loaded.BarReservesSpace);
+        Assert.False(loaded.BarAlwaysOnTop);
+        Assert.Contains($"\"barSize\": \"{size}\"", File.ReadAllText(store.FilePath), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Bar_size_names_stay_stable()
+    {
+        // Die Namen stehen als Text in den Einstellungsdateien der Benutzer – Umbenennen bricht sie.
+        Assert.Equal(["UltraThin", "Small", "Medium", "Large"], Enum.GetNames<BarSize>());
+    }
+
+    [Fact]
+    public void Undefined_bar_size_is_rejected() =>
+        Assert.NotEmpty(SettingsValidator.Validate(FocusSettings.Default with { BarSize = (BarSize)42 }));
+
+    [Theory]
+    [InlineData("{\"barSize\":\"Riesig\"}")]
+    [InlineData("{\"barSize\":42}")]
+    [InlineData("{\"barSize\":null}")]
+    public void Unknown_bar_size_in_file_falls_back_to_defaults(string json)
+    {
+        File.WriteAllText(_dir.File("einstellungen.json"), json);
+        var store = new SettingsStore(_dir.File("einstellungen.json"));
+
+        var loaded = store.Load();
+
+        Assert.NotNull(store.LastLoadWarning);
+        Assert.Equal(BarSize.Large, loaded.BarSize);
+    }
+
+    [Fact]
+    public void Unknown_mode_in_file_falls_back_to_defaults_like_bar_size()
+    {
+        // Gleiche Behandlung wie bei den übrigen Aufzählungen: unbekannter Text → Standardwerte mit Hinweis.
+        File.WriteAllText(_dir.File("einstellungen.json"), "{\"mode\":\"Irgendwas\"}");
+        var store = new SettingsStore(_dir.File("einstellungen.json"));
+
+        var loaded = store.Load();
+
+        Assert.NotNull(store.LastLoadWarning);
+        Assert.Equal(FocusSettings.Default.Mode, loaded.Mode);
     }
 
     [Fact]

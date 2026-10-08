@@ -40,14 +40,14 @@ backend/
 │   │   ├── Integrity/      SessionJournal (Hash-Kette + Anker), JournalBootstrapper,
 │   │   │                   ProtectedKeyStore, AtomicFile, CoreJsonContext
 │   │   ├── Media/          MemeCatalog (eigene Meme-Bilder sicher einlesen)
-│   │   └── Settings/       FocusSettings, SettingsValidator, SettingsStore, ProcessNames
+│   │   └── Settings/       FocusSettings, BarSize, SettingsValidator, SettingsStore, ProcessNames
 │   └── Laternenwacht.Platform.Windows/  net10.0-windows, ohne Oberfläche
 │       ├── Win32ActivityProbe     Vordergrundprozess + Leerlaufzeit (nur lesend, Name je Fenster zwischengespeichert)
 │       ├── MemoryRelief           gibt Arbeitsspeicher zurück, wenn die App in den Hintergrund geht
 │       ├── DpapiSecretProtector   Schlüsselschutz per DPAPI (CurrentUser)
 │       ├── AppPaths, AppLog       %LOCALAPPDATA%\Laternenwacht, Fehlerprotokoll
 │       └── Native/NativeMethods   P/Invoke-Deklarationen
-└── tests/Laternenwacht.Core.Tests/      xUnit, 270 Tests, deterministische Uhr
+└── tests/Laternenwacht.Core.Tests/      xUnit, 281 Tests, deterministische Uhr
 ```
 
 ## 3. Bauen und testen
@@ -91,12 +91,14 @@ Parameter mit Standardwert) sind erlaubt.
 | `JourneyEnding` / `JourneyEndingText` | `Coronation` (vollendet + Frühling), `Thaw` (vollendet + Tauwetter), `StoneCourtyard` (vollendet + Winter), `Wardrobe` (alles andere); `Label`, `Title`, `Narration` |
 | `SessionRecord` | `StartedAtUtc`, `Planned`, `Focused`, `Distracted`, `Measured`, `DistractionCount`, `Outcome`, `TopDistractions` |
 | `ActivitySnapshot` | `ProcessName`, `IdleTime` |
-| `ActivityState`, `SessionPhase`, `ClassificationMode`, `RealmMood`, `SealStatus`, `ChronicleBook` | Enum-Werte (Namen werden als Text in JSON gespeichert – **nicht umbenennen**) |
+| `ActivityState`, `SessionPhase`, `ClassificationMode`, `RealmMood`, `SealStatus`, `ChronicleBook`, `BarSize` | Enum-Werte (Namen werden als Text in JSON gespeichert – **nicht umbenennen**) |
+| `BarSize` | `UltraThin`, `Small`, `Medium`, `Large` (Größe der Fokusleiste; neue Größen nur anhängen) |
 | `RealmMoods` | `FromFrost(double)` |
 | `TimeFormat` | `Clock(TimeSpan)` |
 | `Admonitions` / `Admonition` | `Next(int, TimeSpan, ISet<string>, ChronicleBook, int seed)`; `Admonition.Text`, `.Book`, `.Reply` (`Encouragement?`: nur „Der König von Narnia“ bei den 7 Anzahl-Schwellen – dann spricht in `Text` die Königin, Unterschrift `Admonitions.QueenSignature`, und `Reply` ist die Antwort aus Narnia; sonst `null`) |
 | `ChronicleBooks` | `Title(ChronicleBook)`, `Volume(ChronicleBook)`, `Volumes` |
-| `FocusSettings` | alle Eigenschaften, `Default`, `HasCustomBarPosition`; Änderungen nur per `with` |
+| `FocusSettings` | alle Eigenschaften, `Default`, `HasCustomBarPosition`; Änderungen nur per `with`. Leiste: `BarAlwaysOnTop` (Standard `true`), `BarSize` (Standard `Large` = bisherige Leiste), `BarReservesSpace` (Standard `true`: angedockt Platz am oberen Rand freihalten), `BarLeft`/`BarTop` |
+| `SettingsValidator` (Leiste) | lehnt nicht definierte `BarSize`-Werte ab („Unbekannte Größe der Fokusleiste.“); eine Datei mit unbekanntem Text oder Zahlenwert fällt – wie bei den übrigen Aufzählungen – mit `LastLoadWarning` auf die Standardwerte zurück |
 | `SettingsValidator` | `Validate(FocusSettings)` → Liste deutscher Fehlermeldungen |
 | `SettingsStore` | Konstruktor `(string path)`, `Load()`, `Save(FocusSettings)`, `LastLoadWarning`, `FilePath` |
 | `ProcessNames` | `ParseList(string?)`, `FromImagePath(ReadOnlySpan<char>)` |

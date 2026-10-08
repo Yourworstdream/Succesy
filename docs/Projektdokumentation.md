@@ -126,6 +126,7 @@ Lizenzkosten entstehen nicht.
 | F10 | Statistik: Gesamtfokus, Gesamtfrost, Frühlingsquote | Soll |
 | F11 | Mahnrufe als **Push‑Benachrichtigung** („Rabenbote“), abschaltbar | Soll |
 | F12 | Fokusleiste **frei verschiebbar**, Position wird gespeichert; Rückkehr an den oberen Rand | Soll |
+| F16 | Fokusleiste in **vier Größen** (Ultradünn, Klein, Mittel, Groß), sofort umschaltbar; bleibt **im Vordergrund** und hält angedockt auf Wunsch den **Platz am oberen Rand frei** (maximierte Fenster beginnen darunter) | Soll |
 | F13 | **Rechtsklick‑Menü** der Leiste: Auswahl, aus welchem der sieben Bücher der Chroniken die Mahnrufe stammen (oder gemischt) | Soll |
 | F15 | **Positive Verstärkung:** Lob für Fokus‑Serien (10/25/45/60/90 min), „Willkommen zurück“ nach einer Ablenkung, Würdigung makelloser Wachten und neuer Bestleistungen; getrennt von den Mahnrufen abschaltbar | Soll |
 | F14 | Bei jeder neuen Ablenkung **treibt ein Meme** in einem Pop‑up quer über den Bildschirm; eigene Memes hinzufügbar, abschaltbar | Kann |
@@ -397,11 +398,58 @@ Rechts eine Botschaft mit Initial‑Avatar und Serifen‑Zitat, links ein treibe
   (z. B. „Am Schlitten · Hearthstone“ bei Ablenkung), **Wegfaden** mit den zehn Stationen, der Laterne und
   je Ablenkung einem Stück Türkischem Honig, Chip = Frostzeit und Honigstücke. In der Rast glimmt die Kapsel
   warm, im Wegfaden steht statt der Laterne ein Feuer.
-* **Verschiebbar:** Ziehen mit der linken Maustaste; die Position wird gespeichert. Fehlt der Bildschirm
-  später (z. B. Laptop ohne Zweitmonitor), sitzt sie wieder oben mittig. Rechtsklick ▸
+* **Vier Größen** (Einstellung `BarSize`, Rechtsklick ▸ *Größe der Leiste* oder Reiter *Gefährten & Verlockungen*,
+  wirkt sofort):
+
+  | Größe | Maße | Inhalt |
+  |---|---|---|
+  | Groß | Kapsel 776 × 70 | wie oben beschrieben (Standard, die ursprüngliche Leiste) |
+  | Mittel | Kapsel 560 × 50 | Medaillon 36 px mit Ring, Restzeit (Cinzel 22 px), Kurzstatus 13 px (gekürzt), Wegfaden 110 px, kompakter Frost‑Chip, Knöpfe 34 px |
+  | Klein | Pille 300 × 34 | Mini‑Ring (22 px) mit Zustandszeichen, Restzeit 16 px, Frost‑Chip; keine Knöpfe – Steuerung im Kontextmenü; Tooltip mit Kurzstatus, Station und nächster Station |
+  | Ultradünn | Streifen 6 px (Fenster 8 px) | angedockt mit freigehaltenem Platz über die ganze Breite des Arbeitsbereichs, sonst (frei verschoben, ohne Reservierung oder wenn sie scheitert) 640 px; dunkle Spur, Füllung bis zum Fortschritt (Gold, bei Ablenkung Eisblau auf deutlich hellerer, eisgetönter Spur mit 2‑px‑Eissaum, in der Rast Bernstein), Kerben an den Stationen bei (n − 1)/9, winzige Honigstücke; Tooltip mit Restzeit, Status, Frost, Honig und Station |
+
+  Alle Größen teilen denselben Datenkontext (`BarViewModel`). Gezeigt wird nur die Vorlage der gewählten Größe
+  (`ContentTemplate` per Datentrigger) – die anderen werden gar nicht erst erzeugt. Das Fenster passt sich der
+  Vorlage an (`SizeToContent`). Die ultradünne Leiste zeichnet in drei `DrawingLayers`‑Ebenen
+  (`ThinJourneyStrip`); der sekündliche Fortschritt verstellt nur eine Skalierung, und auch das nur bei einem neuen
+  ganzen Pixel. Ihr 2‑px‑Griffrand ist zu 1/255 gedeckt, weil ein geschichtetes Fenster völlig transparente Pixel
+  zur Maus durchlässt.
+* **Immer im Vordergrund** (`BarAlwaysOnTop`): Warum die Leiste früher unter Arbeitsfenster geraten konnte: WPF setzt
+  `HWND_TOPMOST` nur beim Erzeugen des Fensters und bei einer Änderung von `Topmost`. Unter den „stets oben“‑Fenstern liegt
+  aber immer das zuletzt aktivierte oder gezeigte vorn, und die Leiste wird nie aktiviert (`WS_EX_NOACTIVATE`) – sie kam von
+  selbst nie wieder nach vorn. Beim Verbergen und Zeigen zu jeder Wacht, bei „Desktop anzeigen“, Vollbildwechseln und
+  Bildschirmänderungen konnte Windows sie hinter andere Fenster schieben, ohne dass WPF davon erfuhr. Abhilfe ohne Hooks:
+  `SetWindowPos(HWND_TOPMOST, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOOWNERZORDER)` beim Erzeugen, nach jedem
+  Zeigen, nach Bildschirm‑ und DPI‑Wechseln und – solange die Leiste sichtbar ist – in einem ruhigen Sekundentakt nur dann,
+  wenn `GetForegroundWindow()` ein anderes, gewöhnliches Fenster meldet oder das Merkmal `WS_EX_TOPMOST` verloren ging.
+  Fenster, die selbst „stets oben“ sind (Startmenü, Alt+Tab, Taskansicht, Kontextmenüs), dürfen vorn bleiben, solange sie
+  im Vordergrund sind. Verborgen läuft nichts. Ist die Option aus, gilt `HWND_NOTOPMOST`, und nichts wird erneut gesetzt.
+* **Platz am oberen Rand freihalten** (`BarReservesSpace`, `AppBarDocking`): Ist die Leiste oben angedockt (nicht frei
+  verschoben) und während einer Wacht sichtbar, meldet sie sich per `SHAppBarMessage` als Desktop‑Symbolleiste an
+  (`ABM_NEW` mit eigener Rückrufnachricht aus `RegisterWindowMessage`, `ABM_QUERYPOS`/`ABM_SETPOS` mit `ABE_TOP` auf dem
+  Hauptbildschirm). Reserviert wird die ganze Fensterhöhe in Gerätepixeln (DPI des Bildschirms): Groß 92, Mittel 67,
+  Klein 46, Ultradünn 8 geräteunabhängige Pixel. Damit das Fenster nicht höher ist als der Streifen, ziehen die Vorlagen
+  angedockt mit Reservierung (`FocusBarWindow.IsReservingTop`) den unteren Rand auf den Saum ein und zeichnen den
+  Schatten ohne Versatz und mit kleinem Radius – sonst läge ein Schattenstreifen über der Titel‑ bzw. Tab‑Leiste
+  maximierter Fenster und finge dort Klicks ab (ein geschichtetes Fenster nimmt jeden nicht völlig transparenten Pixel
+  als Treffer). Maximierte Fenster beginnen darunter. Die Lage wird erst nach dem Layout bestimmt
+  (`DispatcherPriority.Loaded`, gebündelt) und nach jeder echten Größenänderung des HWND (`WM_WINDOWPOSCHANGED` ohne
+  `SWP_NOSIZE`) erneut – so zählt beim Andocken und Eingrenzen immer die tatsächliche Breite. Startet der Explorer neu,
+  verwirft er alle Anmeldungen; auf die Rundmeldung `TaskbarCreated` meldet sich die Leiste neu an und setzt „stets oben“
+  erneut. Eine andere Größe oder DPI wird neu ausgehandelt (`ABM_QUERYPOS`/`ABM_SETPOS` mit neuer Höhe); `ABN_POSCHANGED`
+  (z. B. verschobene Taskleiste) lässt nachfragen und nur bei einem anderen Ergebnis neu setzen – so entstehen keine
+  Rundmeldungs‑Schleifen. `ABN_FULLSCREENAPP` holt die Leiste nach vorn bzw. stellt sie nach dem Vollbild wieder an ihren
+  Platz: Sie weicht Vollbildprogrammen bewusst nicht aus, denn ein Video im Vollbild ist genau die Ablenkung, die sie zeigen
+  soll („Immer im Vordergrund“ ausschalten, wenn sie z. B. bei Präsentationen stören würde). `ABM_REMOVE` beim Verbergen,
+  beim Verschieben an eine freie Stelle, beim Abschalten der Option, beim Schließen und Beenden sowie bei unbehandelten
+  Ausnahmen (`AppDomain.UnhandledException`); bei einem harten Absturz räumt die Shell verwaiste Leisten selbst auf.
+* **Verschiebbar:** Ziehen mit der linken Maustaste; die Position wird gespeichert. Beim Anzeigen wird die Leiste
+  vollständig in den Arbeitsbereich des nächstgelegenen Bildschirms geschoben (etwa nach dem Wechsel auf eine breitere
+  Größe oder wenn der Zweitbildschirm fehlt); die gespeicherte Position bleibt dabei erhalten. Rechtsklick ▸
   *Leiste zurück an den oberen Rand* setzt sie zurück.
 * **Rechtsklick‑Menü:** Programm im Vordergrund als Ablenkung markieren, Buch der Chroniken wählen
-  (Band 1–7 oder gemischt), Lob/Mahnrufe/Memes schalten, Wacht steuern.
+  (Band 1–7 oder gemischt), Lob/Mahnrufe/Memes schalten, *Größe der Leiste* (Ultradünn/Klein/Mittel/Groß),
+  *Immer im Vordergrund*, *Platz am oberen Rand freihalten*, Leiste zurücksetzen, Wacht steuern.
 * `WS_EX_NOACTIVATE`: Klicks stehlen **nicht** den Tastaturfokus – sonst würde die Leiste selbst
   die Messung verfälschen. `WS_EX_TOOLWINDOW`: kein Eintrag in Alt+Tab/Taskleiste.
 * Bei Ablenkung wechseln Ring, Rand, Wegfaden und Chip von Laternengold zu Eisblau, die Kapsel schimmert kalt und im Medaillon steht eine Schneeflocke.
@@ -519,8 +567,8 @@ Succesy/
 │       ├── Services/                Erzähltexte (Lore), Rabenbote, Fensterstile
 │       ├── Themes/Laternendickicht.xaml  Gestaltungssystem
 │       ├── ViewModels/              MVVM
-│       └── Views/                   Hauptfenster, Seiten, Wegband, Szenenrahmen, Fokusleiste,
-│                                    Rabenbote, Meme, RenderCache (Ressourcenschonung)
+│       └── Views/                   Hauptfenster, Seiten, Wegband, Szenenrahmen, Fokusleiste (vier Größen,
+│                                    ThinJourneyStrip, AppBarDocking), Rabenbote, Meme, RenderCache (Ressourcenschonung)
 ├── docs/                            Diese Dokumentation, Veröffentlichungsanleitung
 └── .github/workflows/build.yml      CI: Build, Test, EXE-Artefakt
 ```
@@ -587,12 +635,15 @@ Ordnerebene, keine Verknüpfungen, max. 10 MB, max. 200 Dateien) und mit begrenz
 dekodiert; unlesbare Dateien werden übersprungen und protokolliert. Eingebaute Memes wurden
 verkleinert und ohne Metadaten (EXIF, ggf. GPS) gespeichert.
 
-**Sofort wirkende Einstellungen** (`SettingsViewModel.ApplyQuickChange`): Buchwahl, Benachrichtigungen
-und Leistenposition werden ohne „Speichern“ übernommen – ungespeicherte Eingaben im Formular
-bleiben dabei unberührt.
+**Sofort wirkende Einstellungen** (`SettingsViewModel.ApplyQuickChange`): Buchwahl, Benachrichtigungen,
+Leistenposition, Leistengröße, „Immer im Vordergrund“ und „Platz am oberen Rand freihalten“ werden ohne „Speichern“
+übernommen – ungespeicherte Eingaben im Formular bleiben dabei unberührt. `App` reagiert in `SettingsSaved` nur mit
+`FocusBarWindow.ApplyPosition` und `ApplyBarSettings`; eine laufende Wacht bleibt unberührt.
 
 **Fokusleiste ohne Fokusraub** (`WindowStyles.MakeNonActivatingToolWindow`): Erweiterte Fensterstile
-`WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW` werden nach Erzeugung des nativen Fensters gesetzt.
+`WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW` werden nach Erzeugung des nativen Fensters gesetzt und per
+`SetWindowPos(SWP_FRAMECHANGED)` wirksam gemacht. `WindowStyles.SetTopmost` setzt die Z‑Reihenfolge
+(`HWND_TOPMOST`/`HWND_NOTOPMOST`) ohne Verschieben oder Aktivieren.
 
 ### 6.3 Ressourcenschonung (Leistungsoptimierung, Version 1.6)
 
@@ -666,7 +717,7 @@ Version 1.5 und 1.6 laufen lassen und vergleichen. Genauer geht es mit
 
 ### 7.1 Automatisierte Tests
 
-270 Unit‑Tests (xUnit) für die Fachlogik, u. a.:
+281 Unit‑Tests (xUnit) für die Fachlogik, u. a.:
 
 | Testklasse | Geprüft wird |
 |---|---|
@@ -675,7 +726,7 @@ Version 1.5 und 1.6 laufen lassen und vergleichen. Genauer geht es mit
 | `FocusWardenTests` | Ereignis „Wacht beendet“ genau einmal, keine Doppelstarts, Einstellungen wirken sofort |
 | `SessionJournalTests` | **Veränderung, Löschung, Vertauschung, Abschneiden, gefälschter Anker, falscher Schlüssel, Müllzeilen**, Absturz‑Reparatur |
 | `JournalBootstrapperTests` | Erststart, Schlüssel nie im Klartext, Archivierung gebrochener Chroniken, defekter Schlüssel |
-| `SettingsTests` | Wertebereiche, Überschneidungen, Normalisierung, **verdächtige Namen** (Pfade, Nullbytes), Round‑Trip, **beschädigte Dateien**, Prozessname aus dem Programmpfad |
+| `SettingsTests` | Wertebereiche, Überschneidungen, Normalisierung, **verdächtige Namen** (Pfade, Nullbytes), Round‑Trip, **beschädigte Dateien**, Prozessname aus dem Programmpfad, **Leistengröße und „Platz freihalten“** (Standardwerte, fehlende Felder, Round‑Trip als Text, stabile Namen, unbekannte Werte) |
 | `HomecomingTests`, `PraiseTests` | Abwesenheitsstufen, Riepiepich‑Gruß, vollständige Spruchsätze je Buch und Schwelle |
 | `KnownDistractionTests` | Hearthstone & Co. ab Werk erkannt, Gefährten haben Vorrang, Katalog abschaltbar, Markieren ohne Duplikate |
 | `ShuffleBagTests` | Jedes Element einmal je Durchgang, nie zweimal hintereinander, Sonderfälle leer/einzeln |
@@ -707,6 +758,11 @@ damit deterministisch und schnell (< 1 s gesamt).
 | T10 | Anzeige mit 150 % / 200 % Skalierung | Leiste und Symbole scharf, oben zentriert |
 | T11 | Leiste mit der Maus verschieben, App neu starten | Leiste erscheint an der neuen Stelle, alle Ecken rund |
 | T12 | Rechtsklick ▸ *Leiste zurück an den oberen Rand* | Leiste dockt oben zentriert an |
+| T29 | Wacht starten, ein Arbeitsfenster maximieren und mehrfach zwischen Programmen wechseln (auch Win+D, Alt+Tab, zweite Wacht) | Leiste bleibt sichtbar über den Arbeitsfenstern; Startmenü und Alt+Tab liegen kurz darüber |
+| T30 | „Platz am oberen Rand freihalten“ an, Fenster maximieren | Fenster beginnt direkt unter der Leiste; nach dem Ende der Wacht (Leiste verschwindet) füllt es wieder den ganzen Bildschirm |
+| T31 | Rechtsklick ▸ *Größe der Leiste* ▸ Ultradünn / Klein / Mittel / Groß während einer Wacht | Leiste wechselt sofort, bleibt oben zentriert (ultradünn mit freigehaltenem Platz über die ganze Breite); reservierter Streifen passt sich der Höhe an, unter der Leiste lässt sich die Tab‑ bzw. Titelleiste maximierter Fenster auch in der Mitte anklicken |
+| T32 | Ultradünne Leiste nach unten ziehen, Rechtsklick, Tooltip | Streifen wird 640 px breit, Platz oben wird freigegeben; Kontextmenü und Tooltip (Restzeit, Status, Frost, Honig, Station) funktionieren |
+| T33 | Leiste an den rechten Rand ziehen, Größe „Groß“ wählen | Leiste bleibt vollständig auf dem Bildschirm |
 | T13 | Rechtsklick ▸ *Sprüche aus dem Buch* ▸ *Der silberne Sessel* | Häkchen wandert, nächster Mahnruf stammt aus diesem Buch |
 | T14 | Benachrichtigungen per Rechtsklick abschalten, Schwelle erreichen | Kein Rabenbote; Mahnruf nur im Hauptfenster |
 | T15 | Auf den Rabenboten klicken, während in einem Editor getippt wird | Botschaft verschwindet, Editor behält den Fokus |

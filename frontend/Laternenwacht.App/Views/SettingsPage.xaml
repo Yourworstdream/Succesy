@@ -3,6 +3,7 @@
   DataContext: SettingsViewModel (vom Hauptfenster gesetzt: Settings).
   Gestaltung: Nachtflächen (Glass) mit Kapitelzeile, Cinzel-Überschriften mit goldenem Symbol und EB-Garamond-Text.
   Gefährten = Arbeitsprogramme, Verlockungen = Ablenkungen (so sprechen auch die Texte der Wacht).
+  Die Karte "Fokusleiste" (Größe, Vordergrund, Platz freihalten) speichert sofort – wie die Schnellschalter im Kontextmenü.
 -->
 <UserControl x:Class="Laternenwacht.App.Views.SettingsPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -137,7 +138,53 @@
                 <TextBox Text="{Binding IdleText, UpdateSourceTrigger=PropertyChanged}" MaxLength="4" />
               </StackPanel>
             </WrapPanel>
-            <CheckBox IsChecked="{Binding BarAlwaysOnTop}" Margin="0,16,0,0" Content="Fokusleiste stets über allen Fenstern" />
+          </StackPanel>
+        </Border>
+
+        <!-- Fokusleiste: Größe, Vordergrund, Platz am oberen Rand (gilt sofort) -->
+        <Border Style="{StaticResource Glass}" Margin="0,16,0,0">
+          <StackPanel>
+            <StackPanel Orientation="Horizontal">
+              <Path Data="{StaticResource SlidersGeometry}" Style="{StaticResource CardGlyph}" />
+              <TextBlock Text="Fokusleiste" Style="{StaticResource CardTitle}" VerticalAlignment="Center" />
+            </StackPanel>
+            <Rectangle Style="{StaticResource CardRule}" />
+            <TextBlock Style="{StaticResource Body}" Margin="0,12,0,10"
+                       Text="Die Leiste hängt während der Wacht am oberen Bildschirmrand. Wähle, wie viel Raum sie einnimmt – von der haarfeinen Linie bis zur vollen Kapsel. Änderungen gelten sofort, auch mitten in einer Wacht." />
+            <TextBlock Text="GRÖSSE DER LEISTE" Style="{StaticResource Overline}" Margin="0,0,0,4" />
+            <ItemsControl ItemsSource="{Binding BarSizeOptions}" Focusable="False" AutomationProperties.Name="Größe der Leiste">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <WrapPanel />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="{x:Type vm:BarSizeOption}">
+                  <RadioButton GroupName="BarSize" Width="250" Margin="0,6,16,6"
+                               IsChecked="{Binding IsSelected, Mode=OneWay}" Command="{Binding SelectCommand}"
+                               AutomationProperties.Name="{Binding Label}">
+                    <StackPanel>
+                      <TextBlock Text="{Binding Label}" FontWeight="SemiBold" />
+                      <TextBlock Text="{Binding Description}" Style="{StaticResource Caption}" FontSize="13" TextWrapping="Wrap" />
+                    </StackPanel>
+                  </RadioButton>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <CheckBox IsChecked="{Binding BarAlwaysOnTop}" Margin="0,14,0,6" AutomationProperties.Name="Immer im Vordergrund"
+                      AutomationProperties.HelpText="Die Leiste bleibt über allen Fenstern – auch wenn ein anderes Programm nach vorn kommt.">
+              <StackPanel>
+                <TextBlock Text="Immer im Vordergrund" />
+                <TextBlock Text="Die Leiste bleibt über allen Fenstern – auch wenn ein anderes Programm nach vorn kommt." Style="{StaticResource Caption}" FontSize="13" TextWrapping="Wrap" />
+              </StackPanel>
+            </CheckBox>
+            <CheckBox IsChecked="{Binding BarReservesSpace}" AutomationProperties.Name="Platz am oberen Rand freihalten"
+                      AutomationProperties.HelpText="Oben angedockt hält Windows den Streifen der Leiste frei: Maximierte Fenster beginnen darunter, nichts wird verdeckt.">
+              <StackPanel>
+                <TextBlock Text="Platz am oberen Rand freihalten" />
+                <TextBlock Text="Oben angedockt hält Windows den Streifen der Leiste frei: Maximierte Fenster beginnen darunter, nichts wird verdeckt. Gilt nicht, solange du die Leiste frei verschoben hast." Style="{StaticResource Caption}" FontSize="13" TextWrapping="Wrap" />
+              </StackPanel>
+            </CheckBox>
             <Button Style="{StaticResource SecondaryButton}" Command="{Binding ResetBarPositionCommand}" HorizontalAlignment="Left"
                     Margin="0,10,0,0" Content="Fokusleiste wieder oben mittig anordnen" />
           </StackPanel>

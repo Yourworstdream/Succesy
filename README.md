@@ -34,9 +34,24 @@ sobald Aufnahmen der Laternendickicht‑Oberfläche unter Windows vorliegen.</su
   goldenen Licht am Tor; abgebrochen: zurück durch den Schrank.
 * **Fokusleiste oben am Bildschirm** – Restzeit, kumulierte Ablenkungszeit (❄ Frost), Anzahl der
   Verlockungen, Fortschritt; stiehlt beim Anklicken keinen Fokus.
-* **Verschiebbar** – Leiste mit der Maus an jede Stelle ziehen; die Position wird gespeichert.
+* **Vier Leistengrößen** – *Groß* (die volle Kapsel), *Mittel* (kompakte Kapsel mit Wegfaden und Knöpfen),
+  *Klein* (schmale Pille mit Restzeit und Frost, Steuerung per Rechtsklick) und *Ultradünn* (ein haarfeiner
+  Streifen mit Fortschritt, Stationskerben und Honigstücken – angedockt mit freigehaltenem Platz über die ganze
+  Bildschirmbreite, sonst 640 px breit; Einzelheiten im Tooltip). Wechsel jederzeit per Rechtsklick ▸ *Größe der Leiste* oder im Reiter *Gefährten & Verlockungen* –
+  auch mitten in einer Wacht.
+* **Immer im Vordergrund** – die Leiste bleibt über den Arbeitsfenstern: Nach jedem Zeigen und wenn ein anderes
+  Programm nach vorn kommt, setzt sie sich wieder an die Spitze (ohne Hooks, nur eine billige Abfrage pro Sekunde,
+  solange sie sichtbar ist). Abschaltbar.
+* **Platz am oberen Rand freihalten** – oben angedockt meldet sich die Leiste bei Windows wie die Taskleiste als
+  Desktop‑Symbolleiste an: Maximierte Fenster beginnen darunter, nichts wird verdeckt. Der Streifen ist genau so
+  hoch wie die Leiste (angedockt ohne nach unten fallenden Schatten, damit nichts darüber hinausragt) und wird beim
+  Verbergen, Verschieben oder Beenden sofort zurückgegeben; nach einem Neustart des Explorers meldet sich die Leiste
+  von selbst neu an. Abschaltbar.
+* **Verschiebbar** – Leiste mit der Maus an jede Stelle ziehen; die Position wird gespeichert und bleibt
+  vollständig auf dem Bildschirm.
 * **Rechtsklick auf die Leiste** – wählen, aus welchem Buch der Chroniken von Narnia die Sprüche
-  stammen (Band 1–7 oder alle gemischt), Benachrichtigungen an/aus, Leiste zurück an den Rand.
+  stammen (Band 1–7 oder alle gemischt), Benachrichtigungen an/aus, Größe der Leiste, Vordergrund,
+  Platz freihalten, Leiste zurück an den Rand.
 * **Bekannte Verlockungen** wie Hearthstone, Battle.net, Steam, League of Legends, Minecraft oder
   Discord werden ab Werk erkannt; jedes andere Programm per Rechtsklick auf die Leiste ▸
   *„… als Verlockung markieren“*.
@@ -113,7 +128,7 @@ dotnet publish frontend/Laternenwacht.App/Laternenwacht.App.csproj -p:PublishPro
 backend/                               BACKEND – eigenständig baubar (Laternenwacht.Backend.sln)
   src/Laternenwacht.Core               Fachlogik: Messung, Bewertung, Sprüche, versiegelte Chronik
   src/Laternenwacht.Platform.Windows   Win32-Messung, DPAPI, Pfade, Protokoll (ohne Oberfläche)
-  tests/Laternenwacht.Core.Tests       270 xUnit-Tests
+  tests/Laternenwacht.Core.Tests       281 xUnit-Tests
   GEMINI.md                            Übergabe-Anweisung & Schnittstellenvertrag für KI-Assistenten
 frontend/                              FRONTEND – nur Darstellung
   Laternenwacht.App                    WPF: Fokusleiste, Hauptfenster, Rabenbote, Gestaltung

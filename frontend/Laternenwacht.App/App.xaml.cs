@@ -67,6 +67,9 @@ public partial class App : Application
             {
                 AppLog.Error("Unbehandelt", ex);
             }
+
+            // Stürzt die App ab, darf der für die Leiste freigehaltene Streifen nicht verwaist zurückbleiben.
+            AppBarDocking.ReleaseActive();
         };
 
         // --- Einstellungen ---
@@ -107,8 +110,9 @@ public partial class App : Application
 
         // --- Fenster ---
         _main = new MainWindow { DataContext = shell };
-        _bar = new FocusBarWindow { DataContext = new BarViewModel(_session, settingsViewModel), Topmost = settings.BarAlwaysOnTop };
+        _bar = new FocusBarWindow { DataContext = new BarViewModel(_session, settingsViewModel) };
         _bar.ApplyPosition(settings.BarLeft, settings.BarTop);
+        _bar.ApplyBarSettings(settings.BarSize, settings.BarAlwaysOnTop, settings.BarReservesSpace);
         _bar.PositionChosen += (_, position) => settingsViewModel.SaveBarPosition(position.X, position.Y);
         MainWindow = _main;
 
@@ -175,8 +179,9 @@ public partial class App : Application
         {
             warden.ApplySettings(saved);
             _session.SayingsBook = saved.SayingsBook;
-            _bar.Topmost = saved.BarAlwaysOnTop;
+            // Größe, Vordergrund und Platz am Rand gelten sofort – auch mitten in einer Wacht; sonst bleibt alles, wie es ist.
             _bar.ApplyPosition(saved.BarLeft, saved.BarTop);
+            _bar.ApplyBarSettings(saved.BarSize, saved.BarAlwaysOnTop, saved.BarReservesSpace);
             if (!_session.IsActive && saved.DefaultDuration != lastDefaultDuration)
             {
                 _session.DurationMinutes = (int)saved.DefaultDuration.TotalMinutes;
@@ -208,6 +213,9 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        // Den freigehaltenen Streifen am oberen Rand in jedem Fall zurückgeben (sonst bliebe er bis zum Neustart des Explorers).
+        AppBarDocking.ReleaseActive();
+
         if (_singleInstance is not null)
         {
             _singleInstance.ReleaseMutex();
@@ -251,8 +259,7 @@ public partial class App : Application
         }
 
         _hideBarTimer?.Stop();
-        _bar.Show();
-        _bar.Reposition();
+        _bar.ShowOnTop();  // zeigen, an den Platz stellen und "stets oben" erneut setzen
     }
 
     /// <summary>

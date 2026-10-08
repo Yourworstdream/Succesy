@@ -20,7 +20,6 @@ internal sealed class SettingsViewModel : ObservableObject
     private string _durationText = string.Empty;
     private string _idleText = string.Empty;
     private bool _useAllowList;
-    private bool _barAlwaysOnTop;
     private string? _statusMessage;
     private bool _statusIsError;
 
@@ -38,6 +37,8 @@ internal sealed class SettingsViewModel : ObservableObject
 
         BookOptions = [.. Enum.GetValues<ChronicleBook>().Select(b => new BookOption(b, () => SelectedBook = b))];
         UpdateBookSelection();
+        BarSizeOptions = [.. BarSizeOption.Order.Select(size => new BarSizeOption(size, () => BarSize = size))];
+        UpdateBarSizeSelection();
 
         SaveCommand = new RelayCommand(Save);
         ResetBarPositionCommand = new RelayCommand(ResetBarPosition, () => _current.HasCustomBarPosition);
@@ -45,6 +46,8 @@ internal sealed class SettingsViewModel : ObservableObject
         ToggleMemesCommand = new RelayCommand(() => ShowMemes = !ShowMemes);
         TogglePraiseCommand = new RelayCommand(() => ShowPraise = !ShowPraise);
         ToggleKnownDistractionsCommand = new RelayCommand(() => UseKnownDistractions = !UseKnownDistractions);
+        ToggleBarAlwaysOnTopCommand = new RelayCommand(() => BarAlwaysOnTop = !BarAlwaysOnTop);
+        ToggleBarReservesSpaceCommand = new RelayCommand(() => BarReservesSpace = !BarReservesSpace);
         OpenMemeFolderCommand = new RelayCommand(OpenMemeFolder);
         AddMemesCommand = new RelayCommand(AddMemes);
         ResetCommand = new RelayCommand(() => LoadFrom(_current));
@@ -178,6 +181,57 @@ internal sealed class SettingsViewModel : ObservableObject
         }
     }
 
+    // ===== Fokusleiste (alle Änderungen gelten sofort) =====
+
+    /// <summary>Auswahl der vier Leistengrößen (Kontextmenü der Leiste und Einstellungen).</summary>
+    public IReadOnlyList<BarSizeOption> BarSizeOptions { get; }
+
+    /// <summary>Größe der Fokusleiste. Wird sofort gespeichert; die Leiste wechselt ihre Vorlage ohne Neustart.</summary>
+    public BarSize BarSize
+    {
+        get => _current.BarSize;
+        set
+        {
+            if (value != _current.BarSize && Enum.IsDefined(value) && ApplyQuickChange(_current with { BarSize = value }))
+            {
+                UpdateBarSizeSelection();
+            }
+        }
+    }
+
+    public ICommand ToggleBarAlwaysOnTopCommand { get; }
+
+    /// <summary>Leiste stets über allen anderen Fenstern halten. Wird sofort gespeichert.</summary>
+    public bool BarAlwaysOnTop
+    {
+        get => _current.BarAlwaysOnTop;
+        set
+        {
+            if (value != _current.BarAlwaysOnTop && ApplyQuickChange(_current with { BarAlwaysOnTop = value }))
+            {
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public ICommand ToggleBarReservesSpaceCommand { get; }
+
+    /// <summary>
+    /// Angedockt den Streifen am oberen Rand bei Windows freihalten (maximierte Fenster beginnen darunter).
+    /// Wird sofort gespeichert.
+    /// </summary>
+    public bool BarReservesSpace
+    {
+        get => _current.BarReservesSpace;
+        set
+        {
+            if (value != _current.BarReservesSpace && ApplyQuickChange(_current with { BarReservesSpace = value }))
+            {
+                OnPropertyChanged();
+            }
+        }
+    }
+
     /// <summary>Merkt sich die vom Benutzer verschobene Position der Fokusleiste.</summary>
     public void SaveBarPosition(double left, double top) =>
         ApplyQuickChange(_current with { BarLeft = Math.Round(left, 1), BarTop = Math.Round(top, 1) });
@@ -217,8 +271,6 @@ internal sealed class SettingsViewModel : ObservableObject
         set => UseAllowList = !value;
     }
 
-    public bool BarAlwaysOnTop { get => _barAlwaysOnTop; set => SetProperty(ref _barAlwaysOnTop, value); }
-
     public string? StatusMessage { get => _statusMessage; private set => SetProperty(ref _statusMessage, value); }
 
     public bool StatusIsError { get => _statusIsError; private set => SetProperty(ref _statusIsError, value); }
@@ -230,7 +282,6 @@ internal sealed class SettingsViewModel : ObservableObject
         DurationText = settings.DefaultDuration.TotalMinutes.ToString("0", CultureInfo.InvariantCulture);
         IdleText = settings.IdleThreshold.TotalSeconds.ToString("0", CultureInfo.InvariantCulture);
         UseAllowList = settings.Mode == ClassificationMode.AllowList;
-        BarAlwaysOnTop = settings.BarAlwaysOnTop;
         Errors.Clear();
         StatusMessage = null;
     }
@@ -269,7 +320,6 @@ internal sealed class SettingsViewModel : ObservableObject
             DefaultDuration = TimeSpan.FromMinutes(minutes),
             IdleThreshold = TimeSpan.FromSeconds(idleSeconds),
             Mode = UseAllowList ? ClassificationMode.AllowList : ClassificationMode.BlockList,
-            BarAlwaysOnTop = BarAlwaysOnTop,
         };
 
         var errors = SettingsValidator.Validate(candidate);
@@ -411,6 +461,16 @@ internal sealed class SettingsViewModel : ObservableObject
         return true;
     }
 
+    private void UpdateBarSizeSelection()
+    {
+        foreach (var option in BarSizeOptions)
+        {
+            option.IsSelected = option.Size == _current.BarSize;
+        }
+
+        OnPropertyChanged(nameof(BarSize));
+    }
+
     private void UpdateBookSelection()
     {
         foreach (var option in BookOptions)
@@ -446,6 +506,45 @@ internal sealed class BookOption : ObservableObject
 
     /// <summary>"Band 2 · Der König von Narnia" bzw. "Alle Chroniken (gemischt)".</summary>
     public string Label => Book == ChronicleBook.All ? Title : $"Band {ChronicleBooks.Volume(Book)} · {Title}";
+
+    public ICommand SelectCommand { get; }
+
+    public bool IsSelected { get => _isSelected; set => SetProperty(ref _isSelected, value); }
+}
+
+/// <summary>Ein Eintrag der Größenwahl der Fokusleiste (Kontextmenü der Leiste und Einstellungen).</summary>
+internal sealed class BarSizeOption : ObservableObject
+{
+    private bool _isSelected;
+
+    public BarSizeOption(BarSize size, Action select)
+    {
+        Size = size;
+        SelectCommand = new RelayCommand(select);
+    }
+
+    /// <summary>Reihenfolge in Menü und Einstellungen: von der feinsten zur vollen Leiste.</summary>
+    public static IReadOnlyList<BarSize> Order { get; } = [BarSize.UltraThin, BarSize.Small, BarSize.Medium, BarSize.Large];
+
+    public BarSize Size { get; }
+
+    /// <summary>"Ultradünn", "Klein", "Mittel" oder "Groß".</summary>
+    public string Label => Size switch
+    {
+        BarSize.UltraThin => "Ultradünn",
+        BarSize.Small => "Klein",
+        BarSize.Medium => "Mittel",
+        _ => "Groß",
+    };
+
+    /// <summary>Kurzbeschreibung für die Einstellungen.</summary>
+    public string Description => Size switch
+    {
+        BarSize.UltraThin => "Haarfeiner Streifen mit Fortschritt, Stationen und Honig – Einzelheiten im Tooltip.",
+        BarSize.Small => "Schmale Pille: Restzeit und Frost. Steuerung per Rechtsklick.",
+        BarSize.Medium => "Kompakte Kapsel mit Restzeit, Status, Wegfaden, Frost und Knöpfen.",
+        _ => "Die volle Kapsel mit Medaillon, Wegfaden, Frost-Chip und Knöpfen.",
+    };
 
     public ICommand SelectCommand { get; }
 

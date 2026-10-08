@@ -41,8 +41,21 @@ public sealed record FocusSettings
     /// </summary>
     public bool UseKnownDistractions { get; set; } = true;
 
-    /// <summary>Soll die Leiste am oberen Rand stets sichtbar sein?</summary>
+    /// <summary>Soll die Leiste am oberen Rand stets sichtbar sein (über allen anderen Fenstern)?</summary>
     public bool BarAlwaysOnTop { get; set; } = true;
+
+    /// <summary>
+    /// Größe der Fokusleiste. Standard ist <see cref="Laternenwacht.Core.Settings.BarSize.Large"/> – die ursprüngliche Leiste,
+    /// damit sich für bestehende Benutzer nichts ändert.
+    /// </summary>
+    public BarSize BarSize { get; set; } = BarSize.Large;
+
+    /// <summary>
+    /// Platz am oberen Bildschirmrand freihalten: Solange die Leiste oben angedockt (nicht frei verschoben) und
+    /// während einer Wacht sichtbar ist, meldet sie sich bei Windows als Desktop-Symbolleiste an. Maximierte
+    /// Fenster beginnen dann unterhalb der Leiste, statt von ihr überdeckt zu werden (bzw. sie zu verdecken).
+    /// </summary>
+    public bool BarReservesSpace { get; set; } = true;
 
     /// <summary>Aus welchem Buch der Chroniken die Mahnrufe stammen.</summary>
     public ChronicleBook SayingsBook { get; set; } = ChronicleBook.All;
