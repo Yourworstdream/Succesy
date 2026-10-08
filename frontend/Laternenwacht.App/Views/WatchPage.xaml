@@ -1,0 +1,957 @@
+<!--
+  Kapitel I · "Die Wacht" – die Reise durch „Der König von Narnia“.
+  DataContext: SessionViewModel (vom Hauptfenster gesetzt: Session).
+
+  Drei Zustände, genau einer ist sichtbar:
+    Bereit  (IsReady)    Der offene Schrank, Wahl der Dauer und des Bandes, "Laterne entzünden".
+    Unterwegs (IsActive) Bogenbild mit Restzeit und Stationszeile, Pergament "Die Reise" mit Wegband,
+                         Kennzahlen und Wintermesser. Bei Ablenkung lockt die Königin (Schlitten, Frostschleier,
+                         "Anders als Edmund …", die Schachtel der Königin); Rast und Abwesenheit tönen das Bild.
+    Ende    (HasEnding)  Das Bild der Chronik (Krönung, Tauwetter, Steinhof oder zurück durch den Schrank).
+
+  Sparsam: Im Sekundentakt ändern sich nur Texte und eine Skalierung (Fortschrittslinie). Schatten liegen in
+  zwischengespeicherten Ebenen der Thema-Bausteine, die Erzählzeile ist zwischengespeichert (Stil Narration),
+  Pinsel sind eingefroren.
+-->
+<UserControl x:Class="Laternenwacht.App.Views.WatchPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:po="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options"
+             xmlns:views="clr-namespace:Laternenwacht.App.Views"
+             xmlns:vm="clr-namespace:Laternenwacht.App.ViewModels"
+             xmlns:core="clr-namespace:Laternenwacht.Core.Tracking;assembly=Laternenwacht.Core"
+             xmlns:model="clr-namespace:Laternenwacht.Core.Model;assembly=Laternenwacht.Core"
+             mc:Ignorable="d po"
+             d:DataContext="{d:DesignInstance Type=vm:SessionViewModel}"
+             d:DesignWidth="908" d:DesignHeight="1100">
+
+  <UserControl.Resources>
+    <views:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility" />
+    <views:PauseGlyphConverter x:Key="PauseGlyph" />
+    <views:IntEqualsConverter x:Key="IntEquals" />
+    <views:BookIsConverter x:Key="BookIs" />
+    <views:BookTitleConverter x:Key="BookTitle" />
+
+    <!-- Farben aus dem Entwurf, die nur diese Seite braucht -->
+    <SolidColorBrush x:Key="SceneIvoryBrush" Color="#E8DCBC" po:Freeze="True" />
+    <SolidColorBrush x:Key="SceneIceBrush" Color="#CFEAF7" po:Freeze="True" />
+    <SolidColorBrush x:Key="InkFadedBrush" Color="#7A2A1E14" po:Freeze="True" />
+    <SolidColorBrush x:Key="InkAwayBrush" Color="#7A6E58" po:Freeze="True" />
+    <SolidColorBrush x:Key="SealInkBrush" Color="#6E1A12" po:Freeze="True" />
+
+    <!-- Gestrichelte Tintenlinie unter Kennzahlen und Zeilen der Schachtel (gekachelt, eingefroren) -->
+    <DrawingBrush x:Key="DashedRuleBrush" TileMode="Tile" Stretch="None"
+                  Viewport="0,0,7,1" ViewportUnits="Absolute" Viewbox="0,0,7,1" ViewboxUnits="Absolute" po:Freeze="True">
+      <DrawingBrush.Drawing>
+        <GeometryDrawing Brush="#612A1E14" Geometry="M 0,0 H 4 V 1 H 0 Z" />
+      </DrawingBrush.Drawing>
+    </DrawingBrush>
+
+    <!-- Dunkler Schleier oben im Abschlussbild, damit der Titel lesbar bleibt -->
+    <LinearGradientBrush x:Key="EndingTopShadeBrush" StartPoint="0,0" EndPoint="0,1" po:Freeze="True">
+      <GradientStop Color="#8004080B" Offset="0" />
+      <GradientStop Color="#3804080B" Offset="0.6" />
+      <GradientStop Color="#0004080B" Offset="1" />
+    </LinearGradientBrush>
+
+    <!-- Schriftband der Bestmarke -->
+    <LinearGradientBrush x:Key="RibbonBrush" StartPoint="0,0" EndPoint="0,1" po:Freeze="True">
+      <GradientStop Color="#F0C16C" Offset="0" />
+      <GradientStop Color="#D49A3E" Offset="1" />
+    </LinearGradientBrush>
+
+    <!-- Kennzahl auf Pergament: Inhalt mit gestrichelter Linie darunter -->
+    <Style x:Key="InkCell" TargetType="ContentControl">
+      <Setter Property="Focusable" Value="False" />
+      <Setter Property="IsTabStop" Value="False" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ContentControl">
+            <Grid>
+              <ContentPresenter Margin="0,10,0,12" />
+              <Rectangle Height="1" VerticalAlignment="Bottom" Fill="{StaticResource DashedRuleBrush}" SnapsToDevicePixels="True" />
+            </Grid>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Ein Stück Türkischer Honig: Würfel mit rotem Rand und zwei Puderpunkten (Größe über Width/Height) -->
+    <Style x:Key="HoneyIcon" TargetType="ContentControl">
+      <Setter Property="Width" Value="18" />
+      <Setter Property="Height" Value="18" />
+      <Setter Property="Focusable" Value="False" />
+      <Setter Property="IsTabStop" Value="False" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ContentControl">
+            <Viewbox Stretch="Uniform">
+              <Canvas Width="18" Height="18">
+                <Rectangle Canvas.Left="2" Canvas.Top="2" Width="14" Height="14" RadiusX="2.5" RadiusY="2.5"
+                           Fill="{StaticResource HoneyBrush}" Stroke="{StaticResource HoneyEdgeBrush}" StrokeThickness="1.4" />
+                <Ellipse Canvas.Left="5.3" Canvas.Top="5.7" Width="2.2" Height="2.2" Fill="{StaticResource HoneyDotBrush}" />
+                <Ellipse Canvas.Left="10.3" Canvas.Top="9.9" Width="2.2" Height="2.2" Fill="{StaticResource HoneyDotBrush}" />
+              </Canvas>
+            </Viewbox>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Pille im Szenenbild (Status) -->
+    <Style x:Key="ScenePill" TargetType="Border">
+      <Setter Property="HorizontalAlignment" Value="Center" />
+      <Setter Property="CornerRadius" Value="999" />
+      <Setter Property="Padding" Value="16,8" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Background" Value="#BD050A0D" />
+      <Setter Property="BorderBrush" Value="#59E7B75F" />
+    </Style>
+
+    <Style x:Key="PillText" TargetType="TextBlock">
+      <Setter Property="FontFamily" Value="{StaticResource CinzelFont}" />
+      <Setter Property="FontSize" Value="12.5" />
+      <Setter Property="Foreground" Value="{StaticResource IvoryBrush}" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="Margin" Value="9,0,0,0" />
+    </Style>
+
+    <!-- Kleine Versalzeile im Bild ("STATION 3 VON 10 · DIE LEERE HÖHLE") -->
+    <Style x:Key="SceneLabel" TargetType="TextBlock">
+      <Setter Property="FontFamily" Value="{StaticResource CinzelFont}" />
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="Foreground" Value="{StaticResource SceneIvoryBrush}" />
+      <Setter Property="HorizontalAlignment" Value="Center" />
+      <Setter Property="TextAlignment" Value="Center" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <!-- Abschnittsüberschrift auf Pergament: "Die Reise" links, Zusatz rechts -->
+    <Style x:Key="InkAside" TargetType="TextBlock">
+      <Setter Property="FontStyle" Value="Italic" />
+      <Setter Property="FontSize" Value="16" />
+      <Setter Property="Foreground" Value="{StaticResource InkMutedBrush}" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <!-- "Alle" am Ende des Bücherregals -->
+    <Style x:Key="AllBooksToggle" TargetType="RadioButton">
+      <Style.Resources>
+        <Style TargetType="TextBlock" />
+      </Style.Resources>
+      <Setter Property="MinWidth" Value="64" />
+      <Setter Property="Height" Value="56" />
+      <Setter Property="Padding" Value="12,0" />
+      <Setter Property="FontFamily" Value="{StaticResource CinzelFont}" />
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RadioButton">
+            <Grid>
+              <Border x:Name="Bg" CornerRadius="8,8,2,2" BorderThickness="1.5" BorderBrush="#8C2A1E14" Background="Transparent" />
+              <Border x:Name="Hover" CornerRadius="8,8,2,2" Background="{StaticResource InkTintBrush}" Opacity="0" />
+              <Border x:Name="FocusRing" CornerRadius="10,10,4,4" Margin="-4" BorderThickness="1.5"
+                      BorderBrush="{StaticResource InkGoldBrush}" Opacity="0" />
+              <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                RecognizesAccessKey="True" />
+            </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Hover" Property="Opacity" Value="1" />
+              </Trigger>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Bg" Property="Background" Value="{StaticResource InkBrush}" />
+                <Setter TargetName="Bg" Property="BorderBrush" Value="{StaticResource InkBrush}" />
+                <Setter TargetName="Hover" Property="Opacity" Value="0" />
+                <Setter Property="Foreground" Value="{StaticResource IvoryBrightBrush}" />
+              </Trigger>
+              <Trigger Property="IsKeyboardFocused" Value="True">
+                <Setter TargetName="FocusRing" Property="Opacity" Value="1" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Eine Sorte aus der Schachtel der Königin -->
+    <DataTemplate x:Key="QueenBoxRow">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <ContentControl Style="{StaticResource HoneyIcon}" Width="14" Height="14" Margin="0,8,10,8" />
+        <TextBlock Grid.Column="1" Text="{Binding Name}" FontFamily="{StaticResource CinzelFont}" FontSize="15"
+                   Foreground="{StaticResource InkBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+        <TextBlock Grid.Column="2" Text="{Binding DurationText}" FontFamily="{StaticResource CinzelFont}" FontSize="15"
+                   Foreground="{StaticResource InkFrostBrush}" VerticalAlignment="Center" Margin="12,0,0,0"
+                   Typography.NumeralAlignment="Tabular" />
+        <Rectangle Grid.ColumnSpan="3" Height="1" VerticalAlignment="Bottom" Fill="{StaticResource DashedRuleBrush}" Opacity="0.8" />
+      </Grid>
+    </DataTemplate>
+  </UserControl.Resources>
+
+  <!-- Negativer Rand + Innenrand: Rahmen und Schatten des Szenenbilds werden vom Bildlauf nicht abgeschnitten -->
+  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False"
+                Margin="-14,0,-14,-14">
+    <Grid Margin="14,0,14,28">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+
+      <!-- ===== Kopf ===== -->
+      <StackPanel>
+        <TextBlock Text="{Binding Eyebrow}" Style="{StaticResource PageEyebrow}" />
+        <TextBlock Text="Die Wacht" Style="{StaticResource PageTitle}" Margin="0,4,0,0" />
+        <TextBlock Text="{Binding Detail}" Style="{StaticResource PageSubtitle}" Margin="0,4,0,0" />
+      </StackPanel>
+
+      <Grid Grid.Row="1" Margin="0,22,0,0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="11*" MaxWidth="460" />
+          <ColumnDefinition Width="30" />
+          <ColumnDefinition Width="12*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- ================= Links: das Bild ================= -->
+
+        <!-- Bereit: der offene Schrank -->
+        <StackPanel Visibility="{Binding IsReady, Converter={StaticResource BoolToVisibility}}">
+          <views:SceneFrame Height="560" IsArched="False" Source="{Binding Scene}"
+                            AutomationProperties.Name="Ein offener Kleiderschrank mit Pelzmänteln, dahinter ein verschneiter Wald mit einer fernen Laterne" />
+          <Border Style="{StaticResource ScenePill}" Margin="0,16,0,0">
+            <StackPanel Orientation="Horizontal">
+              <Ellipse Width="8" Height="8" Stroke="#F0BE62" StrokeThickness="1.5" VerticalAlignment="Center" />
+              <TextBlock Text="{Binding Headline}" Style="{StaticResource PillText}" />
+            </StackPanel>
+          </Border>
+          <TextBlock Style="{StaticResource Quote}" FontSize="19" LineHeight="27" MaxWidth="400" Margin="0,16,0,0"><Run Text="„" /><Run Text="{Binding Proverb, Mode=OneWay}" /><Run Text="“" /></TextBlock>
+        </StackPanel>
+
+        <!-- Unterwegs und Ende: Bogenbild -->
+        <views:SceneFrame Height="600" VerticalAlignment="Top" IsArched="True" Source="{Binding Scene}"
+                          FrostLevel="{Binding SceneFrostLevel}"
+                          Visibility="{Binding IsReady, Converter={StaticResource InverseBoolToVisibility}}">
+          <views:SceneFrame.Style>
+            <Style TargetType="views:SceneFrame" BasedOn="{StaticResource {x:Type views:SceneFrame}}">
+              <Setter Property="AutomationProperties.Name" Value="Laternenpfahl im verschneiten Wald bei Nacht" />
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding IsPaused}" Value="True">
+                  <Setter Property="WarmLevel" Value="1" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsAway}" Value="True">
+                  <Setter Property="DimLevel" Value="1" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsDistracted}" Value="True">
+                  <Setter Property="AutomationProperties.Name" Value="Der Schlitten der Königin im nächtlichen Schneewald" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding HasEnding}" Value="True">
+                  <Setter Property="AutomationProperties.Name" Value="{Binding EndingTitle}" />
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </views:SceneFrame.Style>
+
+          <Grid>
+            <!-- Eiskristalle in den oberen Bogenecken, solange die Königin lockt -->
+            <Path Data="{StaticResource IceStarGeometry}" Stroke="{StaticResource SceneIceBrush}" StrokeThickness="1.2"
+                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" Opacity="0.9" Width="34" Height="40" Stretch="None"
+                  HorizontalAlignment="Left" VerticalAlignment="Top" Margin="28,112,0,0" IsHitTestVisible="False"
+                  Visibility="{Binding IsDistracted, Converter={StaticResource BoolToVisibility}}" />
+            <Path Data="{StaticResource IceStarGeometry}" Stroke="{StaticResource SceneIceBrush}" StrokeThickness="1.2"
+                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" Opacity="0.9" Width="34" Height="40" Stretch="None"
+                  HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,112,28,0" IsHitTestVisible="False"
+                  RenderTransformOrigin="0.5,0.5"
+                  Visibility="{Binding IsDistracted, Converter={StaticResource BoolToVisibility}}">
+              <Path.RenderTransform>
+                <ScaleTransform ScaleX="-1" />
+              </Path.RenderTransform>
+            </Path>
+
+            <!-- ===== Unterwegs: Restzeit oben, Status und Stationszeile unten ===== -->
+            <Grid Visibility="{Binding IsActive, Converter={StaticResource BoolToVisibility}}">
+              <StackPanel VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,54,0,0">
+                <TextBlock x:Name="RemainingLabel" Text="VERBLEIBEND" FontFamily="{StaticResource CinzelFont}" FontSize="11" HorizontalAlignment="Center">
+                  <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                      <Setter Property="Foreground" Value="{StaticResource SceneIvoryBrush}" />
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDistracted}" Value="True">
+                          <Setter Property="Foreground" Value="{StaticResource SceneIceBrush}" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </TextBlock.Style>
+                </TextBlock>
+                <TextBlock Text="{Binding RemainingText}" FontFamily="{StaticResource CinzelFont}" FontSize="86"
+                           LineHeight="92" LineStackingStrategy="BlockLineHeight" Typography.NumeralAlignment="Tabular"
+                           HorizontalAlignment="Center" AutomationProperties.LabeledBy="{Binding ElementName=RemainingLabel}">
+                  <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                      <Setter Property="Foreground" Value="#FBF3DE" />
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDistracted}" Value="True">
+                          <Setter Property="Foreground" Value="#EAF5FB" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </TextBlock.Style>
+                </TextBlock>
+                <TextBlock Text="{Binding PlannedText}" FontStyle="Italic" FontSize="17" HorizontalAlignment="Center">
+                  <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                      <Setter Property="Foreground" Value="#DCD2B9" />
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDistracted}" Value="True">
+                          <Setter Property="Foreground" Value="#D5E3EA" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </TextBlock.Style>
+                </TextBlock>
+
+                <!-- Fortschrittslinie: vom Laternenpfahl bis Cair Paravel -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
+                  <StackPanel.Resources>
+                    <Style TargetType="Path">
+                      <Setter Property="Width" Value="12" />
+                      <Setter Property="Height" Value="12" />
+                      <Setter Property="Stretch" Value="Uniform" />
+                      <Setter Property="StrokeThickness" Value="1.6" />
+                      <Setter Property="StrokeStartLineCap" Value="Round" />
+                      <Setter Property="StrokeEndLineCap" Value="Round" />
+                      <Setter Property="StrokeLineJoin" Value="Round" />
+                      <Setter Property="VerticalAlignment" Value="Center" />
+                      <Setter Property="Stroke" Value="{StaticResource GoldBrush}" />
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDistracted}" Value="True">
+                          <Setter Property="Stroke" Value="{StaticResource SceneIceBrush}" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </StackPanel.Resources>
+                  <Path Data="{StaticResource Station1Geometry}" />
+                  <Grid Width="170" Height="4" Margin="8,0" VerticalAlignment="Center">
+                    <Rectangle Height="2" VerticalAlignment="Center" Fill="#47F1E6CC" />
+                    <Rectangle RadiusX="2" RadiusY="2" HorizontalAlignment="Stretch" RenderTransformOrigin="0,0.5">
+                      <Rectangle.RenderTransform>
+                        <ScaleTransform ScaleX="{Binding Progress}" />
+                      </Rectangle.RenderTransform>
+                      <Rectangle.Style>
+                        <Style TargetType="Rectangle">
+                          <Setter Property="Fill" Value="{StaticResource GoldBrush}" />
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsDistracted}" Value="True">
+                              <Setter Property="Fill" Value="{StaticResource FrostBrush}" />
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </Rectangle.Style>
+                    </Rectangle>
+                  </Grid>
+                  <Path Data="{StaticResource CairParavelGeometry}" />
+                </StackPanel>
+              </StackPanel>
+
+              <StackPanel VerticalAlignment="Bottom" Margin="34,0,34,26">
+                <!-- Statuspille: Punkt je Zustand (Licht, Zurück, Rast, Abwesend, Verlockung) -->
+                <Border>
+                  <Border.Style>
+                    <Style TargetType="Border" BasedOn="{StaticResource ScenePill}">
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDistracted}" Value="True">
+                          <Setter Property="Background" Value="#C7050A0D" />
+                          <Setter Property="BorderBrush" Value="{StaticResource FrostEdgeBrush}" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </Border.Style>
+                  <StackPanel Orientation="Horizontal">
+                    <Grid Width="12" Height="12" VerticalAlignment="Center">
+                      <!-- Goldener Ring der Rückkehr -->
+                      <Ellipse Stroke="{StaticResource GoldBrush}" StrokeThickness="1.5"
+                               Visibility="{Binding IsReturning, Converter={StaticResource BoolToVisibility}}" />
+                      <Ellipse Width="8" Height="8">
+                        <Ellipse.Style>
+                          <Style TargetType="Ellipse">
+                            <Setter Property="Fill" Value="#F0BE62" />
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding IsPaused}" Value="True">
+                                <Setter Property="Fill" Value="{StaticResource RestBrush}" />
+                              </DataTrigger>
+                              <DataTrigger Binding="{Binding IsAway}" Value="True">
+                                <Setter Property="Fill" Value="Transparent" />
+                                <Setter Property="Stroke" Value="#A89B80" />
+                                <Setter Property="StrokeThickness" Value="1.5" />
+                              </DataTrigger>
+                              <DataTrigger Binding="{Binding IsDistracted}" Value="True">
+                                <Setter Property="Fill" Value="{StaticResource FrostBrush}" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </Ellipse.Style>
+                      </Ellipse>
+                    </Grid>
+                    <TextBlock Text="{Binding Headline}" Margin="7,0,0,0">
+                      <TextBlock.Style>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource PillText}">
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsDistracted}" Value="True">
+                              <Setter Property="Foreground" Value="#EAF5FB" />
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </TextBlock.Style>
+                    </TextBlock>
+                  </StackPanel>
+                </Border>
+
+                <!-- Stationszeile bzw. "Wie am Steinernen Tisch" / "Anders als Edmund" -->
+                <TextBlock Text="{Binding ArchLabel}" Margin="0,12,0,0">
+                  <TextBlock.Style>
+                    <Style TargetType="TextBlock" BasedOn="{StaticResource SceneLabel}">
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsDistracted}" Value="True">
+                          <Setter Property="Foreground" Value="{StaticResource SceneIceBrush}" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </TextBlock.Style>
+                </TextBlock>
+                <TextBlock Text="{Binding ArchText}" Style="{StaticResource Narration}" MaxHeight="92"
+                           TextTrimming="WordEllipsis" Margin="0,6,0,0" />
+              </StackPanel>
+            </Grid>
+
+            <!-- ===== Ende: das Bild der Chronik ===== -->
+            <Grid Visibility="{Binding HasEnding, Converter={StaticResource BoolToVisibility}}">
+              <Rectangle Height="216" VerticalAlignment="Top" Fill="{StaticResource EndingTopShadeBrush}" IsHitTestVisible="False" />
+
+              <StackPanel VerticalAlignment="Top" Margin="56,54,56,0" MinHeight="116">
+                <TextBlock Text="{Binding EndingLabel}" Style="{StaticResource SceneLabel}" />
+                <TextBlock Text="{Binding EndingTitle}" FontFamily="{StaticResource CinzelFont}" FontSize="40" LineHeight="44"
+                           LineStackingStrategy="BlockLineHeight" MaxHeight="88" Foreground="#FBF3DE"
+                           TextAlignment="Center" TextWrapping="Wrap" TextTrimming="WordEllipsis" Margin="0,8,0,0"
+                           views:RenderCache.IsEnabled="True">
+                  <TextBlock.Effect>
+                    <DropShadowEffect BlurRadius="14" ShadowDepth="2" Direction="270" Color="Black" Opacity="0.6" />
+                  </TextBlock.Effect>
+                </TextBlock>
+              </StackPanel>
+
+              <StackPanel VerticalAlignment="Bottom" Margin="30,0,30,26">
+                <TextBlock Text="{Binding EndingStationLabel}" Style="{StaticResource SceneLabel}" />
+                <Border Style="{StaticResource ScenePill}" Background="#C7050A0D" Margin="0,10,0,0">
+                  <StackPanel Orientation="Horizontal">
+                    <Grid Width="14" Height="14" VerticalAlignment="Center">
+                      <Path Stretch="Uniform" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                            StrokeLineJoin="Round">
+                        <Path.Style>
+                          <Style TargetType="Path">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding Ending}" Value="{x:Static core:JourneyEnding.Coronation}">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Setter Property="Data" Value="{StaticResource LeafGeometry}" />
+                                <Setter Property="Stroke" Value="{StaticResource SpringBrush}" />
+                              </DataTrigger>
+                              <DataTrigger Binding="{Binding Ending}" Value="{x:Static core:JourneyEnding.Thaw}">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Setter Property="Data" Value="{StaticResource DropGeometry}" />
+                                <Setter Property="Stroke" Value="{StaticResource FrostBrush}" />
+                              </DataTrigger>
+                              <DataTrigger Binding="{Binding Ending}" Value="{x:Static core:JourneyEnding.StoneCourtyard}">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Setter Property="Data" Value="{StaticResource NarniaSnowflakeGeometry}" />
+                                <Setter Property="Stroke" Value="{StaticResource WinterBrush}" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </Path.Style>
+                      </Path>
+                      <!-- Abgebrochen: hohler Punkt -->
+                      <Ellipse Width="8" Height="8" Stroke="#A89B80" StrokeThickness="1.5"
+                               Visibility="{Binding IsCompleted, Converter={StaticResource InverseBoolToVisibility}}" />
+                    </Grid>
+                    <TextBlock Text="{Binding EndingPill}" Style="{StaticResource PillText}" />
+                  </StackPanel>
+                </Border>
+              </StackPanel>
+            </Grid>
+          </Grid>
+        </views:SceneFrame>
+
+        <!-- ================= Rechts: das Pergament ================= -->
+
+        <!-- ===== Bereit: Neue Wacht ===== -->
+        <ContentControl Grid.Column="2" Style="{StaticResource ParchmentCard}" Padding="40,38,40,36" VerticalAlignment="Top"
+                        Visibility="{Binding IsReady, Converter={StaticResource BoolToVisibility}}">
+          <StackPanel>
+            <TextBlock Text="Neue Wacht" Style="{StaticResource InkTitle}" />
+            <TextBlock Style="{StaticResource InkBody}" Margin="0,8,0,0"
+                       Text="Deine Wacht folgt der Geschichte vom „König von Narnia“: vom Laternenpfahl bis zu den vier Thronen von Cair Paravel. Unterwegs lockt die Königin mit Türkischem Honig. Edmund griff zu – du hast die Wahl." />
+            <views:OrnamentDivider Margin="0,18,0,16" />
+
+            <!-- Dauer: vier Wachssiegel und eigene Dauer -->
+            <WrapPanel>
+              <StackPanel Margin="0,0,16,10" VerticalAlignment="Bottom">
+                <TextBlock Text="DAUER DER WACHT" Style="{StaticResource InkOverline}" />
+                <WrapPanel Margin="0,10,0,0">
+                  <RadioButton Style="{StaticResource SealToggle}" GroupName="WatchDuration" Content="15" Margin="0,0,10,0"
+                               AutomationProperties.Name="15 Minuten"
+                               IsChecked="{Binding DurationMinutes, Converter={StaticResource IntEquals}, ConverterParameter=15}" />
+                  <RadioButton Style="{StaticResource SealToggle}" GroupName="WatchDuration" Content="25" Margin="0,0,10,0"
+                               AutomationProperties.Name="25 Minuten"
+                               IsChecked="{Binding DurationMinutes, Converter={StaticResource IntEquals}, ConverterParameter=25}" />
+                  <RadioButton Style="{StaticResource SealToggle}" GroupName="WatchDuration" Content="50" Margin="0,0,10,0"
+                               AutomationProperties.Name="50 Minuten"
+                               IsChecked="{Binding DurationMinutes, Converter={StaticResource IntEquals}, ConverterParameter=50}" />
+                  <RadioButton Style="{StaticResource SealToggle}" GroupName="WatchDuration" Content="90"
+                               AutomationProperties.Name="90 Minuten"
+                               IsChecked="{Binding DurationMinutes, Converter={StaticResource IntEquals}, ConverterParameter=90}" />
+                </WrapPanel>
+              </StackPanel>
+              <StackPanel Margin="0,0,0,10" VerticalAlignment="Bottom">
+                <TextBlock Text="EIGENE DAUER" Style="{StaticResource InkOverline}" />
+                <Grid Margin="0,6,0,0" Width="128">
+                  <TextBox Style="{StaticResource InkTextBox}" Height="50" Padding="12,9,44,9"
+                           MaxLength="3" AutomationProperties.Name="Eigene Dauer in Minuten"
+                           Text="{Binding DurationMinutes, UpdateSourceTrigger=PropertyChanged}" />
+                  <TextBlock Text="min" FontSize="16" Foreground="{StaticResource InkMutedBrush}" HorizontalAlignment="Right"
+                             VerticalAlignment="Center" Margin="0,0,14,0" IsHitTestVisible="False" />
+                </Grid>
+              </StackPanel>
+            </WrapPanel>
+
+            <!-- Wegband M: zehn Stationen, die Reise beginnt am Laternenpfahl -->
+            <Grid Height="16" Margin="6,12,6,0"
+                  AutomationProperties.Name="Zehn Stationen vom Laternenpfahl bis Cair Paravel, die Reise beginnt an Station 1">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+              </Grid.ColumnDefinitions>
+              <Grid.Resources>
+                <Style TargetType="Ellipse">
+                  <Setter Property="Width" Value="10" />
+                  <Setter Property="Height" Value="10" />
+                  <Setter Property="HorizontalAlignment" Value="Left" />
+                  <Setter Property="Margin" Value="-5,0,0,0" />
+                  <Setter Property="Fill" Value="#F6EEDA" />
+                  <Setter Property="Stroke" Value="#732A1E14" />
+                  <Setter Property="StrokeThickness" Value="1" />
+                  <Setter Property="StrokeDashArray" Value="2 1.5" />
+                </Style>
+              </Grid.Resources>
+              <Line Grid.ColumnSpan="9" X1="0" X2="1" Y1="0" Y2="0" Stretch="Fill" VerticalAlignment="Center"
+                    Stroke="{StaticResource InkBrush}" StrokeThickness="2.5" StrokeDashArray="0 2.8"
+                    StrokeDashCap="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Opacity="0.7" />
+              <Ellipse Fill="{StaticResource GoldBrush}" Stroke="{StaticResource InkBrush}" StrokeDashArray="{x:Null}" />
+              <Ellipse Grid.Column="1" />
+              <Ellipse Grid.Column="2" />
+              <Ellipse Grid.Column="3" />
+              <Ellipse Grid.Column="4" />
+              <Ellipse Grid.Column="5" />
+              <Ellipse Grid.Column="6" />
+              <Ellipse Grid.Column="7" />
+              <Ellipse Grid.Column="8" />
+              <Ellipse Grid.Column="8" HorizontalAlignment="Right" Margin="0,0,-5,0" />
+            </Grid>
+            <TextBlock Text="{Binding ReadyRouteText}" FontStyle="Italic" FontSize="16.5" Foreground="{StaticResource InkSoftBrush}"
+                       TextWrapping="Wrap" Margin="0,10,0,0" />
+            <StackPanel HorizontalAlignment="Right" Margin="0,8,0,0">
+              <TextBlock Text="FROSTVORRAT" Style="{StaticResource InkOverline}" HorizontalAlignment="Right" />
+              <TextBlock Text="{Binding FrostAllowanceText}" FontSize="16.5" Foreground="{StaticResource InkFrostBrush}"
+                         TextAlignment="Right" TextWrapping="Wrap" Margin="0,2,0,0" />
+            </StackPanel>
+
+            <!-- Bücherregal: aus welchem Band die Rabenboten kommen (wird sofort gespeichert) -->
+            <TextBlock Text="SPRÜCHE AUS DEM BAND" Style="{StaticResource InkOverline}" Margin="0,24,0,0" />
+            <!-- Bei schmalem Fenster schrumpft das Regal (Viewbox, nur verkleinern), statt Band VII und „Alle“ abzuschneiden -->
+            <Border Height="112" Margin="0,10,0,0" Padding="10,0" BorderBrush="#5A3A20" BorderThickness="0,0,0,7">
+              <Viewbox Stretch="Uniform" StretchDirection="DownOnly" HorizontalAlignment="Left" VerticalAlignment="Bottom">
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" ClipToBounds="False">
+                    <StackPanel.Resources>
+                      <Style TargetType="RadioButton" BasedOn="{StaticResource BookSpine}">
+                        <Setter Property="GroupName" Value="SayingsBook" />
+                        <Setter Property="Margin" Value="0,0,6,0" />
+                      </Style>
+                    </StackPanel.Resources>
+                    <RadioButton Content="I" Height="84" Tag="#6B2E2A" ToolTip="Band I · „Das Wunder von Narnia“"
+                                 AutomationProperties.Name="Band I: Das Wunder von Narnia"
+                                 IsChecked="{Binding DataContext.Settings.SelectedBook, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BookIs}, ConverterParameter={x:Static model:ChronicleBook.MagiciansNephew}}" />
+                    <RadioButton Content="II" Height="92" Tag="#2E4A3A" ToolTip="Band II · „Der König von Narnia“"
+                                 AutomationProperties.Name="Band II: Der König von Narnia"
+                                 IsChecked="{Binding DataContext.Settings.SelectedBook, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BookIs}, ConverterParameter={x:Static model:ChronicleBook.LionWitchWardrobe}}" />
+                    <RadioButton Content="III" Height="80" Tag="#7A5528" ToolTip="Band III · „Der Ritt nach Narnia“"
+                                 AutomationProperties.Name="Band III: Der Ritt nach Narnia"
+                                 IsChecked="{Binding DataContext.Settings.SelectedBook, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BookIs}, ConverterParameter={x:Static model:ChronicleBook.HorseAndHisBoy}}" />
+                    <RadioButton Content="IV" Height="88" Tag="#2F3F5E" ToolTip="Band IV · „Prinz Kaspian von Narnia“"
+                                 AutomationProperties.Name="Band IV: Prinz Kaspian von Narnia"
+                                 IsChecked="{Binding DataContext.Settings.SelectedBook, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BookIs}, ConverterParameter={x:Static model:ChronicleBook.PrinceCaspian}}" />
+                    <RadioButton Content="V" Height="94" Tag="#2F5A68" ToolTip="Band V · „Die Reise auf der Morgenröte“"
+                                 AutomationProperties.Name="Band V: Die Reise auf der Morgenröte"
+                                 IsChecked="{Binding DataContext.Settings.SelectedBook, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BookIs}, ConverterParameter={x:Static model:ChronicleBook.DawnTreader}}" />
+                    <RadioButton Content="VI" Height="82" Tag="#555A62" ToolTip="Band VI · „Der silberne Sessel“"
+                                 AutomationProperties.Name="Band VI: Der silberne Sessel"
+                                 IsChecked="{Binding DataContext.Settings.SelectedBook, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BookIs}, ConverterParameter={x:Static model:ChronicleBook.SilverChair}}" />
+                    <RadioButton Content="VII" Height="90" Tag="#3E2A44" ToolTip="Band VII · „Der letzte Kampf“"
+                                 AutomationProperties.Name="Band VII: Der letzte Kampf"
+                                 IsChecked="{Binding DataContext.Settings.SelectedBook, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BookIs}, ConverterParameter={x:Static model:ChronicleBook.LastBattle}}" />
+                  </StackPanel>
+                  <RadioButton Grid.Column="1" Style="{StaticResource AllBooksToggle}" GroupName="SayingsBook" Content="Alle"
+                               VerticalAlignment="Bottom" Margin="8,0,0,0" ToolTip="Alle sieben Chroniken, gemischt"
+                               AutomationProperties.Name="Alle sieben Chroniken, gemischt"
+                               IsChecked="{Binding DataContext.Settings.SelectedBook, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BookIs}, ConverterParameter={x:Static model:ChronicleBook.All}}" />
+                </Grid>
+              </Viewbox>
+            </Border>
+            <Border Height="3" Background="#3A2414" Margin="0,0,0,0" />
+            <TextBlock Text="{Binding DataContext.Settings.SelectedBook, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BookTitle}}"
+                       FontStyle="Italic" FontSize="18" Foreground="{StaticResource InkBrush}" TextWrapping="Wrap" Margin="0,12,0,0" />
+            <TextBlock FontStyle="Italic" FontSize="15.5" LineHeight="22" Foreground="{StaticResource InkMutedBrush}" TextWrapping="Wrap"
+                       Margin="0,6,0,0"
+                       Text="Die Reise erzählt immer Band II. Der gewählte Band bestimmt, wer dir unterwegs Rabenboten schickt." />
+
+            <Button Style="{StaticResource PrimaryButton}" Command="{Binding StartCommand}" IsDefault="True"
+                    Height="58" FontSize="16" HorizontalAlignment="Stretch" Margin="0,26,0,0"
+                    AutomationProperties.Name="{Binding StartLabel}">
+              <StackPanel Orientation="Horizontal">
+                <Path Data="{StaticResource FlameGeometry}" Fill="{StaticResource GoldInkBrush}" Stretch="Uniform"
+                      Width="14" Height="18" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding StartLabel}" Margin="12,0,0,0" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+          </StackPanel>
+        </ContentControl>
+
+        <!-- ===== Unterwegs: Die Reise ===== -->
+        <ContentControl Grid.Column="2" Style="{StaticResource ParchmentCard}" VerticalAlignment="Top"
+                        Visibility="{Binding IsActive, Converter={StaticResource BoolToVisibility}}">
+          <StackPanel>
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <TextBlock Text="Die Reise" Style="{StaticResource InkTitle}" VerticalAlignment="Bottom" />
+              <TextBlock Grid.Column="1" Text="erzählt nach „Der König von Narnia“" Style="{StaticResource InkAside}"
+                         TextAlignment="Right" VerticalAlignment="Bottom" Margin="16,0,0,3" />
+            </Grid>
+            <views:OrnamentDivider Margin="0,14,0,6" />
+
+            <views:JourneyBand Station="{Binding StationNumber}" Progress="{Binding Progress}" HoneyMarks="{Binding HoneyMarks}"
+                               IsFrost="{Binding IsDistracted}" IsResting="{Binding IsPaused}" ShowReturnHook="{Binding IsReturning}"
+                               AutomationProperties.Name="{Binding JourneyDescription}" />
+            <Grid Margin="0,6,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <TextBlock Text="{Binding StationName}" FontFamily="{StaticResource CinzelFont}" FontSize="13" FontWeight="SemiBold"
+                         Foreground="{StaticResource InkBrush}" VerticalAlignment="Top" Margin="0,3,0,0" />
+              <TextBlock Grid.Column="1" Text="{Binding NextStationText}" Style="{StaticResource InkAside}" TextAlignment="Right"
+                         Margin="14,0,0,0" />
+            </Grid>
+
+            <!-- Kennzahlen 2 × 3 -->
+            <Grid Margin="0,18,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="30" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+              </Grid.RowDefinitions>
+
+              <ContentControl Style="{StaticResource InkCell}">
+                <StackPanel>
+                  <TextBlock Text="IM LICHT" Style="{StaticResource InkOverline}" />
+                  <TextBlock Text="{Binding FocusedText}" Style="{StaticResource InkMetric}" />
+                </StackPanel>
+              </ContentControl>
+              <ContentControl Grid.Column="2" Style="{StaticResource InkCell}" ToolTip="Zeit im Licht seit der letzten Verlockung">
+                <StackPanel>
+                  <TextBlock Text="AKTUELLE SERIE" Style="{StaticResource InkOverline}" />
+                  <TextBlock Text="{Binding CurrentStreakText}">
+                    <TextBlock.Style>
+                      <Style TargetType="TextBlock" BasedOn="{StaticResource InkMetric}">
+                        <Setter Property="Foreground" Value="{StaticResource InkGoldBrush}" />
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding IsDistracted}" Value="True">
+                            <Setter Property="Foreground" Value="{StaticResource InkFadedBrush}" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </TextBlock.Style>
+                  </TextBlock>
+                </StackPanel>
+              </ContentControl>
+              <ContentControl Grid.Row="1" Style="{StaticResource InkCell}">
+                <StackPanel>
+                  <TextBlock Text="IM FROST" Style="{StaticResource InkOverline}" />
+                  <TextBlock Text="{Binding FrostText}">
+                    <TextBlock.Style>
+                      <Style TargetType="TextBlock" BasedOn="{StaticResource InkMetric}">
+                        <Setter Property="Foreground" Value="{StaticResource InkFrostBrush}" />
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding IsDistracted}" Value="True">
+                            <Setter Property="FontWeight" Value="Bold" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </TextBlock.Style>
+                  </TextBlock>
+                </StackPanel>
+              </ContentControl>
+              <ContentControl Grid.Row="1" Grid.Column="2" Style="{StaticResource InkCell}" ToolTip="Längste Zeit im Licht am Stück in dieser Wacht">
+                <StackPanel>
+                  <TextBlock Text="BESTE SERIE" Style="{StaticResource InkOverline}" />
+                  <TextBlock Text="{Binding LongestStreakText}" Style="{StaticResource InkMetric}" />
+                </StackPanel>
+              </ContentControl>
+              <ContentControl Grid.Row="2" Style="{StaticResource InkCell}" ToolTip="Jede neue Verlockung ist ein Stück aus der Schachtel der Königin">
+                <StackPanel>
+                  <TextBlock Text="TÜRKISCHER HONIG" Style="{StaticResource InkOverline}" />
+                  <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                    <ContentControl Style="{StaticResource HoneyIcon}" />
+                    <TextBlock Text="{Binding HoneyText}" FontFamily="{StaticResource CinzelFont}" FontSize="29"
+                               Foreground="{StaticResource InkBrush}" Margin="10,0,0,0" VerticalAlignment="Center" />
+                  </StackPanel>
+                </StackPanel>
+              </ContentControl>
+              <ContentControl Grid.Row="2" Grid.Column="2" Style="{StaticResource InkCell}" ToolTip="Abwesenheit zählt nicht als Frost">
+                <StackPanel>
+                  <TextBlock Text="ABWESEND" Style="{StaticResource InkOverline}" />
+                  <TextBlock Text="{Binding AwayText}" Style="{StaticResource InkMetric}" Foreground="{StaticResource InkAwayBrush}" />
+                </StackPanel>
+              </ContentControl>
+            </Grid>
+
+            <!-- Der Winter der Königin -->
+            <TextBlock Text="DER WINTER DER KÖNIGIN" Style="{StaticResource InkOverline}" Margin="0,22,0,0" />
+            <views:WinterMeter FrostSeconds="{Binding WinterFrostSeconds}" PlannedSeconds="{Binding PlannedSeconds}" Margin="0,10,0,0"
+                               AutomationProperties.Name="{Binding WinterMeterDescription}" />
+            <TextBlock Text="{Binding WinterMeterText}" FontStyle="Italic" FontSize="16.5" LineHeight="23" TextWrapping="Wrap"
+                       Margin="0,6,0,0">
+              <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                  <Setter Property="Foreground" Value="{StaticResource InkSoftBrush}" />
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsWinterMeterWarning}" Value="True">
+                      <Setter Property="Foreground" Value="{StaticResource InkRedBrush}" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </TextBlock.Style>
+            </TextBlock>
+
+            <!-- Im Licht: nächstes Ziel -->
+            <StackPanel Margin="0,20,0,0" Visibility="{Binding IsDistracted, Converter={StaticResource InverseBoolToVisibility}}">
+              <TextBlock Text="NÄCHSTES ZIEL" Style="{StaticResource InkOverline}" />
+              <Grid Margin="0,6,0,0">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding NextGoalText}" FontSize="18" Foreground="{StaticResource InkBrush}" TextTrimming="CharacterEllipsis" />
+                <TextBlock Grid.Column="1" Text="{Binding NextGoalRemainingText}" FontFamily="{StaticResource CinzelFont}" FontSize="14"
+                           FontWeight="SemiBold" Foreground="{StaticResource InkGoldBrush}" VerticalAlignment="Bottom" Margin="12,0,0,2" />
+              </Grid>
+              <ProgressBar Style="{StaticResource InkProgress}" Value="{Binding NextGoalProgress, Mode=OneWay}" Margin="0,8,0,0"
+                           AutomationProperties.Name="Fortschritt zum nächsten Ziel" />
+            </StackPanel>
+
+            <!-- Bei der Königin: ihre Schachtel und der Weg zurück -->
+            <StackPanel Margin="0,22,0,0" Visibility="{Binding IsDistracted, Converter={StaticResource BoolToVisibility}}">
+              <TextBlock Text="DIE SCHACHTEL DER KÖNIGIN" Style="{StaticResource InkOverline}" />
+              <ItemsControl ItemsSource="{Binding QueenBox}" ItemTemplate="{StaticResource QueenBoxRow}" Margin="0,4,0,0" Focusable="False" />
+              <Grid Margin="0,22,0,0">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Path Data="{StaticResource LanternGeometry}" Stroke="{StaticResource InkGoldBrush}" StrokeThickness="1.6"
+                      StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Stretch="Uniform"
+                      Width="16" Height="16" VerticalAlignment="Top" Margin="0,4,10,0" />
+                <TextBlock Grid.Column="1" FontStyle="Italic" FontSize="17" LineHeight="24" Foreground="{StaticResource InkSoftBrush}"
+                           TextWrapping="Wrap" Text="Wechsle zu einem Gefährten, und der Schlitten fährt ohne dich weiter." />
+              </Grid>
+            </StackPanel>
+
+            <!-- Rasten / Weiterziehen, Wacht beenden -->
+            <WrapPanel Margin="0,26,0,0">
+              <Button Style="{StaticResource InkButton}" Command="{Binding PauseResumeCommand}" Margin="0,0,12,0"
+                      AutomationProperties.Name="{Binding PauseResumeLabel}">
+                <StackPanel Orientation="Horizontal">
+                  <Path Style="{StaticResource FillIcon}" Width="12" Height="14"
+                        Data="{Binding IsPaused, Converter={StaticResource PauseGlyph}}" />
+                  <TextBlock Text="{Binding PauseResumeLabel}" Margin="10,0,0,0" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+              <Button Style="{StaticResource InkDangerButton}" Command="{Binding AbortCommand}" Content="Wacht beenden" />
+            </WrapPanel>
+          </StackPanel>
+        </ContentControl>
+
+        <!-- ===== Ende: Die Reise in der Chronik ===== -->
+        <ContentControl Grid.Column="2" Style="{StaticResource ParchmentCard}" VerticalAlignment="Top"
+                        Visibility="{Binding HasEnding, Converter={StaticResource BoolToVisibility}}">
+          <StackPanel>
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <TextBlock Text="Die Reise" Style="{StaticResource InkTitle}" VerticalAlignment="Bottom" />
+              <TextBlock Grid.Column="1" Text="{Binding EndingCaption}" Style="{StaticResource InkAside}"
+                         TextAlignment="Right" VerticalAlignment="Bottom" Margin="16,0,0,3" />
+            </Grid>
+            <views:OrnamentDivider Margin="0,14,0,6" />
+
+            <views:JourneyBand Station="{Binding StationNumber}" Progress="{Binding Progress}" HoneyMarks="{Binding HoneyMarks}"
+                               ShowCrown="{Binding ShowCrown}" AutomationProperties.Name="{Binding JourneyDescription}" />
+            <Grid Margin="0,6,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <TextBlock Text="{Binding StationName}" FontFamily="{StaticResource CinzelFont}" FontSize="13" FontWeight="SemiBold"
+                         Foreground="{StaticResource InkBrush}" VerticalAlignment="Top" Margin="0,3,0,0" />
+              <TextBlock Grid.Column="1" Text="{Binding EndingRouteText}" Style="{StaticResource InkAside}" TextAlignment="Right"
+                         Margin="14,0,0,0" />
+            </Grid>
+
+            <!-- Schriftband bei neuer Bestmarke -->
+            <Grid Margin="0,20,0,0" Visibility="{Binding HasRecordStreak, Converter={StaticResource BoolToVisibility}}">
+              <Polygon Points="0,0 100,0 96.5,50 100,100 0,100 3.5,50" Stretch="Fill" Fill="{StaticResource RibbonBrush}" />
+              <TextBlock Text="{Binding RecordStreakText}" FontFamily="{StaticResource CinzelFont}" FontSize="13" FontWeight="SemiBold"
+                         LineHeight="19" Foreground="{StaticResource InkBrush}" TextAlignment="Center" TextWrapping="Wrap"
+                         Margin="30,10" />
+            </Grid>
+
+            <TextBlock Text="{Binding EndingNarration}" FontSize="18" LineHeight="26" Foreground="{StaticResource InkBrush}"
+                       TextWrapping="Wrap" Margin="0,20,0,0" />
+
+            <!-- Die Schachtel blieb zu: grünes Wachssiegel -->
+            <Grid Margin="0,18,0,0" Visibility="{Binding IsFlawless, Converter={StaticResource BoolToVisibility}}">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <views:WaxSeal Diameter="44" SealBrush="{StaticResource SpringSealBrush}" Glyph="{StaticResource HoneyCubeGeometry}"
+                             GlyphBrush="#D5E4B8" VerticalAlignment="Center" />
+              <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
+                <TextBlock Text="Die Schachtel blieb zu" FontFamily="{StaticResource CinzelFont}" FontSize="15" FontWeight="SemiBold"
+                           Foreground="{StaticResource InkSpringBrush}" />
+                <TextBlock Text="Kein einziges Stück Türkischer Honig in dieser Wacht." FontSize="16.5"
+                           Foreground="{StaticResource InkSoftBrush}" TextWrapping="Wrap" Margin="0,2,0,0" />
+              </StackPanel>
+            </Grid>
+
+            <!-- Kennzahlen 2 × 2 -->
+            <Grid Margin="0,18,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="30" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+              </Grid.RowDefinitions>
+              <ContentControl Style="{StaticResource InkCell}">
+                <StackPanel>
+                  <TextBlock Text="IM LICHT" Style="{StaticResource InkOverline}" />
+                  <TextBlock Text="{Binding FocusedText}" Style="{StaticResource InkMetric}" />
+                </StackPanel>
+              </ContentControl>
+              <ContentControl Grid.Column="2" Style="{StaticResource InkCell}">
+                <StackPanel>
+                  <TextBlock Text="IM FROST" Style="{StaticResource InkOverline}" />
+                  <TextBlock Text="{Binding FrostText}" Style="{StaticResource InkMetric}" Foreground="{StaticResource InkFrostBrush}" />
+                </StackPanel>
+              </ContentControl>
+              <ContentControl Grid.Row="1" Style="{StaticResource InkCell}">
+                <StackPanel>
+                  <TextBlock Text="TÜRKISCHER HONIG" Style="{StaticResource InkOverline}" />
+                  <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                    <ContentControl Style="{StaticResource HoneyIcon}" />
+                    <TextBlock Text="{Binding HoneyText}" FontFamily="{StaticResource CinzelFont}" FontSize="29"
+                               Foreground="{StaticResource InkBrush}" Margin="10,0,0,0" VerticalAlignment="Center" />
+                  </StackPanel>
+                </StackPanel>
+              </ContentControl>
+              <ContentControl Grid.Row="1" Grid.Column="2" Style="{StaticResource InkCell}">
+                <StackPanel>
+                  <TextBlock Text="LÄNGSTE SERIE" Style="{StaticResource InkOverline}" />
+                  <TextBlock Text="{Binding LongestStreakText}" Style="{StaticResource InkMetric}" Foreground="{StaticResource InkGoldBrush}" />
+                </StackPanel>
+              </ContentControl>
+            </Grid>
+
+            <!-- Die Schachtel der Königin -->
+            <TextBlock Text="DIE SCHACHTEL DER KÖNIGIN" Style="{StaticResource InkOverline}" Margin="0,22,0,0" />
+            <TextBlock Text="Diese Sorten hat sie dir in dieser Wacht angeboten" FontStyle="Italic" FontSize="15.5"
+                       Foreground="{StaticResource InkMutedBrush}" TextWrapping="Wrap" Margin="0,4,0,0" />
+            <ItemsControl ItemsSource="{Binding QueenBox}" ItemTemplate="{StaticResource QueenBoxRow}" Margin="0,6,0,0" Focusable="False"
+                          Visibility="{Binding HasQueenBoxItems, Converter={StaticResource BoolToVisibility}}" />
+            <TextBlock Text="Leer geblieben – nicht ein Stück." FontSize="17" Foreground="{StaticResource InkSpringBrush}" Margin="0,10,0,0"
+                       Visibility="{Binding HasQueenBoxItems, Converter={StaticResource InverseBoolToVisibility}}" />
+
+            <!-- Versiegelt -->
+            <Border BorderBrush="{StaticResource RuleBrush}" BorderThickness="0,1,0,0" Margin="0,24,0,0" Padding="0,16,0,0">
+              <StackPanel>
+                <StackPanel Orientation="Horizontal">
+                  <views:WaxSeal Diameter="16" VerticalAlignment="Center" />
+                  <TextBlock Text="In die Chronik eingetragen und versiegelt." FontFamily="{StaticResource CinzelFont}" FontSize="13"
+                             FontWeight="SemiBold" Foreground="{StaticResource SealInkBrush}" VerticalAlignment="Center"
+                             TextWrapping="Wrap" Margin="9,0,0,0" />
+                </StackPanel>
+                <TextBlock FontStyle="Italic" FontSize="16.5" LineHeight="24" Foreground="{StaticResource InkSoftBrush}" TextWrapping="Wrap"
+                           Margin="0,10,0,0" Visibility="{Binding IsCompleted, Converter={StaticResource BoolToVisibility}}"
+                           Text="Am Ende des Buches finden die vier den Laternenpfahl wieder und stehen plötzlich als Kinder im Haus des Professors. Auch du kehrst zurück an deinen Tisch – mit einer Seite mehr in der Chronik." />
+              </StackPanel>
+            </Border>
+
+            <WrapPanel Margin="0,26,0,0">
+              <Button Style="{StaticResource PrimaryButton}" Command="{Binding NewWatchCommand}" Height="52" FontSize="15"
+                      Padding="30,0" Margin="0,0,12,10">
+                <StackPanel Orientation="Horizontal">
+                  <Path Data="{StaticResource FlameGeometry}" Fill="{StaticResource GoldInkBrush}" Stretch="Uniform"
+                        Width="12" Height="16" VerticalAlignment="Center" />
+                  <TextBlock Text="Neue Wacht" Margin="12,0,0,0" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+              <Button Style="{StaticResource InkButton}" Content="Zur Chronik" Click="OnShowChronicle" Margin="0,2,0,10" />
+            </WrapPanel>
+          </StackPanel>
+        </ContentControl>
+      </Grid>
+    </Grid>
+  </ScrollViewer>
+</UserControl>

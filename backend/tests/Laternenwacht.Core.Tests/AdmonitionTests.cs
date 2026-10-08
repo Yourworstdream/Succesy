@@ -23,16 +23,115 @@ public class AdmonitionTests
         Assert.Null(Admonitions.Next(2, TimeSpan.FromMinutes(1), new HashSet<string>()));
 
     [Fact]
-    public void Twenty_distractions_summon_the_ruler_of_cair_paravel()
+    public void Twenty_pieces_of_turkish_delight_are_answered_by_peter()
     {
         var shown = new HashSet<string> { "count:3", "count:5", "count:10", "count:15" };
 
         var admonition = Admonitions.Next(20, TimeSpan.Zero, shown, ChronicleBook.LionWitchWardrobe);
 
         Assert.NotNull(admonition);
-        Assert.Contains("Cair Paravel", admonition!.Text, StringComparison.Ordinal);
+        Assert.Equal("count:20", admonition!.Key);
+        Assert.Contains("trockenes Brot", admonition.Text, StringComparison.Ordinal);
         Assert.Equal(ChronicleBook.LionWitchWardrobe, admonition.Book);
+        Assert.Equal(new Encouragement("Genau so ging es Edmund. Was sie verspricht, hält sie nicht.", "Peter",
+            ChronicleBook.LionWitchWardrobe), admonition.Reply);
     }
+
+    [Fact]
+    public void The_queen_never_has_the_last_word_in_the_lion_witch_and_wardrobe()
+    {
+        var shown = new HashSet<string>();
+        var sayings = Admonitions.For(ChronicleBook.LionWitchWardrobe);
+
+        for (var i = 0; i < Admonitions.CountThresholds.Count; i++)
+        {
+            var count = Admonitions.CountThresholds[i];
+            var admonition = Admonitions.Next(count, TimeSpan.Zero, shown, ChronicleBook.LionWitchWardrobe);
+
+            // Genau ein Spruch je Schwelle – und jeder Mahnruf der Königin bekommt eine Antwort aus Narnia.
+            Assert.NotNull(admonition);
+            Assert.Equal($"count:{count}", admonition!.Key);
+            Assert.Equal(sayings[i], admonition.Text);
+            Assert.NotNull(admonition.Reply);
+            Assert.Equal(ChronicleBook.LionWitchWardrobe, admonition.Reply!.Book);
+            Assert.False(string.IsNullOrWhiteSpace(admonition.Reply.Text));
+            Assert.False(string.IsNullOrWhiteSpace(admonition.Reply.Speaker));
+            Assert.NotEqual(admonition.Text, admonition.Reply.Text);
+            Assert.Null(Admonitions.Next(count, TimeSpan.Zero, shown, ChronicleBook.LionWitchWardrobe));
+        }
+    }
+
+    [Fact]
+    public void Replies_to_the_queen_are_all_different()
+    {
+        var shown = new HashSet<string>();
+        var replies = Admonitions.CountThresholds
+            .Select(c => Admonitions.Next(c, TimeSpan.Zero, shown, ChronicleBook.LionWitchWardrobe)!.Reply!.Text)
+            .ToList();
+
+        Assert.Equal(replies.Count, replies.Distinct(StringComparer.Ordinal).Count());
+    }
+
+    [Fact]
+    public void Aslan_answers_only_at_fifty()
+    {
+        var fifty = Admonitions.Next(50, TimeSpan.Zero, new HashSet<string>(), ChronicleBook.LionWitchWardrobe);
+
+        Assert.Equal("Aslan", fifty!.Reply!.Speaker);
+
+        var shown = new HashSet<string>();
+        var others = Admonitions.CountThresholds.Take(6)
+            .Select(c => Admonitions.Next(c, TimeSpan.Zero, shown, ChronicleBook.LionWitchWardrobe)!.Reply!.Speaker);
+        Assert.DoesNotContain("Aslan", others);
+    }
+
+    [Fact]
+    public void Frost_admonitions_come_without_a_reply()
+    {
+        var shown = new HashSet<string>();
+
+        foreach (var minutes in Admonitions.FrostMinuteThresholds)
+        {
+            var admonition = Admonitions.Next(0, TimeSpan.FromMinutes(minutes), shown, ChronicleBook.LionWitchWardrobe);
+
+            Assert.Equal($"frost:{minutes}", admonition!.Key);
+            Assert.Null(admonition.Reply);
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(Volumes))]
+    public void Only_the_lion_witch_and_wardrobe_carries_replies(ChronicleBook book)
+    {
+        var shown = new HashSet<string>();
+        var admonitions = Admonitions.CountThresholds
+            .Select(c => Admonitions.Next(c, TimeSpan.Zero, shown, book)!)
+            .Concat(Admonitions.FrostMinuteThresholds
+                .Select(m => Admonitions.Next(0, TimeSpan.FromMinutes(m), shown, book)!))
+            .ToList();
+
+        Assert.Equal(Admonitions.CountThresholds.Count + Admonitions.FrostMinuteThresholds.Count, admonitions.Count);
+        Assert.Equal(book == ChronicleBook.LionWitchWardrobe ? Admonitions.CountThresholds.Count : 0,
+            admonitions.Count(a => a.Reply is not null));
+    }
+
+    [Fact]
+    public void Mixed_mode_gives_the_queen_a_reply_whenever_her_book_is_drawn()
+    {
+        for (var seed = 0; seed < ChronicleBooks.Volumes.Count; seed++)
+        {
+            var shown = new HashSet<string>();
+            foreach (var count in Admonitions.CountThresholds)
+            {
+                var admonition = Admonitions.Next(count, TimeSpan.Zero, shown, ChronicleBook.All, seed)!;
+                Assert.Equal(admonition.Book == ChronicleBook.LionWitchWardrobe, admonition.Reply is not null);
+            }
+        }
+    }
+
+    [Fact]
+    public void Queen_signature_is_set() =>
+        Assert.StartsWith("Jadis", Admonitions.QueenSignature, StringComparison.Ordinal);
 
     [Fact]
     public void Each_admonition_appears_only_once()

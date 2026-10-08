@@ -43,9 +43,9 @@ public static class Homecomings
             ],
             [ChronicleBook.LionWitchWardrobe] =
             [
-                ("Ah, zurück am Laternenpfahl. Ich habe den Tee warm gehalten.", "Herr Tumnus"),
-                ("Gut, dass du da bist! Wir hatten schon einen Suchtrupp losgeschickt.", "Frau Biber"),
-                ("Du bist zurück – und der Schnee beginnt zu tauen. Man sagt, der Löwe sei unterwegs.", "Herr Biber"),
+                ("Du bist aufgestanden, bevor die Schachtel leer war. Edmund hat dafür viel länger gebraucht.", "Lucy"),
+                ("Da bist du ja! Ich hab den Topf vom Feuer genommen, damit nichts anbrennt. Setz dich, das Essen ist noch warm.", "Frau Biber"),
+                ("Edmund kam auch zurück, und keiner hat ihm den Umweg vorgehalten. Komm, wir gehen zusammen weiter.", "Peter"),
             ],
             [ChronicleBook.HorseAndHisBoy] =
             [
@@ -75,7 +75,7 @@ public static class Homecomings
             [
                 ("Gut gemacht – nicht jede Stalltür muss man öffnen. Schön, dass du zurück bist.", "König Tirian"),
                 ("Willkommen zurück. Ich habe schon unruhig mit dem Huf gescharrt.", "Juwel, das Einhorn"),
-                ("Weiter hinauf und weiter hinein! Wir haben gewartet – jetzt aber los.", "Juwel, das Einhorn"),
+                ("Da bist du endlich! Wir haben die Stellung für dich gehalten – jetzt reiten wir gemeinsam weiter.", "Juwel, das Einhorn"),
             ],
         }.ToFrozenDictionary();
 

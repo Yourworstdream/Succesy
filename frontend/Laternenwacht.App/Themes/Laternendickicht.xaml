@@ -1,0 +1,1201 @@
+<!--
+  Gestaltungssystem "Laternendickicht"
+  ====================================
+  Leitidee: ein aufgeschlagenes Buch im nächtlichen Laternenwald. Die Wacht erzählt "Der König von Narnia"
+  vom Laternenpfahl bis Cair Paravel – darum tragen Pergamentkarten mit Tinte die Geschichte, während der
+  Nachtgrund still im Hintergrund bleibt. Laternengold ist das einzige warme Licht (Fokus, Fortschritt, Lob),
+  Eisblau gehört allein der Ablenkung (der Winter der Königin), rote Wachssiegel stehen für Narnia und
+  für die versiegelte Chronik. Überschriften in Cinzel (römische Versalien), Fließtext in EB Garamond.
+
+  Farbrollen
+    Nacht      #081116 (Grund), #0B181E–#16303A (Schein oben)       Ivory   #F1E6CC  Text auf Nacht
+    Glas       Nachtblau 75 % #0D1A1F, Goldkante 22–35 %            Matt    #CFC6AF / #A9A28E  Fließtext / Beschriftung
+    Pergament  #F6EEDA → #ECDFBF → #DCC69A, Rand #A07A36             Tinte   #2A1E14 (+ #6B5434 / #4A3A28 / #8A5A12)
+    Laterne    #E7B75F  Licht, Fokus, Lob, Rahmen #B8904A           Eis     #9FD0EA / #4F92B5  nur Ablenkung
+    Wachs      #9E2B1F / #B23A2A / #6E1A12  Siegel, gewählte Dauer   Frühling #B9D58E, Rast #E08A4A, Honig #F4EBDD
+
+  Schriften
+    Cinzel, Cinzel Decorative und EB Garamond liegen als TTF in Assets/Fonts (SIL Open Font License) und werden
+    als Ordner-Verweis "/Assets/Fonts/#Familie" geladen. Bewusst ohne "pack://application:,,,": In einer Liste mit
+    Ersatzschriften trennt WPF Namen an Kommas – die drei Kommas des Pack-Schemas würden die Liste zerschneiden.
+    Der führende Schrägstrich wird gegen die Basis-URI aufgelöst und ergibt genau pack://application:,,,/Assets/Fonts/.
+    Fehlt eine Schrift, greifen Sitka bzw. Georgia (seit Windows 8.1 bzw. immer vorhanden).
+
+  Neue Bausteine (zusätzlich zu allen bisherigen Schlüsseln, die mit neuen Werten erhalten bleiben)
+    Pergament: ParchmentCard (ContentControl) mit Innenlinie und vier Eckzierden, Tinte: InkOverline,
+    InkMetric, InkBody, InkTitle, InkButton, InkDangerButton. Nacht: NightPanel, Narration, PageEyebrow.
+    Auswahl: SealToggle (rundes Wachssiegel), BookSpine (Buchrücken, Farbe über Tag).
+    Symbole: Station1Geometry … Station10Geometry (die zehn Stationen der Reise, 20×20) und weitere.
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:views="clr-namespace:Laternenwacht.App.Views">
+
+  <!-- ===== Farben ===== -->
+  <Color x:Key="IvoryColor">#F1E6CC</Color>
+  <Color x:Key="GoldColor">#E7B75F</Color>
+  <Color x:Key="FrostColor">#9FD0EA</Color>
+  <Color x:Key="NightColor">#081116</Color>
+  <Color x:Key="InkColor">#2A1E14</Color>
+  <Color x:Key="IceDeepColor">#4F92B5</Color>
+  <Color x:Key="RestColor">#E08A4A</Color>
+  <Color x:Key="NarniaRedColor">#9E2B1F</Color>
+
+  <!-- Nachtgrund: kühler Schein oben rechts, darunter tiefe Nacht -->
+  <RadialGradientBrush x:Key="NightBrush" Center="0.62,-0.1" GradientOrigin="0.62,-0.1" RadiusX="1.05" RadiusY="1.1">
+    <GradientStop Color="#16303A" Offset="0" />
+    <GradientStop Color="#0B181E" Offset="0.45" />
+    <GradientStop Color="#081116" Offset="1" />
+  </RadialGradientBrush>
+
+  <!-- Warmer Laternenschimmer im Fensterhintergrund -->
+  <RadialGradientBrush x:Key="AmbientGlowBrush" Center="0.3,0.78" GradientOrigin="0.3,0.78" RadiusX="0.55" RadiusY="0.6">
+    <GradientStop Color="#12E7B75F" Offset="0" />
+    <GradientStop Color="#00E7B75F" Offset="1" />
+  </RadialGradientBrush>
+
+  <SolidColorBrush x:Key="GlassBrush" Color="#0BF1E6CC" />
+  <SolidColorBrush x:Key="Glass2Brush" Color="#14F1E6CC" />
+  <SolidColorBrush x:Key="Glass3Brush" Color="#1FF1E6CC" />
+  <SolidColorBrush x:Key="EdgeBrush" Color="#38C9A056" />
+  <SolidColorBrush x:Key="Edge2Brush" Color="#5CC9A056" />
+  <SolidColorBrush x:Key="PopupBrush" Color="#FA0D1A1F" />
+  <!-- Dunkle Glasfläche der Nachtseiten (Siegel, Kennzahlen, Navigation) -->
+  <SolidColorBrush x:Key="NightPanelBrush" Color="#BF0D1A1F" />
+  <SolidColorBrush x:Key="HeaderBrush" Color="#8C04090C" />
+
+  <SolidColorBrush x:Key="IvoryBrush" Color="{StaticResource IvoryColor}" />
+  <SolidColorBrush x:Key="IvoryBrightBrush" Color="#F6EBD0" />
+  <SolidColorBrush x:Key="SageBrush" Color="#CFC6AF" />
+  <SolidColorBrush x:Key="MossBrush" Color="#A9A28E" />
+  <SolidColorBrush x:Key="AwayBrush" Color="#6E6A5C" />
+
+  <SolidColorBrush x:Key="GoldBrush" Color="{StaticResource GoldColor}" />
+  <SolidColorBrush x:Key="GoldDeepBrush" Color="#C8913A" />
+  <SolidColorBrush x:Key="GoldTintBrush" Color="#1AE7B75F" />
+  <SolidColorBrush x:Key="GoldInkBrush" Color="{StaticResource InkColor}" />
+  <SolidColorBrush x:Key="FrameGoldBrush" Color="#B8904A" />
+  <SolidColorBrush x:Key="EyebrowBrush" Color="#C9A056" />
+  <LinearGradientBrush x:Key="GoldFillBrush" StartPoint="0,0" EndPoint="0,1">
+    <GradientStop Color="#F0C16C" Offset="0" />
+    <GradientStop Color="#D49A3E" Offset="1" />
+  </LinearGradientBrush>
+  <LinearGradientBrush x:Key="GoldBarBrush" StartPoint="0,0" EndPoint="1,0">
+    <GradientStop Color="#C8913A" Offset="0" />
+    <GradientStop Color="#E7B75F" Offset="1" />
+  </LinearGradientBrush>
+
+  <SolidColorBrush x:Key="FrostBrush" Color="{StaticResource FrostColor}" />
+  <SolidColorBrush x:Key="FrostDeepBrush" Color="{StaticResource IceDeepColor}" />
+  <SolidColorBrush x:Key="FrostTintBrush" Color="#249FD0EA" />
+  <SolidColorBrush x:Key="FrostEdgeBrush" Color="#809FD0EA" />
+
+  <SolidColorBrush x:Key="RoseBrush" Color="#E39B8A" />
+  <SolidColorBrush x:Key="ErrorBrush" Color="#E5826F" />
+  <SolidColorBrush x:Key="ErrorTintBrush" Color="#26E5826F" />
+
+  <!-- Pergament und Tinte -->
+  <RadialGradientBrush x:Key="ParchmentBrush" Center="0.5,0.38" GradientOrigin="0.5,0.38" RadiusX="0.75" RadiusY="0.75">
+    <GradientStop Color="#F6EEDA" Offset="0" />
+    <GradientStop Color="#ECDFBF" Offset="0.66" />
+    <GradientStop Color="#DCC69A" Offset="1" />
+  </RadialGradientBrush>
+  <SolidColorBrush x:Key="ParchmentFlatBrush" Color="#F1E6CC" />
+  <SolidColorBrush x:Key="ParchmentEdgeBrush" Color="#A07A36" />
+  <SolidColorBrush x:Key="InkBrush" Color="{StaticResource InkColor}" />
+  <SolidColorBrush x:Key="InkMutedBrush" Color="#6B5434" />
+  <SolidColorBrush x:Key="InkSoftBrush" Color="#4A3A28" />
+  <SolidColorBrush x:Key="InkGoldBrush" Color="#8A5A12" />
+  <SolidColorBrush x:Key="InkFrostBrush" Color="#2C6A8A" />
+  <SolidColorBrush x:Key="InkRedBrush" Color="#9E2B1F" />
+  <SolidColorBrush x:Key="InkSpringBrush" Color="#3F5A24" />
+  <!-- Feine Linie auf Pergament (Innenrahmen, Trenner) -->
+  <SolidColorBrush x:Key="RuleBrush" Color="#6B8A5A12" />
+  <SolidColorBrush x:Key="InkTintBrush" Color="#142A1E14" />
+
+  <!-- Licht, Eis, Wachs, Jahreszeiten -->
+  <SolidColorBrush x:Key="LanternBrush" Color="{StaticResource GoldColor}" />
+  <SolidColorBrush x:Key="IceBrush" Color="{StaticResource FrostColor}" />
+  <SolidColorBrush x:Key="IceDeepBrush" Color="{StaticResource IceDeepColor}" />
+  <SolidColorBrush x:Key="NarniaRedBrush" Color="{StaticResource NarniaRedColor}" />
+  <SolidColorBrush x:Key="SealLightBrush" Color="#B23A2A" />
+  <SolidColorBrush x:Key="SealDarkBrush" Color="#6E1A12" />
+  <SolidColorBrush x:Key="SpringBrush" Color="#B9D58E" />
+  <SolidColorBrush x:Key="SpringSealBrush" Color="#3F5A24" />
+  <SolidColorBrush x:Key="WinterBrush" Color="#C7D2DC" />
+  <SolidColorBrush x:Key="HoneyBrush" Color="#F4EBDD" />
+  <SolidColorBrush x:Key="HoneyEdgeBrush" Color="{StaticResource NarniaRedColor}" />
+  <SolidColorBrush x:Key="HoneyDotBrush" Color="#CDBB9C" />
+  <SolidColorBrush x:Key="RestBrush" Color="{StaticResource RestColor}" />
+
+  <!-- Kapsel, Botschaften, Polaroid -->
+  <LinearGradientBrush x:Key="CapsuleBrush" StartPoint="0,0" EndPoint="0,1">
+    <GradientStop Color="#F815261F" Offset="0" />
+    <GradientStop Color="#F80B1613" Offset="1" />
+  </LinearGradientBrush>
+  <SolidColorBrush x:Key="MemePaperBrush" Color="#F3EFE6" />
+  <SolidColorBrush x:Key="MemeInkBrush" Color="#2D5E78" />
+
+  <!-- ===== Schrift ===== -->
+  <FontFamily x:Key="CinzelFont">/Assets/Fonts/#Cinzel, Sitka Display, Georgia</FontFamily>
+  <FontFamily x:Key="CinzelDecorativeFont">/Assets/Fonts/#Cinzel Decorative, /Assets/Fonts/#Cinzel, Sitka Display, Georgia</FontFamily>
+  <FontFamily x:Key="GaramondFont">/Assets/Fonts/#EB Garamond, Sitka Text, Georgia</FontFamily>
+  <!-- Bisherige Rollen, jetzt auf die Buchschriften gelegt -->
+  <FontFamily x:Key="UiFont">/Assets/Fonts/#EB Garamond, Sitka Text, Georgia</FontFamily>
+  <FontFamily x:Key="DisplayFont">/Assets/Fonts/#Cinzel, Sitka Display, Georgia</FontFamily>
+  <FontFamily x:Key="SerifFont">/Assets/Fonts/#Cinzel, Sitka Display, Georgia</FontFamily>
+  <FontFamily x:Key="SerifTextFont">/Assets/Fonts/#EB Garamond, Sitka Text, Georgia</FontFamily>
+
+  <!-- ===== Symbole (24×24, Linien) ===== -->
+  <Geometry x:Key="FlameGeometry">M12,2.5 C14.6,5.7 18,9.1 18,13.5 A6,6 0 0 1 6,13.5 C6,11.1 7.2,9.3 8.6,7.9 C8.9,9.5 9.7,10.7 11,11.3 C10.6,8.5 11,5.6 12,2.5 Z</Geometry>
+  <Geometry x:Key="SnowflakeGeometry">M12,2 L12,22 M3.3,7 L20.7,17 M3.3,17 L20.7,7 M9.5,3.8 L12,6 L14.5,3.8 M9.5,20.2 L12,18 L14.5,20.2 M4.1,10.6 L6.8,10 L6.1,7.2 M19.9,13.4 L17.2,14 L17.9,16.8 M4.1,13.4 L6.8,14 L6.1,16.8 M19.9,10.6 L17.2,10 L17.9,7.2</Geometry>
+  <Geometry x:Key="PauseGeometry">M7,5 L10,5 L10,19 L7,19 Z M14,5 L17,5 L17,19 L14,19 Z</Geometry>
+  <Geometry x:Key="PlayGeometry">M8,5 L19,12 L8,19 Z</Geometry>
+  <Geometry x:Key="StopGeometry">M8,5 L16,5 A3,3 0 0 1 19,8 L19,16 A3,3 0 0 1 16,19 L8,19 A3,3 0 0 1 5,16 L5,8 A3,3 0 0 1 8,5 Z</Geometry>
+  <Geometry x:Key="OpenGeometry">M14,4 L20,4 L20,10 M20,4 L12,12 M18,14 L18,19 L5,19 L5,6 L10,6</Geometry>
+  <Geometry x:Key="CheckGeometry">M6,12.5 L10,16.5 L18,7.5</Geometry>
+  <Geometry x:Key="CrossGeometry">M7,7 L17,17 M17,7 L7,17</Geometry>
+  <Geometry x:Key="ClockGeometry">M20.5,12 A8.5,8.5 0 1 1 3.5,12 A8.5,8.5 0 1 1 20.5,12 Z M12,7.5 L12,12.3 L15,14.1</Geometry>
+  <!-- Buch der Chronik (20×20, wie im Entwurf) -->
+  <Geometry x:Key="BookGeometry">M 4,4.6 C 4,3.7 4.7,3 5.6,3 H 16 v 12.2 H 5.6 c -0.9,0 -1.6,0.7 -1.6,1.6 V 4.6 z M 4,16.8 c 0,0.9 0.7,1.6 1.6,1.6 H 16 M 7.5,6.8 h 5.5</Geometry>
+  <Geometry x:Key="SlidersGeometry">M4,7 L14,7 M18,7 L20,7 M4,17 L8,17 M12,17 L20,17 M18,7 A2,2 0 1 1 14,7 A2,2 0 1 1 18,7 Z M12,17 A2,2 0 1 1 8,17 A2,2 0 1 1 12,17 Z</Geometry>
+  <Geometry x:Key="InfoGeometry">M20.5,12 A8.5,8.5 0 1 1 3.5,12 A8.5,8.5 0 1 1 20.5,12 Z M12,11 L12,16 M12,8 L12,8.01</Geometry>
+  <Geometry x:Key="PlusGeometry">M12,5 L12,19 M5,12 L19,12</Geometry>
+  <Geometry x:Key="FolderGeometry">M3.5,7 A2,2 0 0 1 5.5,5 L9.5,5 L11.5,7 L18.5,7 A2,2 0 0 1 20.5,9 L20.5,17 A2,2 0 0 1 18.5,19 L5.5,19 A2,2 0 0 1 3.5,17 Z</Geometry>
+  <Geometry x:Key="ChevronDownGeometry">M6,9 L12,15 L18,9</Geometry>
+  <Geometry x:Key="ChevronRightGeometry">M9,6 L15,12 L9,18</Geometry>
+  <Geometry x:Key="MinimizeGeometry">M5,12 L19,12</Geometry>
+  <Geometry x:Key="MaximizeGeometry">M6,6 L18,6 L18,18 L6,18 Z</Geometry>
+
+  <!--
+    ===== Symbole der Reise =====
+    Station1Geometry … Station10Geometry, LanternGeometry, CairParavelGeometry, CrownGeometry, LeafGeometry, DropGeometry,
+    ShieldGeometry, CompassGeometry: Linien im Raster 20×20 (Strichstärke 1,5, runde Enden; nur Stroke, keine Füllung).
+    Gefüllt: CrownBadgeGeometry (12×8), RavenGeometry (~60×60), WaxSealGeometry (44×44, gewellter Wachsrand),
+    SealLanternGeometry (Laterne im Siegel, 44×44), CrestGeometry/CrestLanternGeometry (Wappen und Dach/Fuß der Laterne, 36×40),
+    DiamondGeometry (10×10), HoneyCubeGeometry (9×9). CornerFlourishGeometry: Eckzierde 28×28, Stretch="None", Linie 1,2.
+  -->
+  <Geometry x:Key="Station1Geometry">M 10,18.5 V 8.5 M 7.5,18.5 h 5 M 7.5,4.5 h 5 v 4 h -5 z M 6.8,4.5 L 10,2 l 3.2,2.5</Geometry>
+  <Geometry x:Key="Station2Geometry">M 2,15.5 h 13.2 c 1.5,0 2.6,-1 2.6,-2.4 M 4,15.5 v -3.2 h 9.6 l 1.6,-4.6 c 0.4,-1.2 1.6,-1.4 2.2,-0.6 M 4,12.3 V 8.6 M 6.5,12.3 v 3.2 M 11.5,12.3 v 3.2</Geometry>
+  <Geometry x:Key="Station3Geometry">M 2.5,17.5 h 15 M 3.5,17.5 C 3.5,10 6.4,5.5 10,5.5 s 6.5,4.5 6.5,12 M 8.2,17.5 l 0.5,-6 l 3.6,-0.6 l 0.4,6.6</Geometry>
+  <Geometry x:Key="Station4Geometry">M 4.5,12.5 a 5.5,5.5 0 0 1 11,0 z M 9,12.5 v -2.2 h 2 v 2.2 M 2,15.5 q 2,-1.4 4,0 t 4,0 t 4,0 t 4,0 M 3.5,18.2 q 1.7,-1.2 3.3,0 t 3.3,0 t 3.3,0 t 3.3,0</Geometry>
+  <Geometry x:Key="Station5Geometry">M 4.5,18.5 h 11 M 6,18.5 v -2.6 h 8 v 2.6 M 7.2,15.9 c -0.3,-2.8 0.4,-4.8 2,-6 M 6.6,6.4 a 2.4,2.4 0 1 0 4.8,0 a 2.4,2.4 0 1 0 -4.8,0 M 10.8,8.6 c 2,0.5 3.4,2.4 3.4,5.3 v 2 M 14.2,12.2 c 1.3,-0.4 1.9,-1.6 1.6,-2.8</Geometry>
+  <Geometry x:Key="Station6Geometry">M 10,2 c 2.2,3 3.4,4.8 3.4,6.5 a 3.4,3.4 0 0 1 -6.8,0 C 6.6,6.8 7.8,5 10,2 z M 10,18.5 v -5 M 10,15.6 c -1.3,-1.5 -3,-1.8 -4.2,-1.3 c 0.5,1.3 2.3,1.8 4.2,1.3 z M 10,14.9 c 1.2,-1.4 2.8,-1.7 4,-1.2 c -0.5,1.2 -2.2,1.7 -4,1.2 z</Geometry>
+  <Geometry x:Key="Station7Geometry">M 2.5,8.5 h 15 v 3 h -15 z M 4.5,11.5 v 6 h 3.5 v -6 M 12,11.5 v 6 h 3.5 v -6 M 2,17.5 h 16</Geometry>
+  <Geometry x:Key="Station8Geometry">M 5.6,8.5 a 4.4,4.4 0 0 1 8.8,0 M 10,1.8 v 1.6 M 4.6,4 l 1.1,1.1 M 15.4,4 l -1.1,1.1 M 2.5,8.5 h 15 v 3 h -15 z M 10.4,8.5 l -1,1.4 l 1,1.6 M 4.5,11.5 v 6 h 3.5 v -6 M 12,11.5 v 6 h 3.5 v -6</Geometry>
+  <Geometry x:Key="Station9Geometry">M 10,1.8 v 2.8 M 7.2,4.6 h 5.6 M 8.8,4.6 v 7.6 l 1.2,2 l 1.2,-2 V 4.6 M 2.5,18.4 l 5.6,-1.5 M 11.9,15.9 l 5.6,-1.5 M 8.1,16.9 l 0.9,-1.1 M 11.9,15.9 l -0.7,1.1</Geometry>
+  <Geometry x:Key="Station10Geometry">M 2,18 h 16 M 3,18 V 9.5 h 2.6 V 18 M 7.1,18 V 7 h 2.6 v 11 M 10.3,18 V 7 h 2.6 v 11 M 14.4,18 V 9.5 H 17 V 18 M 3,9.5 l 1.3,-2.3 l 1.3,2.3 M 7.1,7 l 1.3,-2.6 L 9.7,7 M 10.3,7 l 1.3,-2.6 L 12.9,7 M 14.4,9.5 l 1.3,-2.3 L 17,9.5</Geometry>
+  <Geometry x:Key="LanternGeometry">M 10,1.8 v 2 M 6.3,6.2 L 10,3.8 l 3.7,2.4 M 6.5,6.2 h 7 v 7.3 h -7 z M 10,6.2 v 7.3 M 7.6,13.5 l -0.9,1.8 h 6.6 l -0.9,-1.8 M 10,15.3 v 3</Geometry>
+  <Geometry x:Key="CairParavelGeometry">M 2,18 h 16 M 3,18 V 9.5 h 2.6 V 18 M 7.1,18 V 7 h 2.6 v 11 M 10.3,18 V 7 h 2.6 v 11 M 14.4,18 V 9.5 H 17 V 18 M 3,9.5 l 1.3,-2.3 l 1.3,2.3 M 7.1,7 l 1.3,-2.6 L 9.7,7 M 10.3,7 l 1.3,-2.6 L 12.9,7 M 14.4,9.5 l 1.3,-2.3 L 17,9.5</Geometry>
+  <Geometry x:Key="CrownGeometry">M 3,16 h 14 M 3,16 l -0.8,-9 l 4.3,3.4 L 10,4 l 3.5,6.4 l 4.3,-3.4 L 17,16</Geometry>
+  <Geometry x:Key="CrownBadgeGeometry">M 1,7.2 L 0.6,2 L 3.6,4.3 L 6,0.6 l 2.4,3.7 L 11.4,2 L 11,7.2 z</Geometry>
+  <Geometry x:Key="LeafGeometry">M 4,16 C 4,9 9,4 16,4 c 0,7 -5,12 -12,12 z M 4,16 l 7,-7</Geometry>
+  <Geometry x:Key="DropGeometry">M 10,3 C 13,7.5 15,10 15,12.5 A 5,5 0 0 1 5,12.5 C 5,10 7,7.5 10,3 Z</Geometry>
+  <Geometry x:Key="RavenGeometry">M 14,44 C 10,38 12,28 20,24 C 24,16 32,12 40,14 C 44,15 47,17 49,20 L 58,22 L 50,25 C 50,32 46,40 38,44 L 34,46 L 40,56 L 36,56 L 31,47 L 27,48 L 30,56 L 26,56 L 23,48 C 18,48 8,52 2,58 C 6,52 10,48 14,44 Z</Geometry>
+  <Geometry x:Key="WaxSealGeometry">M 38.63,28.89 Q 37.56,37.56 28.89,38.63 Q 22,44 15.11,38.63 Q 6.44,37.56 5.37,28.89 Q 0,22 5.37,15.11 Q 6.44,6.44 15.11,5.37 Q 22,0 28.89,5.37 Q 37.56,6.44 38.63,15.11 Q 44,22 38.63,28.89 Z</Geometry>
+  <Geometry x:Key="CornerFlourishGeometry">M 3,25 V 11 Q 3,3 11,3 H 25 M 8,25 V 14 Q 8,8 14,8 H 25 M 14.35,13.5 A 0.85,0.85 0 1 1 12.65,13.5 A 0.85,0.85 0 1 1 14.35,13.5 Z</Geometry>
+  <Geometry x:Key="DiamondGeometry">M 5,0 L 10,5 L 5,10 L 0,5 Z</Geometry>
+  <Geometry x:Key="ShieldGeometry">M 10,2.4 l 6,2.2 v 4.9 c 0,4 -2.6,6.6 -6,8 c -3.4,-1.4 -6,-4 -6,-8 V 4.6 z M 10,6 v 8 M 7,9 h 6</Geometry>
+  <Geometry x:Key="CrestGeometry">M 18,2 L 33,7 L 33,20 C 33,30 26,36 18,39 C 10,36 3,30 3,20 L 3,7 Z</Geometry>
+  <Geometry x:Key="CrestLanternGeometry">M 13,14 L 18,10 L 23,14 Z M 13,24 H 23 L 21,27 H 15 Z M 17.2,27 H 18.8 V 33 H 17.2 Z</Geometry>
+  <Geometry x:Key="CompassGeometry">M 17.2,10 A 7.2,7.2 0 1 1 2.8,10 A 7.2,7.2 0 1 1 17.2,10 Z M 10,4.8 l 1.5,3.7 l 3.7,1.5 l -3.7,1.5 L 10,15.2 l -1.5,-3.7 L 4.8,10 l 3.7,-1.5 z</Geometry>
+  <Geometry x:Key="SealLanternGeometry">M 17.5,18 L 22,14.5 L 26.5,18 Z M 18,18 H 26 V 25.5 H 18 Z M 17.5,25.5 H 26.5 L 24.5,28 H 19.5 Z</Geometry>
+  <Geometry x:Key="HoneyCubeGeometry">M 2.2,1 H 6.8 A 1.2,1.2 0 0 1 8,2.2 V 6.8 A 1.2,1.2 0 0 1 6.8,8 H 2.2 A 1.2,1.2 0 0 1 1,6.8 V 2.2 A 1.2,1.2 0 0 1 2.2,1 Z</Geometry>
+  <Geometry x:Key="IceStarGeometry">M 30,20 L 4,20 M 28,20 L 14,8 M 28,20 L 14,32 M 18,20 L 10,13 M 18,20 L 10,27 M 22,14 L 22,10 M 22,26 L 22,30</Geometry>
+  <Geometry x:Key="NarniaSnowflakeGeometry">M 8,1 v 14 M 1.9,4.5 l 12.2,7 M 1.9,11.5 l 12.2,-7 M 6,2.5 l 2,1.5 l 2,-1.5 M 6,13.5 l 2,-1.5 l 2,1.5</Geometry>
+
+  <Style x:Key="LineIcon" TargetType="Path">
+    <Setter Property="Width" Value="18" />
+    <Setter Property="Height" Value="18" />
+    <Setter Property="Stretch" Value="Uniform" />
+    <Setter Property="StrokeThickness" Value="1.6" />
+    <Setter Property="StrokeStartLineCap" Value="Round" />
+    <Setter Property="StrokeEndLineCap" Value="Round" />
+    <Setter Property="StrokeLineJoin" Value="Round" />
+    <Setter Property="Stroke" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Control}}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style x:Key="FillIcon" TargetType="Path">
+    <Setter Property="Width" Value="14" />
+    <Setter Property="Height" Value="14" />
+    <Setter Property="Stretch" Value="Uniform" />
+    <Setter Property="Fill" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Control}}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <!-- ===== Typografie (Nacht) ===== -->
+  <Style TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+  </Style>
+
+  <!-- Kleine Kapitelzeile über dem Seitentitel, z. B. "KAPITEL I" -->
+  <Style x:Key="PageEyebrow" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource CinzelFont}" />
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="Foreground" Value="{StaticResource EyebrowBrush}" />
+  </Style>
+
+  <Style x:Key="PageTitle" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource CinzelFont}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="FontSize" Value="38" />
+    <Setter Property="Foreground" Value="{StaticResource IvoryBrightBrush}" />
+  </Style>
+
+  <Style x:Key="PageSubtitle" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource GaramondFont}" />
+    <Setter Property="FontStyle" Value="Italic" />
+    <Setter Property="FontSize" Value="19" />
+    <Setter Property="Foreground" Value="#C9BFA6" />
+    <Setter Property="Margin" Value="0,2,0,0" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+
+  <Style x:Key="CardTitle" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource CinzelFont}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="FontSize" Value="22" />
+    <Setter Property="Foreground" Value="{StaticResource IvoryBrightBrush}" />
+  </Style>
+
+  <Style x:Key="Body" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource GaramondFont}" />
+    <Setter Property="FontSize" Value="16.5" />
+    <Setter Property="LineHeight" Value="23" />
+    <Setter Property="Foreground" Value="{StaticResource SageBrush}" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+
+  <Style x:Key="Caption" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource GaramondFont}" />
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="Foreground" Value="{StaticResource MossBrush}" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+
+  <!-- Kleine Versal-Beschriftung (Cinzel kennt nur Großbuchstaben bzw. Kapitälchen) -->
+  <Style x:Key="Overline" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource CinzelFont}" />
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{StaticResource MossBrush}" />
+  </Style>
+
+  <Style x:Key="Metric" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource CinzelFont}" />
+    <Setter Property="FontSize" Value="28" />
+    <Setter Property="Foreground" Value="{StaticResource IvoryBrightBrush}" />
+    <Setter Property="Typography.NumeralAlignment" Value="Tabular" />
+    <Setter Property="Margin" Value="0,4,0,0" />
+  </Style>
+
+  <Style x:Key="Quote" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource GaramondFont}" />
+    <Setter Property="FontStyle" Value="Italic" />
+    <Setter Property="FontSize" Value="18" />
+    <Setter Property="LineHeight" Value="25" />
+    <Setter Property="Foreground" Value="#E3D9BF" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="TextAlignment" Value="Center" />
+  </Style>
+
+  <!--
+    Erzähltext über einem Szenenbild (Station, "Anders als Edmund …"): helle Kursive mit weichem Schatten.
+    Der Schatten ist ein Effekt; der Text wird deshalb zwischengespeichert (RenderCache) und nur neu gezeichnet,
+    wenn er sich ändert (selten) – nicht, wenn daneben im Sekundentakt die Restzeit springt.
+  -->
+  <Style x:Key="Narration" TargetType="TextBlock">
+    <Setter Property="views:RenderCache.IsEnabled" Value="True" />
+    <Setter Property="FontFamily" Value="{StaticResource GaramondFont}" />
+    <Setter Property="FontStyle" Value="Italic" />
+    <Setter Property="FontSize" Value="17" />
+    <Setter Property="LineHeight" Value="23" />
+    <Setter Property="Foreground" Value="#EDE3CA" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="TextAlignment" Value="Center" />
+    <Setter Property="Effect">
+      <Setter.Value>
+        <DropShadowEffect BlurRadius="8" ShadowDepth="1" Direction="270" Color="Black" Opacity="0.8" />
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- ===== Typografie (Tinte auf Pergament) ===== -->
+  <Style x:Key="InkTitle" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource CinzelFont}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="FontSize" Value="27" />
+    <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+  </Style>
+
+  <Style x:Key="InkOverline" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource CinzelFont}" />
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{StaticResource InkMutedBrush}" />
+  </Style>
+
+  <Style x:Key="InkMetric" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource CinzelFont}" />
+    <Setter Property="FontSize" Value="30" />
+    <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+    <Setter Property="Typography.NumeralAlignment" Value="Tabular" />
+    <Setter Property="Margin" Value="0,4,0,0" />
+  </Style>
+
+  <Style x:Key="InkBody" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource GaramondFont}" />
+    <Setter Property="FontSize" Value="17.5" />
+    <Setter Property="LineHeight" Value="25" />
+    <Setter Property="Foreground" Value="{StaticResource InkSoftBrush}" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+
+  <!-- ===== Flächen ===== -->
+  <!-- Glaskarte der Nachtseiten: Nachtblau mit feiner Goldkante -->
+  <Style x:Key="Glass" TargetType="Border">
+    <Setter Property="Background" Value="{StaticResource NightPanelBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource EdgeBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="14" />
+    <Setter Property="Padding" Value="26" />
+  </Style>
+
+  <Style x:Key="SmallGlass" TargetType="Border" BasedOn="{StaticResource Glass}">
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="Padding" Value="18,16" />
+  </Style>
+
+  <!-- Dunkle Glasfläche als ContentControl (Siegel, Kennzahlen, Rabenbote auf Nacht) -->
+  <Style x:Key="NightPanel" TargetType="ContentControl">
+    <Setter Property="Foreground" Value="{StaticResource IvoryBrush}" />
+    <Setter Property="Padding" Value="24,20" />
+    <Setter Property="Focusable" Value="False" />
+    <Setter Property="IsTabStop" Value="False" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ContentControl">
+          <Border Background="{StaticResource NightPanelBrush}" BorderBrush="{StaticResource EdgeBrush}" BorderThickness="1"
+                  CornerRadius="14" Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
+            <ContentPresenter />
+          </Border>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!--
+    Pergamentkarte: verlaufendes Pergament mit Goldrand, Innenlinie (9 px eingerückt) und vier Eckzierden.
+    Der große Schatten liegt in einer eigenen, zwischengespeicherten Ebene – er wird nur bei Größenänderung neu gezeichnet,
+    nicht wenn sich im Sekundentakt Zahlen auf der Karte ändern. Vordergrund ist Tinte; Fließtext in EB Garamond.
+  -->
+  <Style x:Key="ParchmentCard" TargetType="ContentControl">
+    <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+    <Setter Property="FontFamily" Value="{StaticResource GaramondFont}" />
+    <Setter Property="FontSize" Value="17" />
+    <Setter Property="Padding" Value="34,38,34,34" />
+    <Setter Property="Focusable" Value="False" />
+    <Setter Property="IsTabStop" Value="False" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ContentControl">
+          <Grid>
+            <Grid views:RenderCache.IsEnabled="True" IsHitTestVisible="False">
+              <Border Background="{StaticResource ParchmentEdgeBrush}" CornerRadius="6">
+                <Border.Effect>
+                  <DropShadowEffect BlurRadius="56" ShadowDepth="22" Direction="270" Color="Black" Opacity="0.5" />
+                </Border.Effect>
+              </Border>
+              <Border Background="{StaticResource ParchmentBrush}" BorderBrush="{StaticResource ParchmentEdgeBrush}"
+                      BorderThickness="1" CornerRadius="6" />
+              <Border Margin="9" BorderBrush="{StaticResource RuleBrush}" BorderThickness="1" CornerRadius="3" />
+              <Path Data="{StaticResource CornerFlourishGeometry}" Stroke="{StaticResource InkGoldBrush}" StrokeThickness="1.2"
+                    Stretch="None" Width="28" Height="28" Margin="14" HorizontalAlignment="Left" VerticalAlignment="Top" />
+              <Path Data="{StaticResource CornerFlourishGeometry}" Stroke="{StaticResource InkGoldBrush}" StrokeThickness="1.2"
+                    Stretch="None" Width="28" Height="28" Margin="14" HorizontalAlignment="Right" VerticalAlignment="Top"
+                    RenderTransformOrigin="0.5,0.5">
+                <Path.RenderTransform>
+                  <ScaleTransform ScaleX="-1" />
+                </Path.RenderTransform>
+              </Path>
+              <Path Data="{StaticResource CornerFlourishGeometry}" Stroke="{StaticResource InkGoldBrush}" StrokeThickness="1.2"
+                    Stretch="None" Width="28" Height="28" Margin="14" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                    RenderTransformOrigin="0.5,0.5">
+                <Path.RenderTransform>
+                  <ScaleTransform ScaleY="-1" />
+                </Path.RenderTransform>
+              </Path>
+              <Path Data="{StaticResource CornerFlourishGeometry}" Stroke="{StaticResource InkGoldBrush}" StrokeThickness="1.2"
+                    Stretch="None" Width="28" Height="28" Margin="14" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                    RenderTransformOrigin="0.5,0.5">
+                <Path.RenderTransform>
+                  <ScaleTransform ScaleX="-1" ScaleY="-1" />
+                </Path.RenderTransform>
+              </Path>
+            </Grid>
+            <ContentPresenter Margin="{TemplateBinding Padding}" />
+          </Grid>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- ===== Schaltflächen ===== -->
+  <!-- Tag = Farbe der Hover-Schicht; die Form ist immer eine Pille -->
+  <Style x:Key="ButtonBase" TargetType="Button">
+    <Style.Resources>
+      <!-- Schirmt das globale TextBlock-Format ab: Text in der Schaltfläche erbt deren Schrift (Cinzel) -->
+      <Style TargetType="TextBlock" />
+    </Style.Resources>
+    <Setter Property="FontFamily" Value="{StaticResource CinzelFont}" />
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Height" Value="46" />
+    <Setter Property="Padding" Value="22,0" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Grid x:Name="Root" RenderTransformOrigin="0.5,0.5">
+            <Grid.RenderTransform>
+              <ScaleTransform />
+            </Grid.RenderTransform>
+            <Border x:Name="Bg" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="999" />
+            <Border x:Name="Hover" Background="{TemplateBinding Tag}" CornerRadius="999" Opacity="0" />
+            <Border x:Name="FocusRing" BorderBrush="{StaticResource GoldBrush}" BorderThickness="1.5" CornerRadius="999" Opacity="0" Margin="-4" />
+            <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                              RecognizesAccessKey="True" />
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Hover" Property="Opacity" Value="1" />
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+              <Setter TargetName="Root" Property="RenderTransform">
+                <Setter.Value>
+                  <ScaleTransform ScaleX="0.97" ScaleY="0.97" />
+                </Setter.Value>
+              </Setter>
+            </Trigger>
+            <Trigger Property="IsKeyboardFocused" Value="True">
+              <Setter TargetName="FocusRing" Property="Opacity" Value="1" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter TargetName="Root" Property="Opacity" Value="0.4" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Hauptaktion: Laternengold mit warmem Schein ("Laterne entzünden") -->
+  <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource ButtonBase}">
+    <Setter Property="Background" Value="{StaticResource GoldFillBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource InkGoldBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Foreground" Value="{StaticResource GoldInkBrush}" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Tag">
+      <Setter.Value>
+        <SolidColorBrush Color="#33FFF4D6" />
+      </Setter.Value>
+    </Setter>
+    <Setter Property="Effect">
+      <Setter.Value>
+        <DropShadowEffect BlurRadius="24" ShadowDepth="8" Direction="270" Color="#A0681E" Opacity="0.35" />
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource ButtonBase}">
+    <Setter Property="Background" Value="{StaticResource GlassBrush}" />
+    <Setter Property="BorderBrush" Value="{StaticResource Edge2Brush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Foreground" Value="{StaticResource IvoryBrush}" />
+    <Setter Property="Tag" Value="{StaticResource GoldTintBrush}" />
+  </Style>
+
+  <Style x:Key="GhostButton" TargetType="Button" BasedOn="{StaticResource ButtonBase}">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{StaticResource SageBrush}" />
+    <Setter Property="Tag" Value="{StaticResource GlassBrush}" />
+  </Style>
+
+  <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource GhostButton}">
+    <Setter Property="Foreground" Value="{StaticResource RoseBrush}" />
+    <Setter Property="Tag" Value="{StaticResource ErrorTintBrush}" />
+  </Style>
+
+  <!-- Tinte auf Pergament: umrandete Pille ("Rasten", "Weiterziehen") -->
+  <Style x:Key="InkButton" TargetType="Button" BasedOn="{StaticResource ButtonBase}">
+    <Setter Property="Height" Value="48" />
+    <Setter Property="Padding" Value="24,0" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{StaticResource InkBrush}" />
+    <Setter Property="BorderThickness" Value="1.5" />
+    <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+    <Setter Property="Tag" Value="{StaticResource InkTintBrush}" />
+  </Style>
+
+  <!-- Tinte auf Pergament, rot und ohne Rand ("Wacht beenden") -->
+  <Style x:Key="InkDangerButton" TargetType="Button" BasedOn="{StaticResource ButtonBase}">
+    <Setter Property="Height" Value="48" />
+    <Setter Property="Padding" Value="16,0" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{StaticResource InkRedBrush}" />
+    <Setter Property="Tag">
+      <Setter.Value>
+        <SolidColorBrush Color="#149E2B1F" />
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Schnellstart-Kapsel innerhalb einer Glasspur -->
+  <Style x:Key="SegmentButton" TargetType="Button" BasedOn="{StaticResource ButtonBase}">
+    <Setter Property="Height" Value="38" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{StaticResource SageBrush}" />
+    <Setter Property="Tag" Value="{StaticResource GoldTintBrush}" />
+  </Style>
+
+  <!-- Runde Symbolschaltfläche in der Kapsel -->
+  <Style x:Key="CapsuleButton" TargetType="Button">
+    <Setter Property="Width" Value="40" />
+    <Setter Property="Height" Value="40" />
+    <Setter Property="Margin" Value="3,0" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Foreground" Value="#E8DCBC" />
+    <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="Circle" Background="#0AFFFFFF" BorderBrush="#33F1E6CC"
+                  BorderThickness="1" CornerRadius="20">
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Circle" Property="Background" Value="{StaticResource Glass3Brush}" />
+              <Setter TargetName="Circle" Property="BorderBrush" Value="{StaticResource Edge2Brush}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter TargetName="Circle" Property="Opacity" Value="0.35" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Titelleisten-Schaltflächen (eigene Fensterleiste) -->
+  <Style x:Key="ChromeButton" TargetType="Button">
+    <Setter Property="Width" Value="44" />
+    <Setter Property="Height" Value="38" />
+    <Setter Property="Foreground" Value="#B3AC98" />
+    <Setter Property="Tag" Value="{StaticResource Glass2Brush}" />
+    <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+    <Setter Property="IsTabStop" Value="False" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="Bg" Background="Transparent" CornerRadius="8">
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Bg" Property="Background" Value="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" />
+              <Setter Property="Foreground" Value="{StaticResource IvoryBrush}" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!--
+    Rundes Wachssiegel als Auswahl (z. B. Dauer 15 / 25 / 50 / 90): offen = Tintenring auf Pergament,
+    gewählt = rotes Wachs mit gewelltem Rand und hellem Innenring. Inhalt = Beschriftung (Cinzel).
+  -->
+  <Style x:Key="SealToggle" TargetType="RadioButton">
+    <Style.Resources>
+      <!-- Schirmt das globale TextBlock-Format ab: Text in der Schaltfläche erbt deren Schrift (Cinzel) -->
+      <Style TargetType="TextBlock" />
+    </Style.Resources>
+    <Setter Property="Width" Value="58" />
+    <Setter Property="Height" Value="58" />
+    <Setter Property="FontFamily" Value="{StaticResource CinzelFont}" />
+    <Setter Property="FontSize" Value="18" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="RadioButton">
+          <Grid x:Name="Root" Background="Transparent" RenderTransformOrigin="0.5,0.5">
+            <Grid.RenderTransform>
+              <ScaleTransform />
+            </Grid.RenderTransform>
+            <Path x:Name="Wax" Data="{StaticResource WaxSealGeometry}" Stretch="Fill" Fill="{StaticResource NarniaRedBrush}"
+                  Margin="-3" Visibility="Hidden" />
+            <Ellipse x:Name="Ring" Stroke="#8C2A1E14" StrokeThickness="1.5" Fill="Transparent" />
+            <Ellipse x:Name="Inner" Margin="8" Stroke="#1FFFFFFF" StrokeThickness="1.5" Visibility="Hidden" />
+            <Ellipse x:Name="Hover" Fill="{StaticResource InkTintBrush}" Opacity="0" />
+            <Ellipse x:Name="FocusRing" Stroke="{StaticResource InkGoldBrush}" StrokeThickness="1.5" Margin="-6" Opacity="0" />
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" />
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Hover" Property="Opacity" Value="1" />
+            </Trigger>
+            <Trigger Property="IsChecked" Value="True">
+              <Setter TargetName="Wax" Property="Visibility" Value="Visible" />
+              <Setter TargetName="Inner" Property="Visibility" Value="Visible" />
+              <Setter TargetName="Ring" Property="Fill" Value="{StaticResource SealLightBrush}" />
+              <Setter TargetName="Ring" Property="Stroke" Value="{StaticResource SealDarkBrush}" />
+              <Setter TargetName="Ring" Property="Margin" Value="4" />
+              <Setter TargetName="Hover" Property="Opacity" Value="0" />
+              <Setter Property="Foreground" Value="#FBF1DC" />
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+              <Setter TargetName="Root" Property="RenderTransform">
+                <Setter.Value>
+                  <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
+                </Setter.Value>
+              </Setter>
+            </Trigger>
+            <Trigger Property="IsKeyboardFocused" Value="True">
+              <Setter TargetName="FocusRing" Property="Opacity" Value="1" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter TargetName="Root" Property="Opacity" Value="0.45" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!--
+    Buchrücken im Regal (Wahl des Bandes): Leder in der Farbe aus Tag (Brush), goldene Doppellinien oben und unten,
+    Inhalt = Bandnummer. Gewählt = 12 px angehoben mit Goldring. Höhe über Height (Standard 88).
+  -->
+  <Style x:Key="BookSpine" TargetType="RadioButton">
+    <Style.Resources>
+      <!-- Schirmt das globale TextBlock-Format ab: Text in der Schaltfläche erbt deren Schrift (Cinzel) -->
+      <Style TargetType="TextBlock" />
+    </Style.Resources>
+    <Setter Property="Width" Value="38" />
+    <Setter Property="Height" Value="88" />
+    <Setter Property="VerticalAlignment" Value="Bottom" />
+    <Setter Property="Tag">
+      <Setter.Value>
+        <SolidColorBrush Color="#2E4A3A" />
+      </Setter.Value>
+    </Setter>
+    <Setter Property="FontFamily" Value="{StaticResource CinzelFont}" />
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Foreground" Value="#F0CF8A" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="RadioButton">
+          <Grid x:Name="Root" Background="Transparent">
+            <Grid.RenderTransform>
+              <TranslateTransform />
+            </Grid.RenderTransform>
+            <Border x:Name="Ring" Margin="-2" CornerRadius="5,5,3,3" BorderBrush="{StaticResource GoldBrush}" BorderThickness="2"
+                    Visibility="Hidden" />
+            <Border x:Name="Leather" CornerRadius="3,3,1,1" Background="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}">
+              <Grid>
+                <!-- Lichtkante links, Schattenkante rechts -->
+                <Border Width="3" HorizontalAlignment="Left" Background="#14FFFFFF" CornerRadius="3,0,0,1" />
+                <Border Width="4" HorizontalAlignment="Right" Background="#40000000" CornerRadius="0,3,1,0" />
+                <Border Width="26" Height="4" VerticalAlignment="Top" Margin="0,10,0,0" BorderBrush="#D9B26A" BorderThickness="0,1" />
+                <Border Width="26" Height="4" VerticalAlignment="Bottom" Margin="0,0,0,10" BorderBrush="#D9B26A" BorderThickness="0,1" />
+                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" />
+              </Grid>
+            </Border>
+            <Border x:Name="Hover" CornerRadius="3,3,1,1" Background="#14FFFFFF" Opacity="0" />
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Hover" Property="Opacity" Value="1" />
+            </Trigger>
+            <Trigger Property="IsChecked" Value="True">
+              <Setter TargetName="Ring" Property="Visibility" Value="Visible" />
+              <Setter TargetName="Root" Property="RenderTransform">
+                <Setter.Value>
+                  <TranslateTransform Y="-12" />
+                </Setter.Value>
+              </Setter>
+            </Trigger>
+            <Trigger Property="IsKeyboardFocused" Value="True">
+              <Setter TargetName="Ring" Property="Visibility" Value="Visible" />
+              <Setter TargetName="Ring" Property="BorderBrush" Value="{StaticResource InkGoldBrush}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter TargetName="Root" Property="Opacity" Value="0.45" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- ===== Eingaben ===== -->
+  <Style TargetType="TextBox">
+    <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+    <Setter Property="FontSize" Value="16" />
+    <Setter Property="Foreground" Value="{StaticResource IvoryBrush}" />
+    <Setter Property="Background" Value="#40000000" />
+    <Setter Property="BorderBrush" Value="{StaticResource EdgeBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Padding" Value="12,9" />
+    <Setter Property="CaretBrush" Value="{StaticResource GoldBrush}" />
+    <Setter Property="SelectionBrush" Value="{StaticResource GoldBrush}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="TextBox">
+          <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="10">
+            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" Focusable="False"
+                          HorizontalScrollBarVisibility="Hidden" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource Edge2Brush}" />
+            </Trigger>
+            <Trigger Property="IsKeyboardFocused" Value="True">
+              <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource GoldBrush}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter TargetName="Bd" Property="Opacity" Value="0.5" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Eingabefeld auf Pergament (z. B. "Eigene Dauer") -->
+  <Style x:Key="InkTextBox" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+    <Setter Property="FontFamily" Value="{StaticResource CinzelFont}" />
+    <Setter Property="FontSize" Value="22" />
+    <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+    <Setter Property="Background" Value="#8CFFFAEE" />
+    <Setter Property="BorderBrush" Value="#8C6B5434" />
+    <Setter Property="BorderThickness" Value="1.5" />
+    <Setter Property="CaretBrush" Value="{StaticResource InkBrush}" />
+    <Setter Property="SelectionBrush" Value="{StaticResource GoldDeepBrush}" />
+  </Style>
+
+  <!-- Kontrollkästchen als Schalter -->
+  <Style TargetType="CheckBox">
+    <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+    <Setter Property="FontSize" Value="16" />
+    <Setter Property="Foreground" Value="{StaticResource IvoryBrush}" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Margin" Value="0,6" />
+    <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="CheckBox">
+          <Grid Background="Transparent">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Border x:Name="Track" Width="40" Height="24" CornerRadius="12" Background="{StaticResource Glass3Brush}"
+                    BorderBrush="{StaticResource Edge2Brush}" BorderThickness="1" VerticalAlignment="Top" Margin="0,1,0,0">
+              <Ellipse x:Name="Thumb" Width="16" Height="16" Fill="{StaticResource SageBrush}" HorizontalAlignment="Left" Margin="3,0" />
+            </Border>
+            <ContentPresenter Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" RecognizesAccessKey="True" />
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsChecked" Value="True">
+              <Setter TargetName="Track" Property="Background" Value="{StaticResource GoldFillBrush}" />
+              <Setter TargetName="Track" Property="BorderBrush" Value="{StaticResource InkGoldBrush}" />
+              <Setter TargetName="Thumb" Property="Fill" Value="{StaticResource GoldInkBrush}" />
+              <Setter TargetName="Thumb" Property="HorizontalAlignment" Value="Right" />
+            </Trigger>
+            <Trigger Property="IsKeyboardFocused" Value="True">
+              <Setter TargetName="Track" Property="BorderBrush" Value="{StaticResource GoldBrush}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter Property="Opacity" Value="0.45" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <Style TargetType="RadioButton">
+    <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+    <Setter Property="FontSize" Value="16" />
+    <Setter Property="Foreground" Value="{StaticResource IvoryBrush}" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Margin" Value="0,6" />
+    <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="RadioButton">
+          <Grid Background="Transparent">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Ellipse x:Name="Ring" Width="20" Height="20" Fill="#33000000" Stroke="{StaticResource Edge2Brush}"
+                     StrokeThickness="1.5" VerticalAlignment="Top" Margin="0,2,0,0" />
+            <ContentPresenter Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" RecognizesAccessKey="True" />
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsChecked" Value="True">
+              <Setter TargetName="Ring" Property="Stroke" Value="{StaticResource GoldBrush}" />
+              <Setter TargetName="Ring" Property="StrokeThickness" Value="6" />
+            </Trigger>
+            <Trigger Property="IsKeyboardFocused" Value="True">
+              <Setter TargetName="Ring" Property="Stroke" Value="{StaticResource GoldBrush}" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Dunkle Auswahlliste -->
+  <Style x:Key="ComboToggle" TargetType="ToggleButton">
+    <Setter Property="Focusable" Value="False" />
+    <Setter Property="ClickMode" Value="Press" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ToggleButton">
+          <Border x:Name="Bd" Background="#40000000" BorderBrush="{StaticResource EdgeBrush}" BorderThickness="1" CornerRadius="10">
+            <Path Data="{StaticResource ChevronDownGeometry}" Stroke="{StaticResource SageBrush}" StrokeThickness="1.8" Width="12" Height="12"
+                  Stretch="Uniform" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                  HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,14,0" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource Edge2Brush}" />
+            </Trigger>
+            <Trigger Property="IsChecked" Value="True">
+              <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource GoldBrush}" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <Style TargetType="ComboBox">
+    <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+    <Setter Property="FontSize" Value="16" />
+    <Setter Property="Foreground" Value="{StaticResource IvoryBrush}" />
+    <Setter Property="MinHeight" Value="42" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ComboBox">
+          <Grid>
+            <ToggleButton Style="{StaticResource ComboToggle}"
+                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}" />
+            <ContentPresenter Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                              Margin="14,0,40,0" VerticalAlignment="Center" HorizontalAlignment="Left" IsHitTestVisible="False" />
+            <Popup x:Name="PART_Popup" IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom" VerticalOffset="6"
+                   AllowsTransparency="True" Focusable="False" PopupAnimation="Fade">
+              <Border Background="{StaticResource PopupBrush}" BorderBrush="{StaticResource Edge2Brush}" BorderThickness="1"
+                      CornerRadius="10" Padding="6" MinWidth="{TemplateBinding ActualWidth}" MaxHeight="340">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                  <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" />
+                </ScrollViewer>
+              </Border>
+            </Popup>
+          </Grid>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <Style TargetType="ComboBoxItem">
+    <Setter Property="Foreground" Value="{StaticResource IvoryBrush}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ComboBoxItem">
+          <Border x:Name="Bd" Padding="12,9" CornerRadius="8" Background="Transparent">
+            <ContentPresenter />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsHighlighted" Value="True">
+              <Setter TargetName="Bd" Property="Background" Value="{StaticResource Glass2Brush}" />
+            </Trigger>
+            <Trigger Property="IsSelected" Value="True">
+              <Setter Property="Foreground" Value="{StaticResource GoldBrush}" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Schmale Bildlaufleisten -->
+  <Style x:Key="SlimThumb" TargetType="Thumb">
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Thumb">
+          <Border CornerRadius="4" Background="#40C9A056" Margin="2" />
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <Style TargetType="ScrollBar">
+    <Setter Property="Width" Value="10" />
+    <Setter Property="MinWidth" Value="10" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ScrollBar">
+          <Track x:Name="PART_Track" IsDirectionReversed="True">
+            <Track.Thumb>
+              <Thumb Style="{StaticResource SlimThumb}" />
+            </Track.Thumb>
+          </Track>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+    <Style.Triggers>
+      <Trigger Property="Orientation" Value="Horizontal">
+        <Setter Property="Width" Value="Auto" />
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="Height" Value="10" />
+        <Setter Property="Template">
+          <Setter.Value>
+            <ControlTemplate TargetType="ScrollBar">
+              <Track x:Name="PART_Track" IsDirectionReversed="False">
+                <Track.Thumb>
+                  <Thumb Style="{StaticResource SlimThumb}" />
+                </Track.Thumb>
+              </Track>
+            </ControlTemplate>
+          </Setter.Value>
+        </Setter>
+      </Trigger>
+    </Style.Triggers>
+  </Style>
+
+  <Style TargetType="ToolTip">
+    <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="Foreground" Value="{StaticResource IvoryBrush}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ToolTip">
+          <Border Background="{StaticResource PopupBrush}" BorderBrush="{StaticResource Edge2Brush}" BorderThickness="1"
+                  CornerRadius="8" Padding="10,6" MaxWidth="360">
+            <ContentPresenter>
+              <ContentPresenter.Resources>
+                <Style TargetType="TextBlock">
+                  <Setter Property="TextWrapping" Value="Wrap" />
+                </Style>
+              </ContentPresenter.Resources>
+            </ContentPresenter>
+          </Border>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Dunkles Kontextmenü (Rechtsklick auf die Fokusleiste) -->
+  <Style TargetType="ContextMenu">
+    <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+    <Setter Property="FontSize" Value="15" />
+    <Setter Property="Foreground" Value="{StaticResource IvoryBrush}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ContextMenu">
+          <Border Background="{StaticResource PopupBrush}" BorderBrush="{StaticResource Edge2Brush}" BorderThickness="1"
+                  CornerRadius="12" Padding="6">
+            <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle" />
+          </Border>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <Style TargetType="MenuItem">
+    <Setter Property="Foreground" Value="{StaticResource IvoryBrush}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="MenuItem">
+          <Border x:Name="Bd" CornerRadius="8" Padding="10,8" Background="Transparent" MinWidth="260">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="24" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <ContentPresenter x:Name="IconHost" ContentSource="Icon" HorizontalAlignment="Left" VerticalAlignment="Center" />
+              <Path x:Name="Check" Data="{StaticResource CheckGeometry}" Stroke="{StaticResource GoldBrush}" StrokeThickness="2"
+                    Width="12" Height="10" Stretch="Uniform" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                    HorizontalAlignment="Left" VerticalAlignment="Center" Visibility="Collapsed" />
+              <ContentPresenter Grid.Column="1" ContentSource="Header" RecognizesAccessKey="True" VerticalAlignment="Center" />
+              <Path x:Name="Arrow" Grid.Column="2" Data="{StaticResource ChevronRightGeometry}" Stroke="{StaticResource SageBrush}"
+                    StrokeThickness="1.8" Width="8" Height="12" Stretch="Uniform" Margin="14,0,0,0" Visibility="Collapsed"
+                    StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" VerticalAlignment="Center" />
+              <Popup x:Name="PART_Popup" Placement="Right" HorizontalOffset="10" VerticalOffset="-8" AllowsTransparency="True"
+                     Focusable="False" PopupAnimation="Fade"
+                     IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}">
+                <Border Background="{StaticResource PopupBrush}" BorderBrush="{StaticResource Edge2Brush}" BorderThickness="1"
+                        CornerRadius="12" Padding="6">
+                  <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle" />
+                </Border>
+              </Popup>
+            </Grid>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsHighlighted" Value="True">
+              <Setter TargetName="Bd" Property="Background" Value="{StaticResource Glass2Brush}" />
+            </Trigger>
+            <Trigger Property="IsChecked" Value="True">
+              <Setter TargetName="Check" Property="Visibility" Value="Visible" />
+            </Trigger>
+            <Trigger Property="Role" Value="SubmenuHeader">
+              <Setter TargetName="Arrow" Property="Visibility" Value="Visible" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter Property="Opacity" Value="0.4" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <Style TargetType="Separator">
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Separator">
+          <Border Height="1" Background="{StaticResource EdgeBrush}" Margin="8,5" />
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Schmaler Fortschrittsbalken -->
+  <Style x:Key="SlimProgress" TargetType="ProgressBar">
+    <Setter Property="Height" Value="4" />
+    <Setter Property="Minimum" Value="0" />
+    <Setter Property="Maximum" Value="1" />
+    <Setter Property="Foreground" Value="{StaticResource GoldBarBrush}" />
+    <Setter Property="Background" Value="#1FF1E6CC" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ProgressBar">
+          <Grid>
+            <Border x:Name="PART_Track" Background="{TemplateBinding Background}" CornerRadius="2" />
+            <Border x:Name="PART_Indicator" HorizontalAlignment="Left" Background="{TemplateBinding Foreground}" CornerRadius="2" />
+          </Grid>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Schmaler Fortschrittsbalken auf Pergament ("Nächstes Ziel") -->
+  <Style x:Key="InkProgress" TargetType="ProgressBar" BasedOn="{StaticResource SlimProgress}">
+    <Setter Property="Foreground" Value="{StaticResource GoldDeepBrush}" />
+    <Setter Property="Background" Value="#336B5434" />
+  </Style>
+
+  <!--
+    ===== Szenenrahmen =====
+    Goldgerahmtes Szenenbild (Bogen oben oder abgerundet), darüber die Stimmungsschleier für Frost, Rast und Abwesenheit
+    und zuletzt der Inhalt. Form, Rahmen und Schatten berechnet SceneFrame bei Größenänderung (siehe SceneFrame.cs).
+    Der Schatten liegt in einer zwischengespeicherten Ebene; die Schleier sind feste Pinsel, nur ihre Deckkraft folgt den Werten.
+  -->
+  <RadialGradientBrush x:Key="SceneFrostVeilBrush" Center="0.5,0.52" GradientOrigin="0.5,0.52" RadiusX="0.72" RadiusY="0.72">
+    <GradientStop Color="#00AAD6EC" Offset="0" />
+    <GradientStop Color="#00AAD6EC" Offset="0.35" />
+    <GradientStop Color="#3DB4DCF0" Offset="0.78" />
+    <GradientStop Color="#8CD6EEFA" Offset="1" />
+  </RadialGradientBrush>
+  <RadialGradientBrush x:Key="SceneWarmVeilBrush" Center="0.5,1" GradientOrigin="0.5,1" RadiusX="0.8" RadiusY="0.7">
+    <GradientStop Color="#38E08A4A" Offset="0" />
+    <GradientStop Color="#1AE08A4A" Offset="0.45" />
+    <GradientStop Color="#00E08A4A" Offset="0.75" />
+  </RadialGradientBrush>
+  <SolidColorBrush x:Key="SceneDimVeilBrush" Color="#4704080B" />
+  <LinearGradientBrush x:Key="SceneBottomShadeBrush" StartPoint="0,0" EndPoint="0,1">
+    <GradientStop Color="#0004080B" Offset="0" />
+    <GradientStop Color="#8C04080B" Offset="0.7" />
+    <GradientStop Color="#B304080B" Offset="1" />
+  </LinearGradientBrush>
+
+  <Style TargetType="views:SceneFrame">
+    <Setter Property="Foreground" Value="{StaticResource IvoryBrush}" />
+    <Setter Property="Focusable" Value="False" />
+    <Setter Property="IsTabStop" Value="False" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="VerticalContentAlignment" Value="Stretch" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="views:SceneFrame">
+          <Grid>
+            <!--
+              Der äußere Ring ragt 5,5 px über das Element hinaus. Darum liegen die Ring-Pfade in einem Canvas: Es misst
+              seine Kinder ohne Grenze und ordnet sie in ihrer Wunschgröße an, also beschneidet das Layout sie nicht
+              (in einem Grid würde jeder Pfad auf die Elementfläche gekürzt und der Ring verschwände).
+            -->
+            <!-- Schatten und dunkle Fuge: unveränderlich, einmal gezeichnet, dann zwischengespeichert -->
+            <Canvas views:RenderCache.IsEnabled="True" IsHitTestVisible="False">
+              <Path Data="{TemplateBinding OuterRingGeometry}" Fill="#081116">
+                <Path.Effect>
+                  <DropShadowEffect BlurRadius="70" ShadowDepth="30" Direction="270" Color="Black" Opacity="0.55" />
+                </Path.Effect>
+              </Path>
+            </Canvas>
+            <!-- Goldlinie und Eisring blenden mit FrostLevel über; außerhalb des Zwischenspeichers, damit der Schatten nicht neu gerastert wird -->
+            <Canvas IsHitTestVisible="False">
+              <Path x:Name="PART_GoldRing" Data="{TemplateBinding OuterRingGeometry}" Stroke="#73B8904A" StrokeThickness="1" />
+              <Path x:Name="PART_IceRing" Data="{TemplateBinding OuterRingGeometry}" Stroke="#809FD0EA" StrokeThickness="1"
+                    Opacity="{TemplateBinding FrostLevel}" />
+            </Canvas>
+
+            <Grid Clip="{TemplateBinding ShapeGeometry}" Background="#0A141A">
+              <Image Source="{TemplateBinding Source}" Stretch="UniformToFill" HorizontalAlignment="Center" VerticalAlignment="Center"
+                     RenderOptions.BitmapScalingMode="HighQuality" />
+              <Rectangle Fill="{StaticResource SceneFrostVeilBrush}" Opacity="{TemplateBinding FrostLevel}" IsHitTestVisible="False" />
+              <Rectangle Fill="{StaticResource SceneWarmVeilBrush}" Opacity="{TemplateBinding WarmLevel}" IsHitTestVisible="False" />
+              <Rectangle Fill="{StaticResource SceneDimVeilBrush}" Opacity="{TemplateBinding DimLevel}" IsHitTestVisible="False" />
+              <!-- Lesbarkeit für Text im unteren Bilddrittel, nur wenn es Inhalt gibt -->
+              <Rectangle x:Name="BottomShade" Fill="{StaticResource SceneBottomShadeBrush}" VerticalAlignment="Bottom"
+                         Height="{TemplateBinding ShadeHeight}" IsHitTestVisible="False" Visibility="Collapsed" />
+              <ContentPresenter Margin="{TemplateBinding Padding}"
+                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+            </Grid>
+
+            <!-- Goldener Innenrahmen -->
+            <Path Data="{TemplateBinding FrameGeometry}" Stroke="{StaticResource FrameGoldBrush}" StrokeThickness="2" IsHitTestVisible="False" />
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="HasContent" Value="True">
+              <Setter TargetName="BottomShade" Property="Visibility" Value="Visible" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+</ResourceDictionary>
