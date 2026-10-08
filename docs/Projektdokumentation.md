@@ -157,7 +157,7 @@ verborgen (*Dependency Inversion*), wodurch die Fachlogik ohne Windows testbar i
 ```mermaid
 flowchart TB
     subgraph FE["FRONTEND · frontend/Laternenwacht.App (WPF, net10.0-windows)"]
-        V[Views<br/>MainWindow · FocusBarWindow · RavenToastWindow · LanternGlyph]
+        V[Views<br/>MainWindow · WatchPage · ChroniclePage · FocusBarWindow · RavenToastWindow]
         VM[ViewModels<br/>Shell · Bar · Session · Chronicle · Settings]
         L[Services<br/>Lore · NotificationService · WindowStyles]
         V --> VM --> L
@@ -293,10 +293,10 @@ Laternenpfahl. Die Metaphern sind durchgängig und selbsterklärend:
 | Sitzungshistorie | **Chronik** |
 | Integritätsprüfung | **Siegel** |
 | Ergebnisbewertung | **Jahreszeit**: Frühling (< 10 % Frost), Tauwetter (< 25 %), Winter |
-| Hinweis bei vielen Ablenkungen | **Mahnruf** (z. B. bei 20 Verlockungen: *„Herrscher von Cair Paravel, Ihr gefährdet Euer Königreich mit Eurem Müßiggang!“*) |
+| Hinweis bei vielen Ablenkungen | **Mahnruf** (z. B. bei 20 Verlockungen die Königin: *„Zwanzig Stück! Honig gibt es ab jetzt keinen mehr, nur trockenes Brot. Bleibst du trotzdem?“*, darauf Peter: *„Genau so ging es Edmund. Was sie verspricht, hält sie nicht.“*) |
 
-**Gestaltungssystem „Nachtwald“ (ab Version 1.5).** Die Oberfläche hat zwei Iterationen durchlaufen,
-die beide im Nutzertest scheiterten – ein lehrreicher Teil des Projekts:
+**Gestaltungssystem „Nachtwald“ (Version 1.5, Vorgänger).** Die Oberfläche hat zuvor zwei Iterationen
+durchlaufen, die beide im Nutzertest scheiterten – ein lehrreicher Teil des Projekts:
 
 1. *Fantasy‑klassisch* (Nachtblau, Gold, Pergament, Serifen, Ornamente): wirkte altmodisch und „generiert“.
 2. *„Schneelicht“* (Cremeweiß, Tinte, Orange, schlichte weiße Karten): wirkte beliebig – Cremeweiß mit Orange
@@ -329,25 +329,74 @@ verschneiten Wald bei Nacht** – statt aus einem Baukasten:
 * **Barrierefreiheit:** sichtbarer Tastaturfokus (Kerzenlicht‑Rahmen), `AutomationProperties.Name` an
   Steuerelementen, reduzierte Bewegung respektiert, Kontrast Ivory auf Nacht > 14 : 1.
 
+**Gestaltungssystem „Laternendickicht“ (aktuell, vierte Iteration).** Der Nachtwald trug die Stimmung,
+erzählte aber nichts: Die Szene war Dekoration, und ihre Endlos‑Animationen kosteten Rechenzeit (siehe 6.3).
+Die vierte Fassung macht aus jeder Wacht eine **Geschichte** – eine Reise durch *„Der König von Narnia“* –
+und gestaltet die Oberfläche wie ein **aufgeschlagenes Buch im nächtlichen Laternenwald**: Pergamentkarten
+mit Tinte tragen die Geschichte, der Nachtgrund bleibt still im Hintergrund. Die Farbrollen stehen im Kopf
+von `Themes/Laternendickicht.xaml`:
+
+| Rolle | Farbe | Verwendung |
+|---|---|---|
+| Nacht | `#081116` (Grund), Schein oben `#0B181E`–`#16303A` | Fensterhintergrund; Glasflächen Nachtblau `#0D1A1F` mit Goldkante |
+| Ivory | `#F1E6CC` | Text auf Nacht |
+| Pergament | `#F6EEDA` → `#ECDFBF` → `#DCC69A`, Rand `#A07A36` | Karten mit Innenlinie und vier Eckzierden |
+| Tinte | `#2A1E14` (gedämpft `#6B5434`, weich `#4A3A28`, Goldtinte `#8A5A12`) | Text auf Pergament |
+| **Laternengold** | `#E7B75F` | einziges warmes Licht: Fokus, Fortschritt, Lob, Bilderrahmen |
+| **Eis** | `#9FD0EA` / `#4F92B5` | ausschließlich Ablenkung – der Winter der Königin |
+| **Wachsrot** | `#9E2B1F` | Siegel (gewählte Dauer, versiegelte Chronik), Narnia |
+| Frühling · Rast · Honig | `#B9D58E` · `#E08A4A` · `#F4EBDD` | Jahreszeit, Pause, Stücke Türkischer Honig |
+
+* **Schriften:** Überschriften in *Cinzel* (römische Versalien), Zierzeilen in *Cinzel Decorative*,
+  Fließtext und Zahlen in *EB Garamond*. Alle drei liegen als statische TTF‑Dateien in `Assets/Fonts/`
+  und stehen unter der SIL Open Font License 1.1 (Lizenztexte daneben); fehlen sie, greifen Sitka bzw. Georgia.
+* **Die Reise:** Zehn Stationen in der Reihenfolge des Buches – Laternenpfahl, Schlitten der Königin, leere
+  Höhle, Biberdamm, Hof der Königin, Tauwetter, Steinerner Tisch, Morgen am Tisch, Schlacht, Cair Paravel.
+  Die Station hängt allein am Anteil gemessener ÷ geplanter Zeit: **Station = 1 + ⌊9 · Anteil⌋**, Cair Paravel
+  erst bei 100 %; eine Rast hält die Reise an (`Journey` im Backend). Ein Wegband aus zehn Medaillons mit der
+  Laterne zeigt den Stand; jede neue Ablenkung legt ein Stück **Türkischen Honig** an die Stelle, an der sie
+  begann. Die Verlockungszeile erzählt aus Edmunds Kapiteln (Stationen 1–3 der Schlitten, Station 4 der
+  nächtliche Gang vom Biberdamm, ab Station 5 das trockene Brot im Schloss); die Rückkehr wird ohne Vorwurf
+  empfangen, wie Edmund am Steinernen Tisch.
+* **Szenenbilder statt Animation:** Sechs eigene Zeichnungen (Laternenpfahl, Schrank, Schlitten, Tauwetter,
+  Cair Paravel, Steinhof) liegen als JPEG 960 × 1200 in `Assets/Szenen/`, die bearbeitbaren SVG‑Quellen in
+  `docs/szenen/`. Sie stehen ruhend in einem goldenen Bogenrahmen; Ablenkung, Rast und Abwesenheit legen nur
+  einen Schleier darüber (Eis, warmer Schein, Abdunkelung).
+* **Vier Abschlussbilder:** vollendet im Frühling die Krönung in Cair Paravel, im Tauwetter der im Matsch
+  steckende Schlitten, im Winter der Hof der Steinfiguren mit dem ersten goldenen Licht am Tor; abgebrochen
+  geht es zurück durch den Schrank. Das **Wintermesser** zeigt während der Wacht, wie viel Frost noch als
+  Frühling bzw. Tauwetter gilt.
+* **Chronik als Verzeichnis der Bilder:** Spalten WACHT (Datum und Bildtitel, z. B. *„Die Schachtel blieb zu“*),
+  REISE (kleines Wegband), FROST, HONIG, JAHRESZEIT und SIEGEL; die Kennzahl **KRONEN** zählt die Krönungen.
+* **Rabenbote:** Bei *„Der König von Narnia“* spricht die Königin den Mahnruf, darunter antwortet eine Stimme
+  aus Narnia – die Königin hat nie das letzte Wort.
+* **Barrierefreiheit:** Wachssiegel und Buchrücken sind per Tastatur bedienbar und benannt, Einträge der Chronik
+  sind per Tab erreichbar und tragen Bildtitel und Details auch für Screenreader; Text auf Pergament hält
+  mindestens 4,5 : 1.
+
 ![Fokus – laufende Wacht](bilder/1-fokus-laufend.png)
 
-*Abb.: Fokus‑Seite während einer Wacht (Entwurfsvorschau als HTML‑Nachbau). Mitte: Szene mit Lichtring
-und Restzeit; rechts: Kennzahlen, Verteilung und nächstes Ziel.*
+*Abb.: Fokus‑Seite während einer Wacht in der Vorgängergestaltung „Nachtwald“ (Entwurfsvorschau als
+HTML‑Nachbau). Mitte: Szene mit Lichtring und Restzeit; rechts: Kennzahlen, Verteilung und nächstes Ziel.
+Die drei Abbildungen dieses Abschnitts werden durch Aufnahmen der Laternendickicht‑Oberfläche ersetzt,
+sobald diese unter Windows vorliegen.*
 
 ![Fokus – bereit](bilder/2-fokus-bereit.png)
 
-*Abb.: Fokus‑Seite vor dem Start mit Schnellstart und eigener Dauer.*
+*Abb.: Fokus‑Seite vor dem Start mit Schnellstart und eigener Dauer (Vorgängergestaltung „Nachtwald“).*
 
 ![Fokusleiste, Botschaft und Meme](bilder/3-kapsel-botschaft-meme.png)
 
 *Abb.: Fokusleiste aus dunklem Waldglas – oben im Fokus, darunter abgelenkt (eisblauer Schimmer).
-Rechts eine Botschaft mit Initial‑Avatar und Serifen‑Zitat, links ein treibendes Meme.*
+Rechts eine Botschaft mit Initial‑Avatar und Serifen‑Zitat, links ein treibendes Meme (Vorgängergestaltung „Nachtwald“).*
 
 **Fokusleiste (Kapsel)**
 
 * Kapsel aus dunklem Waldglas, damit sie auf hellen wie dunklen Hintergründen trägt.
-  Lichtring = Fortschritt der Wacht, große Zahl = Restzeit, Unterzeile = Kurzstatus
-  („Im Licht · Serie 12:30“ bzw. „Frost · Hearthstone“), Chip = Frostzeit und Anzahl der Ablenkungen.
+  Laternen‑Medaillon mit Fortschrittsring, große Zahl = Restzeit, Unterzeile = Kurzstatus
+  (z. B. „Am Schlitten · Hearthstone“ bei Ablenkung), **Wegfaden** mit den zehn Stationen, der Laterne und
+  je Ablenkung einem Stück Türkischem Honig, Chip = Frostzeit und Honigstücke. In der Rast glimmt die Kapsel
+  warm, im Wegfaden steht statt der Laterne ein Feuer.
 * **Verschiebbar:** Ziehen mit der linken Maustaste; die Position wird gespeichert. Fehlt der Bildschirm
   später (z. B. Laptop ohne Zweitmonitor), sitzt sie wieder oben mittig. Rechtsklick ▸
   *Leiste zurück an den oberen Rand* setzt sie zurück.
@@ -355,7 +404,7 @@ Rechts eine Botschaft mit Initial‑Avatar und Serifen‑Zitat, links ein treibe
   (Band 1–7 oder gemischt), Lob/Mahnrufe/Memes schalten, Wacht steuern.
 * `WS_EX_NOACTIVATE`: Klicks stehlen **nicht** den Tastaturfokus – sonst würde die Leiste selbst
   die Messung verfälschen. `WS_EX_TOOLWINDOW`: kein Eintrag in Alt+Tab/Taskleiste.
-* Bei Ablenkung wechseln Ring, Rand und Chip von Kerzenlicht zu Eisblau, die Kapsel schimmert kalt und die Flamme wird zur Schneeflocke.
+* Bei Ablenkung wechseln Ring, Rand, Wegfaden und Chip von Laternengold zu Eisblau, die Kapsel schimmert kalt und im Medaillon steht eine Schneeflocke.
 
 ---
 
@@ -468,10 +517,10 @@ Succesy/
 │       ├── Assets/                  Anwendungssymbol
 │       ├── Properties/PublishProfiles/   Veröffentlichungsprofile (eigenständig / schlank)
 │       ├── Services/                Erzähltexte (Lore), Rabenbote, Fensterstile
-│       ├── Themes/Nachtwald.xaml    Gestaltungssystem
+│       ├── Themes/Laternendickicht.xaml  Gestaltungssystem
 │       ├── ViewModels/              MVVM
-│       └── Views/                   Hauptfenster, Fokusleiste, Szene, Rabenbote, Meme,
-│                                    AmbientMotion/RenderCache (Ressourcenschonung)
+│       └── Views/                   Hauptfenster, Seiten, Wegband, Szenenrahmen, Fokusleiste,
+│                                    Rabenbote, Meme, RenderCache (Ressourcenschonung)
 ├── docs/                            Diese Dokumentation, Veröffentlichungsanleitung
 └── .github/workflows/build.yml      CI: Build, Test, EXE-Artefakt
 ```
@@ -569,7 +618,7 @@ oder auf den Moment beschränkt, in dem tatsächlich jemand hinsieht.
 
 | Maßnahme | Umsetzung | Wirkung |
 |---|---|---|
-| Bewegung nur, wenn jemand hinsieht | `AmbientMotion` startet Szenen‑Animationen nur, wenn das Element sichtbar und sein Fenster aktiv und nicht minimiert ist. Andernfalls werden sie mit `Storyboard.Pause` angehalten. Die Windows‑Einstellung „Animationen anzeigen“ wird beachtet. | Während einer Wacht (man arbeitet in anderen Programmen) ruht die Szene vollständig. |
+| Bewegung nur, wenn jemand hinsieht | `AmbientMotion` startet Szenen‑Animationen nur, wenn das Element sichtbar und sein Fenster aktiv und nicht minimiert ist. Andernfalls werden sie mit `Storyboard.Pause` angehalten. Die Windows‑Einstellung „Animationen anzeigen“ wird beachtet. | Während einer Wacht (man arbeitet in anderen Programmen) ruht die Szene vollständig. Seit dem Gestaltungssystem „Laternendickicht“ gibt es keine Endlos‑Animationen mehr: Die Szenen sind ruhende, eingefrorene Bilder, `AmbientMotion` und die animierte Nachtwald‑Szene sind entfallen. |
 | Weniger, gebündelte Animationen | Der Schnee besteht aus 3 Tiefenebenen mit je *einer* Geometrie statt aus 26 Einzelelementen. Jede Ebene enthält ihre Flocken doppelt, um eine Szenenhöhe versetzt, damit die Endlosschleife nahtlos schließt. | 6 statt 52 Animationsuhren, weniger Objekte. |
 | Gedrosselte Bildraten | Global gelten 30 statt 60 Bilder je Sekunde (`Timeline.DesiredFrameRate`), für den Schnee 24, das Atmen 15 und den Restzeit‑Balken 20. | Halbe bis Viertel‑Last, solange etwas animiert wird. |
 | Ruhige Fokusleiste | Die Flamme flackert nicht mehr dauerhaft (Bewegung im Augenwinkel lenkt zudem ab). Schatten und Kapselkörper liegen in einer zwischengespeicherten Ebene (`RenderCache` → `BitmapCache` in Bildschirmauflösung). | Pro Sekunde wird nur noch der geänderte Text neu gezeichnet. |
@@ -581,12 +630,12 @@ oder auf den Moment beschränkt, in dem tatsächlich jemand hinsieht.
 | Virtualisierte Chronik | `VirtualizingStackPanel` mit Recycling. | Der Speicherbedarf hängt nicht mehr von der Anzahl der Wachten ab. |
 | Speicher zurückgeben | `MemoryRelief`: Ist das Hauptfenster 3 s minimiert, folgen ein kompaktierender GC‑Lauf und das Leeren des Arbeitssatzes. | Geringerer Arbeitsspeicher, solange die Anwendung im Hintergrund wacht. |
 | Laufzeiteinstellungen | `ConcurrentGarbageCollection=false` (kein GC‑Hintergrundthread), `TieredPGO=false` (keine Profilierungs‑Instrumentierung), ReadyToRun (vorübersetzt). | Weniger Threads, weniger JIT‑Arbeit beim und nach dem Start. |
-| Schlanke Auslieferung | Profil `Win-x64-Schlank`: 1,3 MB statt 65 MB. Es nutzt die installierte .NET‑10‑Desktop‑Laufzeit. | Weniger Festplattenplatz. Die Laufzeit liegt nur einmal auf dem Rechner und wird von allen .NET‑Programmen gemeinsam genutzt. |
+| Schlanke Auslieferung | Profil `Win-x64-Schlank`: ~4 MB statt ~67 MB. Es nutzt die installierte .NET‑10‑Desktop‑Laufzeit. | Weniger Festplattenplatz. Die Laufzeit liegt nur einmal auf dem Rechner und wird von allen .NET‑Programmen gemeinsam genutzt. |
 
 **Abwägungen und Grenzen**
 
 * *Trimming* (Entfernen ungenutzten Codes) unterstützt WPF nicht. Es bleibt deaktiviert.
-* Die **eigenständige** EXE bleibt komprimiert. Unkomprimiert wäre sie 145 MB statt 65 MB groß, und ein
+* Die **eigenständige** EXE bleibt komprimiert. Unkomprimiert wäre sie ~148 MB statt ~67 MB groß, und ein
   Vorteil beim Arbeitsspeicher ließ sich nicht sicher belegen. Die sparsamste Variante ist die schlanke EXE.
 * Das Leeren des Arbeitssatzes senkt den angezeigten Arbeitsspeicher sofort; benötigte Seiten lädt Windows
   bei Bedarf nach. Deshalb geschieht es nur einmal beim Minimieren, nie periodisch.
@@ -617,7 +666,7 @@ Version 1.5 und 1.6 laufen lassen und vergleichen. Genauer geht es mit
 
 ### 7.1 Automatisierte Tests
 
-143 Unit‑Tests (xUnit) für die Fachlogik, u. a.:
+270 Unit‑Tests (xUnit) für die Fachlogik, u. a.:
 
 | Testklasse | Geprüft wird |
 |---|---|
@@ -648,7 +697,7 @@ damit deterministisch und schnell (< 1 s gesamt).
 |---|---|---|
 | T1 | Wacht mit 1 min starten, nur in Visual Studio arbeiten | Leiste gold, Frost 00:00, nach 1 min „Der Frühling ist gekommen!“ |
 | T2 | Während der Wacht Discord in den Vordergrund holen | Rahmen eisblau, Frost zählt hoch, Detail „Eine Verlockung ruft: discord“ |
-| T3 | Buch „Der König von Narnia“ wählen, 20‑mal zwischen Editor und Verlockung wechseln | Rabenbote unten rechts: „Herrscher von Cair Paravel …“ |
+| T3 | Buch „Der König von Narnia“ wählen, 20‑mal zwischen Editor und Verlockung wechseln | Rabenbote unten rechts: die Königin („Zwanzig Stück! …“) mit Peters Antwort |
 | T4 | Auf die Leiste klicken | Vorheriges Fenster behält den Tastaturfokus |
 | T5 | 2 min keine Eingabe | „Die Laterne wacht allein“, Zeit unter „abwesend“ |
 | T6 | Systemuhr während der Wacht um 1 h verstellen | Restzeit unverändert |
@@ -679,8 +728,8 @@ damit deterministisch und schnell (< 1 s gesamt).
 
 ## 8. Abnahme und Einführung
 
-Die Auslieferung erfolgt als **einzelne EXE** in zwei Varianten: **eigenständig** (~65 MB, keine
-Installation und keine .NET‑Laufzeit auf dem Zielsystem nötig) oder **schlank** (~1,3 MB, nutzt die
+Die Auslieferung erfolgt als **einzelne EXE** in zwei Varianten: **eigenständig** (~67 MB, keine
+Installation und keine .NET‑Laufzeit auf dem Zielsystem nötig) oder **schlank** (~4 MB, nutzt die
 installierte .NET‑10‑Desktop‑Laufzeit und ist die ressourcenschonendste Variante). Die Schritte in Visual Studio 2026 beschreibt
 [`Veroeffentlichung-VS2026.md`](Veroeffentlichung-VS2026.md). Einstellungen und Chronik liegen im
 Benutzerprofil; eine Deinstallation besteht aus dem Löschen der EXE und des Ordners

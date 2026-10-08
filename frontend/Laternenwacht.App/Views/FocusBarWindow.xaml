@@ -1,9 +1,16 @@
 <!--
-  Die Fokusleiste: eine Kapsel aus dunklem Waldglas am oberen Bildschirmrand.
-  Lichtring = Fortschritt der Wacht, große Zahl = Restzeit, Chip = Frost (Ablenkungszeit).
-  Bei Ablenkung wechseln Ring, Rand und Chip von Kerzenlicht zu Eisblau, und die Kapsel schimmert kalt.
+  Die Fokusleiste: eine Kapsel aus nächtlichem Waldglas am oberen Bildschirmrand – drei Zustände der Reise.
+    Licht  Goldrand, Laternen-Medaillon mit Fortschrittsring, Raute an beiden Enden, Wegfaden in Gold.
+    Frost  Eisrand mit kaltem Schein, Eiskristalle an beiden Enden, Schneeflocke im Medaillon,
+           Status "Am Schlitten · Programm", Wegfaden in Eisblau, Frost-Chip hell.
+    Rast   Herdglut: warmer Bernsteinrand, Pause-Zeichen im Medaillon, kein Frost-Chip,
+           der erste Knopf heißt "Weiterziehen" (Play).
+  Der Wegfaden zeigt die zehn Stationen der Reise, die Laterne beim Fortschritt und je Verlockung ein Stück
+  Türkischer Honig. Der Frost-Chip zählt Frostzeit und Honigstücke ("00:32 · ▢ 1").
   Ressourcen: Die Leiste ist ein transparentes (geschichtetes) Fenster und bleibt die ganze Wacht sichtbar.
-  Deshalb bewegt sich nichts dauerhaft, und Schatten liegen in einer zwischengespeicherten Ebene.
+  Deshalb bewegt sich nichts dauerhaft, Schatten und Rand liegen in einer zwischengespeicherten Ebene, die nur beim
+  Zustandswechsel neu gezeichnet wird, und die Textspalte hat je Zustand eine feste Breite: Wechselnde Ziffern
+  verschieben so weder den Wegfaden noch den Chip.
 -->
 <Window x:Class="Laternenwacht.App.Views.FocusBarWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -15,10 +22,125 @@
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:BarViewModel}"
         Title="Laternenwacht – Fokusleiste"
-        Width="580" SizeToContent="Height"
+        Width="832" SizeToContent="Height"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         ResizeMode="NoResize" ShowInTaskbar="False" ShowActivated="False" Topmost="True"
         UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
+
+  <Window.Resources>
+    <!-- Kapselgrund je Zustand (Licht / Frost / Rast) -->
+    <LinearGradientBrush x:Key="BarLightBrush" StartPoint="0,0" EndPoint="0,1">
+      <GradientStop Color="#15261F" Offset="0" />
+      <GradientStop Color="#0B1613" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="BarFrostBrush" StartPoint="0,0" EndPoint="0,1">
+      <GradientStop Color="#16293A" Offset="0" />
+      <GradientStop Color="#0B1822" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="BarRestBrush" StartPoint="0,0" EndPoint="0,1">
+      <GradientStop Color="#2A1A12" Offset="0" />
+      <GradientStop Color="#170E09" Offset="1" />
+    </LinearGradientBrush>
+
+    <!-- Ränder: außen kräftig, innen (4 px eingerückt) als feine Zierlinie, dazu ein dunkler Saum um die Kapsel -->
+    <SolidColorBrush x:Key="BarLightRimBrush" Color="#99C9A056" />
+    <SolidColorBrush x:Key="BarFrostRimBrush" Color="#BF9FD0EA" />
+    <SolidColorBrush x:Key="BarRestRimBrush" Color="#99E08A4A" />
+    <SolidColorBrush x:Key="BarLightInnerBrush" Color="#29C9A056" />
+    <SolidColorBrush x:Key="BarFrostInnerBrush" Color="#339FD0EA" />
+    <SolidColorBrush x:Key="BarRestInnerBrush" Color="#29E08A4A" />
+    <SolidColorBrush x:Key="BarLightHemBrush" Color="#590B1613" />
+    <SolidColorBrush x:Key="BarFrostHemBrush" Color="#590B1822" />
+    <SolidColorBrush x:Key="BarRestHemBrush" Color="#59170E09" />
+
+    <!-- Medaillon: Grund und Ringspur (20 % der Zustandsfarbe) -->
+    <SolidColorBrush x:Key="MedallionLightBrush" Color="#0B1613" />
+    <SolidColorBrush x:Key="MedallionFrostBrush" Color="#0B1822" />
+    <SolidColorBrush x:Key="MedallionRestBrush" Color="#170E09" />
+    <SolidColorBrush x:Key="TrackLightBrush" Color="#33E7B75F" />
+    <SolidColorBrush x:Key="TrackFrostBrush" Color="#339FD0EA" />
+    <SolidColorBrush x:Key="TrackRestBrush" Color="#33E08A4A" />
+    <SolidColorBrush x:Key="LanternWindowBrush" Color="#FFF0C4" />
+    <SolidColorBrush x:Key="IceCrystalBrush" Color="#CFEAF7" />
+
+    <!-- Schrift je Zustand: Restzeit und Status -->
+    <SolidColorBrush x:Key="TimeLightBrush" Color="#FBF3DE" />
+    <SolidColorBrush x:Key="TimeFrostBrush" Color="#EAF5FB" />
+    <SolidColorBrush x:Key="TimeRestBrush" Color="#FBEFE0" />
+    <SolidColorBrush x:Key="StatusRestBrush" Color="#E9C3A4" />
+
+    <!-- Frost-Chip -->
+    <SolidColorBrush x:Key="ChipLightBackBrush" Color="#0F9FD0EA" />
+    <SolidColorBrush x:Key="ChipLightEdgeBrush" Color="#4D9FD0EA" />
+    <SolidColorBrush x:Key="ChipLightTextBrush" Color="#CFE6F2" />
+    <SolidColorBrush x:Key="ChipFrostBackBrush" Color="#299FD0EA" />
+    <SolidColorBrush x:Key="ChipDotLightBrush" Color="#6E7F86" />
+    <SolidColorBrush x:Key="ChipDotFrostBrush" Color="#B7D3E0" />
+    <SolidColorBrush x:Key="ChipCubeEdgeBrush" Color="#C0503F" />
+
+    <!-- Runde Knöpfe: Farben kommen aus Background / BorderBrush / Foreground, damit jeder Zustand sie setzen kann -->
+    <SolidColorBrush x:Key="BarButtonBackBrush" Color="#0AFFFFFF" />
+    <SolidColorBrush x:Key="BarButtonHoverBrush" Color="#1FFFFFFF" />
+    <SolidColorBrush x:Key="BarButtonLightEdgeBrush" Color="#33F1E6CC" />
+    <SolidColorBrush x:Key="BarButtonLightTextBrush" Color="#E8DCBC" />
+    <SolidColorBrush x:Key="BarButtonFrostEdgeBrush" Color="#38CFEAF7" />
+    <SolidColorBrush x:Key="BarButtonFrostTextBrush" Color="#DDEFF8" />
+    <SolidColorBrush x:Key="BarButtonRestEdgeBrush" Color="#33FBEFE0" />
+    <SolidColorBrush x:Key="BarButtonRestTextBrush" Color="#F1DDC8" />
+    <SolidColorBrush x:Key="BarButtonGlowBackBrush" Color="#24E08A4A" />
+    <SolidColorBrush x:Key="BarButtonGlowEdgeBrush" Color="#8CE08A4A" />
+
+    <!-- Symbole im Medaillon (Raster 52×52, ohne Streckung) -->
+    <Geometry x:Key="MedallionLanternGeometry">M 21.5,20.5 L 26,17 L 30.5,20.5 Z M 22,20.5 L 30,20.5 L 30,29 L 22,29 Z M 21.5,29 L 30.5,29 L 28.5,31.5 L 23.5,31.5 Z</Geometry>
+    <Geometry x:Key="MedallionWindowGeometry">M 23.5,22 L 28.5,22 L 28.5,27.5 L 23.5,27.5 Z</Geometry>
+    <Geometry x:Key="MedallionSnowGeometry">M 26,17 L 26,35 M 18.2,21.5 L 33.8,30.5 M 18.2,30.5 L 33.8,21.5 M 23.5,18.8 L 26,20.8 L 28.5,18.8 M 23.5,33.2 L 26,31.2 L 28.5,33.2</Geometry>
+    <Geometry x:Key="MedallionPauseGeometry">M 20.5,20.2 A 1.2,1.2 0 0 1 21.7,19 L 23.3,19 A 1.2,1.2 0 0 1 24.5,20.2 L 24.5,31.8 A 1.2,1.2 0 0 1 23.3,33 L 21.7,33 A 1.2,1.2 0 0 1 20.5,31.8 Z M 27.5,20.2 A 1.2,1.2 0 0 1 28.7,19 L 30.3,19 A 1.2,1.2 0 0 1 31.5,20.2 L 31.5,31.8 A 1.2,1.2 0 0 1 30.3,33 L 28.7,33 A 1.2,1.2 0 0 1 27.5,31.8 Z</Geometry>
+    <!-- Honigstück im Chip (Raster 18×18): gepuderter Würfel mit rotem Rand -->
+    <Geometry x:Key="ChipCubeGeometry">M 4.5,2 L 13.5,2 A 2.5,2.5 0 0 1 16,4.5 L 16,13.5 A 2.5,2.5 0 0 1 13.5,16 L 4.5,16 A 2.5,2.5 0 0 1 2,13.5 L 2,4.5 A 2.5,2.5 0 0 1 4.5,2 Z</Geometry>
+    <Geometry x:Key="ChipCubeDotsGeometry">M 7.6,6.8 A 1.2,1.2 0 1 1 5.2,6.8 A 1.2,1.2 0 1 1 7.6,6.8 Z M 12.6,11 A 1.2,1.2 0 1 1 10.2,11 A 1.2,1.2 0 1 1 12.6,11 Z</Geometry>
+
+    <!-- Runder Symbolknopf der Leiste (44 px) -->
+    <Style x:Key="BarButton" TargetType="Button">
+      <Setter Property="Width" Value="44" />
+      <Setter Property="Height" Value="44" />
+      <Setter Property="Margin" Value="6,0,0,0" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+      <Setter Property="Background" Value="{StaticResource BarButtonBackBrush}" />
+      <Setter Property="BorderBrush" Value="{StaticResource BarButtonLightEdgeBrush}" />
+      <Setter Property="Foreground" Value="{StaticResource BarButtonLightTextBrush}" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Grid>
+              <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                      BorderThickness="1" CornerRadius="22" />
+              <Border x:Name="Hover" Background="{StaticResource BarButtonHoverBrush}" CornerRadius="22" Visibility="Hidden" />
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Hover" Property="Visibility" Value="Visible" />
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.35" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+      <Style.Triggers>
+        <DataTrigger Binding="{Binding IsDistracted}" Value="True">
+          <Setter Property="BorderBrush" Value="{StaticResource BarButtonFrostEdgeBrush}" />
+          <Setter Property="Foreground" Value="{StaticResource BarButtonFrostTextBrush}" />
+        </DataTrigger>
+        <DataTrigger Binding="{Binding IsPaused}" Value="True">
+          <Setter Property="BorderBrush" Value="{StaticResource BarButtonRestEdgeBrush}" />
+          <Setter Property="Foreground" Value="{StaticResource BarButtonRestTextBrush}" />
+        </DataTrigger>
+      </Style.Triggers>
+    </Style>
+  </Window.Resources>
 
   <!-- Rechtsklick: Programm markieren, Botschaften, Bücher, Leiste zurücksetzen, Wacht steuern -->
   <Window.ContextMenu>
@@ -65,17 +187,18 @@
     </ContextMenu>
   </Window.ContextMenu>
 
-  <Grid Margin="16,10,16,22">
+  <!-- Rand: Platz für Eiskristalle bzw. Rauten an den Enden (seitlich) und den Schatten (unten) -->
+  <Grid Margin="28,10,28,30">
     <!--
-      Körper der Kapsel (Hintergrund, Rand, Schatten, Frostschimmer) als eigene, zwischengespeicherte Ebene:
-      Er ändert sich nur beim Wechsel zwischen Licht und Frost. Die sekündlich wechselnden Zahlen liegen darüber
+      Körper der Kapsel (Saum, Grund, Ränder, Schatten, Frostschein, Endzierden) als eigene, zwischengespeicherte Ebene:
+      Er ändert sich nur beim Wechsel zwischen Licht, Frost und Rast. Die sekündlich wechselnden Zahlen liegen darüber
       und lassen die Schatten daher nicht jedes Mal neu berechnen.
     -->
     <Grid views:RenderCache.IsEnabled="True" IsHitTestVisible="False" DataContext="{Binding Session}">
-      <!-- Eisblauer Schimmer bei Ablenkung -->
-      <Border CornerRadius="32" Background="{StaticResource FrostTintBrush}">
+      <!-- Kalter Schein um die Kapsel, nur bei Ablenkung -->
+      <Border Height="70" CornerRadius="35" Background="{StaticResource FrostTintBrush}">
         <Border.Effect>
-          <DropShadowEffect BlurRadius="28" ShadowDepth="0" Color="{StaticResource FrostColor}" Opacity="0.55" />
+          <DropShadowEffect BlurRadius="26" ShadowDepth="0" Color="{StaticResource FrostColor}" Opacity="0.4" />
         </Border.Effect>
         <Border.Style>
           <Style TargetType="Border">
@@ -89,59 +212,251 @@
         </Border.Style>
       </Border>
 
-      <Border Height="64" CornerRadius="32" BorderThickness="1" Background="{StaticResource CapsuleBrush}">
+      <!-- Dunkler Saum (4 px) außen um die Kapsel -->
+      <Border Height="78" Margin="-4,0" CornerRadius="39" BorderThickness="4">
         <Border.Style>
           <Style TargetType="Border">
-            <Setter Property="BorderBrush" Value="{StaticResource Edge2Brush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BarLightHemBrush}" />
             <Style.Triggers>
               <DataTrigger Binding="{Binding IsDistracted}" Value="True">
-                <Setter Property="BorderBrush" Value="{StaticResource FrostEdgeBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource BarFrostHemBrush}" />
+              </DataTrigger>
+              <DataTrigger Binding="{Binding IsPaused}" Value="True">
+                <Setter Property="BorderBrush" Value="{StaticResource BarRestHemBrush}" />
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </Border.Style>
+      </Border>
+
+      <!-- Grund mit kräftigem Rand und Schlagschatten -->
+      <Border Height="70" CornerRadius="35" BorderThickness="1">
+        <Border.Style>
+          <Style TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource BarLightBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BarLightRimBrush}" />
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding IsDistracted}" Value="True">
+                <Setter Property="Background" Value="{StaticResource BarFrostBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource BarFrostRimBrush}" />
+              </DataTrigger>
+              <DataTrigger Binding="{Binding IsPaused}" Value="True">
+                <Setter Property="Background" Value="{StaticResource BarRestBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource BarRestRimBrush}" />
               </DataTrigger>
             </Style.Triggers>
           </Style>
         </Border.Style>
         <Border.Effect>
-          <DropShadowEffect BlurRadius="26" ShadowDepth="8" Direction="270" Opacity="0.4" Color="Black" />
+          <DropShadowEffect BlurRadius="30" ShadowDepth="12" Direction="270" Opacity="0.45" Color="#141C20" />
         </Border.Effect>
       </Border>
+
+      <!-- Feine Innenlinie, 4 px eingerückt -->
+      <Border Height="62" Margin="4,0" CornerRadius="31" BorderThickness="1">
+        <Border.Style>
+          <Style TargetType="Border">
+            <Setter Property="BorderBrush" Value="{StaticResource BarLightInnerBrush}" />
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding IsDistracted}" Value="True">
+                <Setter Property="BorderBrush" Value="{StaticResource BarFrostInnerBrush}" />
+              </DataTrigger>
+              <DataTrigger Binding="{Binding IsPaused}" Value="True">
+                <Setter Property="BorderBrush" Value="{StaticResource BarRestInnerBrush}" />
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </Border.Style>
+      </Border>
+
+      <!-- Endzierden: Rauten (Gold bzw. Herdglut) – bei Ablenkung Eiskristalle -->
+      <Grid>
+        <Grid.Style>
+          <Style TargetType="Grid">
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding IsDistracted}" Value="True">
+                <Setter Property="Visibility" Value="Collapsed" />
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </Grid.Style>
+        <Path Data="{StaticResource DiamondGeometry}" Width="10" Height="10" Stretch="None"
+              HorizontalAlignment="Left" VerticalAlignment="Center" Margin="-16,0,0,0">
+          <Path.Style>
+            <Style TargetType="Path">
+              <Setter Property="Fill" Value="{StaticResource EyebrowBrush}" />
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding IsPaused}" Value="True">
+                  <Setter Property="Fill" Value="{StaticResource RestBrush}" />
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </Path.Style>
+        </Path>
+        <Path Data="{StaticResource DiamondGeometry}" Width="10" Height="10" Stretch="None"
+              HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,-16,0">
+          <Path.Style>
+            <Style TargetType="Path">
+              <Setter Property="Fill" Value="{StaticResource EyebrowBrush}" />
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding IsPaused}" Value="True">
+                  <Setter Property="Fill" Value="{StaticResource RestBrush}" />
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </Path.Style>
+        </Path>
+      </Grid>
+      <Grid Opacity="0.9">
+        <Grid.Style>
+          <Style TargetType="Grid">
+            <Setter Property="Visibility" Value="Collapsed" />
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding IsDistracted}" Value="True">
+                <Setter Property="Visibility" Value="Visible" />
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </Grid.Style>
+        <Path Data="{StaticResource IceStarGeometry}" Width="34" Height="40" Stretch="None"
+              Stroke="{StaticResource IceCrystalBrush}" StrokeThickness="1.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+              HorizontalAlignment="Left" VerticalAlignment="Center" Margin="-22,0,0,0" />
+        <Path Data="{StaticResource IceStarGeometry}" Width="34" Height="40" Stretch="None" RenderTransformOrigin="0.5,0.5"
+              Stroke="{StaticResource IceCrystalBrush}" StrokeThickness="1.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+              HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,-22,0">
+          <Path.RenderTransform>
+            <ScaleTransform ScaleX="-1" />
+          </Path.RenderTransform>
+        </Path>
+      </Grid>
     </Grid>
 
     <!-- Inhalt: transparent, aber treffbar (zum Ziehen) -->
-    <Border x:Name="Banner" Height="64" Padding="1" Background="Transparent" DataContext="{Binding Session}" Cursor="SizeAll"
+    <Border x:Name="Banner" Height="70" Background="Transparent" DataContext="{Binding Session}" Cursor="SizeAll"
             ToolTip="Ziehen zum Verschieben · Rechtsklick für Optionen">
-      <Grid Margin="8,0,10,0">
+      <Grid Margin="10,0,12,0">
         <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="Auto" />
           <ColumnDefinition Width="Auto" />
           <ColumnDefinition Width="*" />
           <ColumnDefinition Width="Auto" />
           <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
 
-        <!-- Lichtring mit Zustandssymbol -->
-        <Grid Width="48" Height="48" VerticalAlignment="Center">
-          <views:ProgressRing Progress="{Binding Progress}" Thickness="2.5" Glow="2.5" TrackBrush="#17FFFFFF">
+        <!-- Medaillon: Fortschrittsring mit Laterne (Licht), Schneeflocke (Frost) oder Pause-Zeichen (Rast) -->
+        <Grid Width="52" Height="52" VerticalAlignment="Center" IsHitTestVisible="False">
+          <Ellipse>
+            <Ellipse.Style>
+              <Style TargetType="Ellipse">
+                <Setter Property="Fill" Value="{StaticResource MedallionLightBrush}" />
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding IsDistracted}" Value="True">
+                    <Setter Property="Fill" Value="{StaticResource MedallionFrostBrush}" />
+                  </DataTrigger>
+                  <DataTrigger Binding="{Binding IsPaused}" Value="True">
+                    <Setter Property="Fill" Value="{StaticResource MedallionRestBrush}" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </Ellipse.Style>
+          </Ellipse>
+          <views:ProgressRing Width="45" Height="45" Progress="{Binding Progress}" Thickness="3">
             <views:ProgressRing.Style>
               <Style TargetType="views:ProgressRing">
                 <Setter Property="RingBrush" Value="{StaticResource GoldBrush}" />
+                <Setter Property="TrackBrush" Value="{StaticResource TrackLightBrush}" />
                 <Style.Triggers>
                   <DataTrigger Binding="{Binding IsDistracted}" Value="True">
                     <Setter Property="RingBrush" Value="{StaticResource FrostBrush}" />
+                    <Setter Property="TrackBrush" Value="{StaticResource TrackFrostBrush}" />
                   </DataTrigger>
                   <DataTrigger Binding="{Binding IsPaused}" Value="True">
-                    <Setter Property="RingBrush" Value="{StaticResource MossBrush}" />
+                    <Setter Property="RingBrush" Value="{StaticResource RestBrush}" />
+                    <Setter Property="TrackBrush" Value="{StaticResource TrackRestBrush}" />
                   </DataTrigger>
                 </Style.Triggers>
               </Style>
             </views:ProgressRing.Style>
           </views:ProgressRing>
-          <views:LanternGlyph Width="19" Height="19" IsLit="{Binding IsLit}" />
+
+          <!-- Laterne (Licht und Abwesenheit; abwesend nur gedämpft) -->
+          <Grid>
+            <Grid.Style>
+              <Style TargetType="Grid">
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding IsAway}" Value="True">
+                    <Setter Property="Opacity" Value="0.5" />
+                  </DataTrigger>
+                  <DataTrigger Binding="{Binding IsDistracted}" Value="True">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                  </DataTrigger>
+                  <DataTrigger Binding="{Binding IsPaused}" Value="True">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </Grid.Style>
+            <Path Data="{StaticResource MedallionLanternGeometry}" Fill="{StaticResource GoldBrush}" Stretch="None" />
+            <Path Data="{StaticResource MedallionWindowGeometry}" Fill="{StaticResource LanternWindowBrush}" Stretch="None" />
+          </Grid>
+          <Path Data="{StaticResource MedallionSnowGeometry}" Stroke="{StaticResource IceCrystalBrush}" StrokeThickness="1.5"
+                StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stretch="None">
+            <Path.Style>
+              <Style TargetType="Path">
+                <Setter Property="Visibility" Value="Collapsed" />
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding IsDistracted}" Value="True">
+                    <Setter Property="Visibility" Value="Visible" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </Path.Style>
+          </Path>
+          <Path Data="{StaticResource MedallionPauseGeometry}" Fill="{StaticResource RestBrush}" Stretch="None">
+            <Path.Style>
+              <Style TargetType="Path">
+                <Setter Property="Visibility" Value="Collapsed" />
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding IsPaused}" Value="True">
+                    <Setter Property="Visibility" Value="Visible" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </Path.Style>
+          </Path>
         </Grid>
 
-        <!-- Restzeit und Kurzstatus -->
-        <StackPanel Grid.Column="1" Margin="14,0,12,0" VerticalAlignment="Center">
-          <TextBlock Text="{Binding RemainingText}" FontFamily="{StaticResource DisplayFont}" FontSize="26" FontWeight="Light"
-                     Foreground="{StaticResource IvoryBrush}" Typography.NumeralAlignment="Tabular" />
-          <TextBlock Text="{Binding ShortStatus}" FontSize="12" TextTrimming="CharacterEllipsis" Margin="0,1,0,0">
+        <!-- Restzeit und Kurzstatus; feste Breite je Zustand, damit wechselnde Ziffern nichts verschieben -->
+        <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+          <StackPanel.Style>
+            <Style TargetType="StackPanel">
+              <Setter Property="Width" Value="170" />
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding IsPaused}" Value="True">
+                  <Setter Property="Width" Value="300" />
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </StackPanel.Style>
+          <TextBlock Text="{Binding RemainingText}" FontFamily="{StaticResource CinzelFont}" FontSize="30" LineHeight="32"
+                     LineStackingStrategy="BlockLineHeight" Typography.NumeralAlignment="Tabular">
+            <TextBlock.Style>
+              <Style TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{StaticResource TimeLightBrush}" />
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding IsDistracted}" Value="True">
+                    <Setter Property="Foreground" Value="{StaticResource TimeFrostBrush}" />
+                  </DataTrigger>
+                  <DataTrigger Binding="{Binding IsPaused}" Value="True">
+                    <Setter Property="Foreground" Value="{StaticResource TimeRestBrush}" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </TextBlock.Style>
+          </TextBlock>
+          <TextBlock Text="{Binding ShortStatus}" FontFamily="{StaticResource GaramondFont}" FontStyle="Italic" FontSize="15"
+                     TextTrimming="CharacterEllipsis" Margin="0,2,0,0">
             <TextBlock.Style>
               <Style TargetType="TextBlock">
                 <Setter Property="Foreground" Value="{StaticResource SageBrush}" />
@@ -149,57 +464,148 @@
                   <DataTrigger Binding="{Binding IsDistracted}" Value="True">
                     <Setter Property="Foreground" Value="{StaticResource FrostBrush}" />
                   </DataTrigger>
+                  <DataTrigger Binding="{Binding IsPaused}" Value="True">
+                    <Setter Property="Foreground" Value="{StaticResource StatusRestBrush}" />
+                  </DataTrigger>
                 </Style.Triggers>
               </Style>
             </TextBlock.Style>
           </TextBlock>
         </StackPanel>
 
-        <!-- Frost-Chip: so lange warst du in dieser Wacht abgelenkt -->
-        <Border Grid.Column="2" Height="40" CornerRadius="20" Padding="14,0" BorderThickness="1" VerticalAlignment="Center"
-                ToolTip="Frost: so lange hast du dich in dieser Wacht ablenken lassen">
-          <Border.Style>
-            <Style TargetType="Border">
-              <Setter Property="Background" Value="{StaticResource GlassBrush}" />
-              <Setter Property="BorderBrush" Value="{StaticResource EdgeBrush}" />
-              <Setter Property="TextElement.Foreground" Value="{StaticResource IvoryBrush}" />
+        <!-- Wegfaden: zehn Stationen, Laterne beim Fortschritt, je Verlockung ein Honigstück -->
+        <views:JourneyThread Grid.Column="2" Width="150" Height="20" Margin="14,0,0,0" VerticalAlignment="Center" Background="Transparent"
+                             Station="{Binding StationNumber}" Progress="{Binding Progress}" HoneyMarks="{Binding HoneyMarks}"
+                             IsResting="{Binding IsPaused}">
+          <AutomationProperties.Name>
+            <MultiBinding StringFormat="Station {0} von 10: {1}">
+              <Binding Path="StationNumber" />
+              <Binding Path="StationName" />
+            </MultiBinding>
+          </AutomationProperties.Name>
+          <views:JourneyThread.ToolTip>
+            <TextBlock>
+              <TextBlock.Text>
+                <MultiBinding StringFormat="Station {0} von 10: {1}">
+                  <Binding Path="StationNumber" />
+                  <Binding Path="StationName" />
+                </MultiBinding>
+              </TextBlock.Text>
+            </TextBlock>
+          </views:JourneyThread.ToolTip>
+          <views:JourneyThread.Style>
+            <Style TargetType="views:JourneyThread">
+              <Setter Property="Accent" Value="{StaticResource GoldBrush}" />
               <Style.Triggers>
                 <DataTrigger Binding="{Binding IsDistracted}" Value="True">
-                  <Setter Property="Background" Value="{StaticResource FrostTintBrush}" />
-                  <Setter Property="BorderBrush" Value="{StaticResource FrostEdgeBrush}" />
-                  <Setter Property="TextElement.Foreground" Value="{StaticResource FrostBrush}" />
+                  <Setter Property="Accent" Value="{StaticResource FrostBrush}" />
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </views:JourneyThread.Style>
+        </views:JourneyThread>
+
+        <!-- Frost-Chip: Frostzeit dieser Wacht · Stücke Türkischer Honig (in der Rast ausgeblendet) -->
+        <Border Grid.Column="4" Height="40" CornerRadius="20" Padding="12,0" BorderThickness="1" Margin="10,0,0,0"
+                VerticalAlignment="Center"
+                ToolTip="Frost: so lange hast du dich in dieser Wacht ablenken lassen · Honig: so oft hat dich etwas weggelockt">
+          <AutomationProperties.Name>
+            <MultiBinding StringFormat="Frost {0}, {1} Stück Türkischer Honig">
+              <Binding Path="FrostText" />
+              <Binding Path="DistractionCount" />
+            </MultiBinding>
+          </AutomationProperties.Name>
+          <Border.Style>
+            <Style TargetType="Border">
+              <Setter Property="Background" Value="{StaticResource ChipLightBackBrush}" />
+              <Setter Property="BorderBrush" Value="{StaticResource ChipLightEdgeBrush}" />
+              <Setter Property="TextElement.Foreground" Value="{StaticResource ChipLightTextBrush}" />
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding IsDistracted}" Value="True">
+                  <Setter Property="Background" Value="{StaticResource ChipFrostBackBrush}" />
+                  <Setter Property="BorderBrush" Value="{StaticResource FrostBrush}" />
+                  <Setter Property="TextElement.Foreground" Value="{StaticResource TimeFrostBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsPaused}" Value="True">
+                  <Setter Property="Visibility" Value="Collapsed" />
                 </DataTrigger>
               </Style.Triggers>
             </Style>
           </Border.Style>
           <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-            <Path Data="{StaticResource SnowflakeGeometry}" Stroke="{StaticResource FrostBrush}" StrokeThickness="2"
-                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stretch="Uniform" Width="15" Height="15" Margin="0,0,8,0"
-                  VerticalAlignment="Center" />
-            <TextBlock Text="{Binding FrostText}" FontSize="15" FontWeight="Medium" VerticalAlignment="Center"
-                       Typography.NumeralAlignment="Tabular" />
-            <TextBlock FontSize="12" Opacity="0.7" VerticalAlignment="Center" Margin="6,1,0,0">
-              <Run Text="·" /> <Run Text="{Binding DistractionCount, Mode=OneWay}" /><Run Text="×" />
+            <Path Data="{StaticResource NarniaSnowflakeGeometry}" Width="16" Height="16" Stretch="None" StrokeThickness="1.3"
+                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" VerticalAlignment="Center">
+              <Path.Style>
+                <Style TargetType="Path">
+                  <Setter Property="Stroke" Value="{StaticResource FrostBrush}" />
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsDistracted}" Value="True">
+                      <Setter Property="Stroke" Value="{StaticResource IceCrystalBrush}" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Path.Style>
+            </Path>
+            <TextBlock Text="{Binding FrostText}" FontFamily="{StaticResource CinzelFont}" FontSize="15" FontWeight="SemiBold"
+                       Margin="7,0,0,0" VerticalAlignment="Center" Typography.NumeralAlignment="Tabular" />
+            <TextBlock Text="·" FontSize="15" Margin="7,0,0,0" VerticalAlignment="Center">
+              <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                  <Setter Property="FontFamily" Value="{StaticResource GaramondFont}" />
+                  <Setter Property="Foreground" Value="{StaticResource ChipDotLightBrush}" />
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsDistracted}" Value="True">
+                      <Setter Property="Foreground" Value="{StaticResource ChipDotFrostBrush}" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </TextBlock.Style>
+            </TextBlock>
+            <Grid Width="13" Height="13" Margin="7,0,0,0" VerticalAlignment="Center">
+              <Viewbox Stretch="Uniform">
+                <Canvas Width="18" Height="18">
+                  <Path Data="{StaticResource ChipCubeGeometry}" Fill="{StaticResource HoneyBrush}"
+                        Stroke="{StaticResource ChipCubeEdgeBrush}" StrokeThickness="1.6" />
+                  <Path Data="{StaticResource ChipCubeDotsGeometry}" Fill="{StaticResource HoneyDotBrush}" />
+                </Canvas>
+              </Viewbox>
+            </Grid>
+            <TextBlock Text="{Binding DistractionCount}" FontFamily="{StaticResource CinzelFont}" FontSize="15" FontWeight="SemiBold"
+                       Margin="6,0,0,0" VerticalAlignment="Center" Typography.NumeralAlignment="Tabular" />
+            <TextBlock Text="Stück" FontFamily="{StaticResource GaramondFont}" FontSize="15" Margin="4,0,0,0" VerticalAlignment="Center">
+              <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                  <Setter Property="Visibility" Value="Collapsed" />
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsDistracted}" Value="True">
+                      <Setter Property="Visibility" Value="Visible" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </TextBlock.Style>
             </TextBlock>
           </StackPanel>
         </Border>
 
-        <!-- Steuerung -->
-        <StackPanel Grid.Column="3" Orientation="Horizontal" Margin="10,0,0,0" VerticalAlignment="Center" Cursor="Hand">
+        <!-- Steuerung: Rasten/Weiterziehen, Wacht beenden, Hauptfenster -->
+        <StackPanel Grid.Column="5" Orientation="Horizontal" Margin="4,0,0,0" VerticalAlignment="Center" Cursor="Hand">
           <Button Command="{Binding PauseResumeCommand}" ToolTip="{Binding PauseResumeLabel}"
                   AutomationProperties.Name="{Binding PauseResumeLabel}">
             <Button.Style>
-              <Style TargetType="Button" BasedOn="{StaticResource CapsuleButton}">
+              <Style TargetType="Button" BasedOn="{StaticResource BarButton}">
                 <Setter Property="Content">
                   <Setter.Value>
-                    <Path Data="{StaticResource PauseGeometry}" Style="{StaticResource FillIcon}" Width="12" Height="12" />
+                    <Path Data="{StaticResource PauseGeometry}" Style="{StaticResource FillIcon}" Width="12" Height="14" />
                   </Setter.Value>
                 </Setter>
                 <Style.Triggers>
                   <DataTrigger Binding="{Binding IsPaused}" Value="True">
+                    <Setter Property="Background" Value="{StaticResource BarButtonGlowBackBrush}" />
+                    <Setter Property="BorderBrush" Value="{StaticResource BarButtonGlowEdgeBrush}" />
+                    <Setter Property="Foreground" Value="{StaticResource TimeRestBrush}" />
                     <Setter Property="Content">
                       <Setter.Value>
-                        <Path Data="{StaticResource PlayGeometry}" Style="{StaticResource FillIcon}" Width="12" Height="12" />
+                        <Path Data="{StaticResource PlayGeometry}" Style="{StaticResource FillIcon}" Width="12" Height="14" />
                       </Setter.Value>
                     </Setter>
                   </DataTrigger>
@@ -207,13 +613,13 @@
               </Style>
             </Button.Style>
           </Button>
-          <Button Style="{StaticResource CapsuleButton}" Command="{Binding AbortCommand}"
+          <Button Style="{StaticResource BarButton}" Command="{Binding AbortCommand}"
                   ToolTip="Wacht beenden" AutomationProperties.Name="Wacht beenden">
-            <Path Data="{StaticResource StopGeometry}" Style="{StaticResource FillIcon}" Width="10" Height="10" />
+            <Path Data="{StaticResource StopGeometry}" Style="{StaticResource FillIcon}" Width="12" Height="12" />
           </Button>
-          <Button Style="{StaticResource CapsuleButton}" Command="{Binding ShowChamberCommand}"
+          <Button Style="{StaticResource BarButton}" Command="{Binding ShowChamberCommand}"
                   ToolTip="Laternenwacht öffnen" AutomationProperties.Name="Hauptfenster öffnen">
-            <Path Data="{StaticResource OpenGeometry}" Style="{StaticResource LineIcon}" Width="14" Height="14" StrokeThickness="2" />
+            <Path Data="{StaticResource OpenGeometry}" Style="{StaticResource LineIcon}" Width="14" Height="14" StrokeThickness="1.6" />
           </Button>
         </StackPanel>
       </Grid>

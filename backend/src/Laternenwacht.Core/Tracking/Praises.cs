@@ -30,11 +30,11 @@ public static class Praises
             ],
             [ChronicleBook.LionWitchWardrobe] =
             [
-                ("Zehn Minuten ohne Verlockung – nicht einmal türkischer Honig hätte dich erwischt.", "Lucy"),
-                ("Fünfundzwanzig Minuten! Der Schnee unter deinem Laternenpfahl beginnt zu schmelzen.", "Herr Tumnus"),
-                ("Dreiviertel Stunde – das ist echter Biberfleiß. Ich bin stolz auf dich.", "Herr Biber"),
-                ("Eine Stunde im Licht! Dafür lege ich dir glatt ein Geschenk unter den Baum.", "der Weihnachtsmann"),
-                ("Anderthalb Stunden. Auf Cair Paravel wird man von dieser Wacht noch lange erzählen.", "Peter, der Hochkönig"),
+                ("Zehn Minuten, und kein Glöckchen hat dich vom Weg gelockt. Ich hab’s gewusst!", "Lucy"),
+                ("Fünfundzwanzig Minuten! Unter deinem Laternenpfahl wird der Schnee schon weich.", "Herr Tumnus"),
+                ("Eine Dreiviertelstunde – das nenne ich Biberfleiß. Ich bin stolz auf dich.", "Herr Biber"),
+                ("Eine ganze Stunde im Licht! Ihr Winter bekommt Risse, sonst wäre ich nicht durchgekommen. Diese Stunde hast du dir selbst geschenkt.", "der Weihnachtsmann"),
+                ("Anderthalb Stunden. In Cair Paravel wird man von dieser Wacht noch lange erzählen.", "Peter"),
             ],
             [ChronicleBook.HorseAndHisBoy] =
             [
@@ -74,7 +74,7 @@ public static class Praises
                 ("Fünfundzwanzig Minuten! Du bist nicht nur für dich selbst da – du bist für die Sache da.", "Poggin, der treue Zwerg"),
                 ("Dreiviertel Stunde ohne Wanken. Mit dir ritte ich in jede Schlacht.", "Juwel, das Einhorn"),
                 ("Eine Stunde! So hält man die letzte Stellung.", "König Tirian"),
-                ("Anderthalb Stunden – weiter hinauf und weiter hinein!", "Juwel, das Einhorn"),
+                ("Anderthalb Stunden! Von solcher Treue wird man in Narnia noch lange singen.", "Juwel, das Einhorn"),
             ],
         }.ToFrozenDictionary();
 

@@ -3,7 +3,7 @@ namespace Laternenwacht.App.ViewModels;
 /// <summary>Datenkontext des Hauptfensters ("Kammer des Wächters").</summary>
 internal sealed class ShellViewModel(SessionViewModel session, ChronicleViewModel chronicle, SettingsViewModel settings) : ObservableObject
 {
-    public SessionViewModel Session { get; } = session;
+    public SessionViewModel Session { get; } = Connect(session, chronicle);
 
     public ChronicleViewModel Chronicle { get; } = chronicle;
 
@@ -24,4 +24,16 @@ internal sealed class ShellViewModel(SessionViewModel session, ChronicleViewMode
 
     public string VersionText { get; } =
         "Version " + (typeof(ShellViewModel).Assembly.GetName().Version?.ToString(3) ?? "1.0.0");
+
+    /// <summary>
+    /// Das Abschlussbild einer Wacht vergleicht ihre längste Serie mit der bisherigen Bestleistung der Chronik
+    /// (abgefragt, bevor die Wacht eingetragen wird).
+    /// </summary>
+    private static SessionViewModel Connect(SessionViewModel session, ChronicleViewModel chronicle)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+        ArgumentNullException.ThrowIfNull(chronicle);
+        session.PreviousBestStreak = () => chronicle.BestStreak;
+        return session;
+    }
 }

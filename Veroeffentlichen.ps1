@@ -6,9 +6,9 @@
     1. Führt alle Tests der Gesamtlösung aus (bricht bei Fehlern ab).
     2. Veröffentlicht die WPF-App als einzelne EXE. Das Backend (Laternenwacht.Core,
        Laternenwacht.Platform.Windows) wird dabei automatisch mit in die EXE gepackt.
-         - Eigenständig (Profil "Win-x64-EinzelneExe"): ~65 MB, bringt die .NET-Laufzeit mit,
+         - Eigenständig (Profil "Win-x64-EinzelneExe"): ~67 MB, bringt die .NET-Laufzeit mit,
            läuft auf jedem Windows ohne Installation  -> publish\win-x64\Laternenwacht.exe
-         - Schlank (Profil "Win-x64-Schlank"): ~1,3 MB, nutzt die installierte .NET-10-Desktop-Laufzeit
+         - Schlank (Profil "Win-x64-Schlank"): ~4 MB, nutzt die installierte .NET-10-Desktop-Laufzeit
            und ist die sparsamste Variante           -> publish\win-x64-schlank\Laternenwacht.exe
     3. Öffnet den Explorer mit der fertigen Datei.
 

@@ -6,7 +6,8 @@ using System.Windows.Threading;
 namespace Laternenwacht.App.Views;
 
 /// <summary>
-/// Ein kleines, nicht aktivierendes Fenster, das in einer Bahn über den Arbeitsbereich treibt
+/// Treibgut: die Schachtel der Königin mit einem Meme darin – ein kleines, nicht aktivierendes Fenster,
+/// das in einer Bahn über den Arbeitsbereich treibt
 /// (statt ein bildschirmgroßes transparentes Fenster zu animieren – das wäre teuer).
 /// </summary>
 /// <remarks>
@@ -21,6 +22,9 @@ public partial class MemeFloatWindow : Window
     private static readonly TimeSpan FrameInterval = TimeSpan.FromMilliseconds(1000.0 / 30);
     private const double BobAmplitude = 22;
     private const double TiltDegrees = 5;
+
+    /// <summary>Breite des Bildfeldes in der Schachtel: 300 − 2 × 14 (Deckelrand) − 2 × 5 (Passepartout samt Goldkante).</summary>
+    private const double PictureWidth = 262;
 
     private readonly TimeSpan _duration;
     private readonly Stopwatch _clock = new();
@@ -38,10 +42,10 @@ public partial class MemeFloatWindow : Window
         ArgumentNullException.ThrowIfNull(image);
         Picture.ImageSource = image;
 
-        // Rahmen an das Seitenverhältnis anpassen (Breite fest, Höhe 160–320).
+        // Bildfeld an das Seitenverhältnis anpassen (Breite durch die Schachtel fest, Höhe 160–320).
         if (image.Width > 0 && image.Height > 0)
         {
-            ImageFrame.Height = Math.Clamp(ImageFrame.Width * image.Height / image.Width, 160, 320);
+            ImageFrame.Height = Math.Clamp(PictureWidth * image.Height / image.Width, 160, 320);
         }
         CaptionText.Text = caption;
         _duration = duration;
@@ -60,7 +64,7 @@ public partial class MemeFloatWindow : Window
         MouseLeftButtonUp += (_, _) => Sink();
     }
 
-    /// <summary>Lässt das Meme nach unten wegsinken und schließt es dann.</summary>
+    /// <summary>Lässt die Schachtel nach unten in den Schnee sinken und schließt das Fenster dann.</summary>
     public void Sink()
     {
         if (_sinkStartedAt is null)

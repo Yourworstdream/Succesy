@@ -36,6 +36,10 @@
     <Resource Include="Assets\laterne.ico" />
     <Resource Include="Assets\laterne.png" />
     <Resource Include="Assets\korn.png" />
+    <!-- Szenenbilder der Reise (eigene Zeichnungen, 960×1200; Quellen als SVG in docs/szenen) -->
+    <Resource Include="Assets\Szenen\*.jpg" />
+    <!-- Schriften Cinzel, Cinzel Decorative und EB Garamond (SIL Open Font License, Lizenztexte daneben) -->
+    <Resource Include="Assets\Fonts\*.ttf" />
   </ItemGroup>
 
   <ItemGroup>

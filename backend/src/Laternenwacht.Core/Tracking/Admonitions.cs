@@ -7,15 +7,29 @@ namespace Laternenwacht.Core.Tracking;
 /// <param name="Key">Eindeutiger Schlüssel der Schwelle, damit jeder Mahnruf nur einmal je Wacht erscheint.</param>
 /// <param name="Text">Der anzuzeigende Spruch.</param>
 /// <param name="Book">Das Buch der Chroniken, aus dessen Welt der Spruch stammt.</param>
-public sealed record Admonition(string Key, string Text, ChronicleBook Book);
+public sealed record Admonition(string Key, string Text, ChronicleBook Book)
+{
+    /// <summary>
+    /// Die Antwort aus Narnia auf einen Mahnruf der Königin, sonst <c>null</c>.
+    /// Gesetzt nur bei <see cref="ChronicleBook.LionWitchWardrobe"/> und den Anzahl-Schwellen: Dann spricht in
+    /// <see cref="Text"/> die Königin (Unterschrift: <see cref="Admonitions.QueenSignature"/>), und die Königin
+    /// hat nie das letzte Wort.
+    /// </summary>
+    public Encouragement? Reply { get; init; }
+}
 
 /// <summary>
 /// Mahnrufe des Reiches: humorvolle Hinweise, wenn die Ablenkung überhandnimmt.
 /// Ausgelöst wird entweder durch die Anzahl der Verlockungen oder durch die Minuten im Frost.
 /// Jedes der sieben Bücher hat einen eigenen Satz Sprüche (alles eigene Formulierungen).
+/// In „Der König von Narnia“ sprechen bei den Anzahl-Schwellen die Königin und eine Stimme aus Narnia,
+/// die ihr antwortet (<see cref="Admonition.Reply"/>).
 /// </summary>
 public static class Admonitions
 {
+    /// <summary>Unterschrift unter der Stimme der Königin (bei Mahnrufen mit <see cref="Admonition.Reply"/>).</summary>
+    public const string QueenSignature = "Jadis, die sich Königin von Narnia nennt";
+
     /// <summary>Schwellen nach Anzahl der Verlockungen (Index 0–6 in den Spruchlisten).</summary>
     public static IReadOnlyList<int> CountThresholds { get; } = [3, 5, 10, 15, 20, 30, 50];
 
@@ -40,17 +54,20 @@ public static class Admonitions
         ],
         [ChronicleBook.LionWitchWardrobe] =
         [
-            "Ein Faun räuspert sich hinter dem Laternenpfahl: „Nur ein kleiner Umweg, gewiss?“",
-            "Die Weiße Hexe lässt grüßen – und reicht dir ein Stück türkischen Honig.",
-            "Die Biber tuscheln schon: „Da ist wieder jemand vom Pfad abgekommen …“",
-            "Edmund lässt ausrichten: Er kennt sich mit Verlockungen aus – und rät dringend ab.",
-            "Herrscher von Cair Paravel, Ihr gefährdet Euer Königreich mit Eurem Müßiggang!",
-            "Der Steintisch bebt. Selbst die Dryaden schütteln ihre Zweige über dich.",
-            "Hundert Jahre Winter wären kürzer gewesen als diese Wacht. Irgendwo seufzt ein Löwe.",
-            "Fünf Minuten im Frost – deine Laterne zittert im Wind.",
-            "Zehn Minuten Frost! Die Eiszapfen an deinem Schreibtisch werden länger.",
-            "Zwanzig Minuten Frost. Man munkelt, du habest den Rückweg durch den Schrank vergessen.",
-            "Dreiviertel Stunde Frost: immer Winter, nie Weihnachten – und kein Geschenk für dich.",
+            // Anzahl-Schwellen: die Stimme der Königin (Antworten siehe Replies)
+            "Noch ein Stück? Nimm ruhig, meine Schachtel wird nie leer.",
+            "Fünfmal warst du schon bei mir. Aus dir könnte ein Prinz werden.",
+            "Lass deine Gefährten warten. In meinem Haus zwischen den Hügeln ist es viel gemütlicher.",
+            "Fünfzehn Stück. Komm doch mit in meinen Hof, dort hat es niemand mehr eilig.",
+            "Zwanzig Stück! Honig gibt es ab jetzt keinen mehr, nur trockenes Brot. Bleibst du trotzdem?",
+            "Dreißig! Mein Zwerg spannt schon die Rentiere für dich an.",
+            "Fünfzig Stück. Von hier aus sieht man deine Laterne kaum noch.",
+
+            // Frost-Schwellen: Stimmen aus Narnia
+            "Fünf Minuten im Frost. An deiner Laterne hängt der erste Eiszapfen – noch ist er ganz klein.",
+            "Zehn Minuten! Maugrims Wölfe streifen schon durch den Wald. Folge deiner Spur zurück zur Laterne, noch ist sie gut zu sehen.",
+            "Zwanzig Minuten Frost. Im Hof der Königin wird es eng zwischen den Steinfiguren. Du gehörst nicht dorthin – komm heim.",
+            "Eine Dreiviertelstunde im Winter der Königin. Und doch tropft es irgendwo schon von den Ästen. Für die Rückkehr ist es nie zu spät.",
         ],
         [ChronicleBook.HorseAndHisBoy] =
         [
@@ -119,10 +136,29 @@ public static class Admonitions
             "Die Sterne fallen bereits vom Himmel. Vielleicht wäre jetzt ein guter Moment, anzufangen?",
             "Fünf Minuten Frost – über Narnia ziehen dunkle Wolken auf.",
             "Zehn Minuten! Am Waldrand fallen schon die sprechenden Bäume.",
-            "Zwanzig Minuten Frost. Weiter hinauf und weiter hinein – nicht weiter weg!",
+            "Zwanzig Minuten Frost. König Tirian hält die Stellung allein – lass ihn nicht länger warten.",
             "Dreiviertel Stunde – die letzte Nacht über Narnia bricht an. Rette wenigstens deine Wacht.",
         ],
     }.ToFrozenDictionary();
+
+    /// <summary>
+    /// Antworten aus Narnia auf die Mahnrufe der Königin, je Anzahl-Schwelle eine (Index 0–6).
+    /// Nur „Der König von Narnia“ hat sie; die übrigen Bücher bleiben ohne Antwort.
+    /// </summary>
+    private static readonly FrozenDictionary<ChronicleBook, (string Text, string Speaker)[]> Replies =
+        new Dictionary<ChronicleBook, (string Text, string Speaker)[]>
+        {
+            [ChronicleBook.LionWitchWardrobe] =
+            [
+                ("Je mehr man davon nimmt, desto hungriger wird man. Steh lieber auf.", "Herr Tumnus"),
+                ("Ihre Kronen sind aus Eis. Die echten Throne stehen in Cair Paravel.", "Herr Biber"),
+                ("Edmund ist abends zu ihr gelaufen. Du musst das nicht – deine Gefährten sind ganz nah.", "Frau Biber"),
+                ("Die dort stehen, sind aus Stein. Du nicht – also los, zurück zu deinen Gefährten.", "Lucy"),
+                ("Genau so ging es Edmund. Was sie verspricht, hält sie nicht.", "Peter"),
+                ("Lass ihn spannen. Ihr Schlitten bleibt bald im Matsch stecken, der Frühling ist näher, als sie glaubt.", "Herr Biber"),
+                ("Ich sehe dich. Ein Schritt zurück ins Licht genügt.", "Aslan"),
+            ],
+        }.ToFrozenDictionary();
 
     /// <summary>Alle Sprüche eines Buches in Schwellenreihenfolge (erst Anzahl, dann Frostminuten).</summary>
     public static IReadOnlyList<string> For(ChronicleBook book) =>
@@ -171,6 +207,9 @@ public static class Admonitions
         var source = book == ChronicleBook.All
             ? ChronicleBooks.Volumes[(int)((uint)(seed + index) % (uint)ChronicleBooks.Volumes.Count)]
             : book;
-        return new Admonition(key, Sayings[source][index], source);
+        var reply = Replies.TryGetValue(source, out var replies) && index < replies.Length
+            ? new Encouragement(replies[index].Text, replies[index].Speaker, source)
+            : null;
+        return new Admonition(key, Sayings[source][index], source) { Reply = reply };
     }
 }
